@@ -10,9 +10,10 @@ Authors enter
 
 * title
 * abstract
-* list of advances: the paper's key claims
+* paper and figures
+* list of people whom this paper should interest (as both
+  audience and possible reviewers).
 
-  * title of 
 
 Alpha: pre-review audience search
 ---------------------------------
@@ -66,9 +67,7 @@ Beta: validity assessment
 Data model
 ..........
 
-Authors previously entered a list of claimed *advances* for their paper.
-
-Reviewers begin by reviewing this list, the list of issues already
+Reviewers begin by reviewing the list of issues already
 raised by other reviewers, and 
 entering additional proposed **issues**.  Each issue consists
 of
@@ -84,75 +83,54 @@ of
     and appropriateness of text, figures, supplements.
   * Data sharing:
 
-* advance(s) it affects;
-* assumptions: grounds on which the referee based this concern.
-* relevant citations
-* reviewer assessments
-* comments, each linked to the paper version (commit) it was made on.
-
-**Reviewer assessments**: each reviewer can make an assessment on a given
-issue.  It consists of:
-
-* rating:
+* description: what is the issue?
+* suggestions: what could be done to address this issue?
+* opinions: each reviewer can assign either an open or closed status
+  to this issue
 
   * Crucial: I cannot recommend the paper without this resolved.
   * important: my decision will depend at least in part on this.
   * nice to have: I would like this resolved but it is not required.
   * not needed: I see no need to address this.
-  * no opinion
+  * FATAL: I've decided not to recommend, because of this issue.
+  * RESOLVED: this issue has been resolved to my satisfaction.
 
-* linked comment where the referee explains his position, suggests
-  possible resolutions etc.
+* responses: changes made by the authors to address this issue.
 
-* reviewer's expertise on this issue: "I have published similar analysis
-  <citations>..."
+* Each of these can have any number of linked comments, each tied
+  to (selected text of) a specific version.
 
-  * Using same / very similar / similar / different methodology;
-  * On same / very similar / similar / different dataset;
-  * Addressing same / very similar / similar / different scientific question.
+The paper and the issue database will be kept under version control;
+that is, each addition or change will be tracked as a new commit.
 
-Process
-.......
+Each reviewer controls:
 
-Generate issues (two weeks):
+* his recommendation decision
+* issue title, category and description of issues he defined;
+* his opinion on each issue;
+* can add any number of comments on each issue;
 
-* reviewers start adding issues;
-* they can invite additional reviewers;
-* each reviewer sees the changes since his last view of the issues;
-* each reviewer rates each issue;
+The authors control:
 
-Authors respond with a proposed resolution type for each issue:
+* what to do (responses) for each issue;
+* add any number of comments on each issue;
+* create new versions of the paper;
+* when to release the paper, and where;
+
+Each author response should specify what kind of resolution
+they assert:
 
 * resolved by evidence: data or citations
 * invalid assumptions: they assert that an issue is based on assumptions
   that do not apply to these data;
-* negligible: they assert the issue has little or no effect on the claimed
-  advance;
 * still an advance: they assert that the issue does not undercut
-  the fact that the result is a significant advance over previous work.
-* re-categorize: they assert that the issue category should be changed
-  (e.g. doubt to extension).
+  the result as a significant advance over previous work.
 * duplicate: they assert that the issue duplicates another issue
   and should be merged with it.
-* accepted: the authors accept the issue and attempt to fix it.
+* accepted and revised: the authors accept the criticism
+  as valid and revised the manuscript accordingly (e.g. by
+  removing the claim).
 
-The proposed fix is shown by a diff showing exactly what was changed
-in the manuscript.
-
-Each proposed fix is linked to a comment where the authors explain
-their position.
-
-Along with this list of proposed fixes,
-the authors submit a new version either as *prospective*
-(referees are allowed to choose Maybe as a decision),
-or *final* (referees can only choose Yes / No as a decision).
-
-Reviewers assess the authors' responses on each issue:
-
-* if a reviewer accepts a fix, that issue is *resolved* for that referee.
-* if a reviewer rejects a fix, that issue remains unresolved for that referee.
-* each assessment decision is recorded as a comment where the
-  referee explains his position.
 
 Decision
 ........
@@ -166,18 +144,6 @@ ratings:
 * if he has unresolved important issues, the default is Maybe.
 * otherwise, the default is YES (since he already rated the paper
   as high interest).
-
-Control
-.......
-
-Reviewers are in control of
-
-* their own ratings;
-* their decision
-
-Both authors and reviewers can change
-
-* the category of an issue.
 
 
 
