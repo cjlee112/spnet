@@ -88,6 +88,35 @@ Over time it would add peer review features (e.g. you could flag
 a discussion item as raising doubt about the validity of a major 
 claim in the paper).  However that is not needed at first.
 
+Validation
+----------
+
+Standard peer review requires validation before publication.
+We could incorporate a similar "gateway" requirement as follows:
+
+* at least one referee would have to certify the paper's results
+  as a significant advance over previous work, before *any* recommendations
+  (made by that referee or anyone else) would be sent to subscribers.
+* in the absence of any such validation, recommendations would be visible
+  on the homepage for the paper (but would *not* be sent to subscribers).
+* if you recommend a paper that hasn't been validated, you'll get a 
+  message like "No one has validated this paper's results yet.
+  Recommendations will not be sent until you (or someone else)
+  marks its results as a valid, significant advance over previous 
+  work.  Would you like to proceed to the validation page?"
+
+Validation would consist of two basic pieces:
+
+* listing the basic questions the paper addresses, and its
+  basic claims (answering those questions).
+* "Validation statement": 
+
+  - you have read the full paper;
+  - you have listed all of your major concerns about the paper's claims,
+    and your level of confidence;
+  - based on this, you consider the paper a valid, significant
+    advance over previous literature.
+
 User registration
 -----------------
 
