@@ -8,14 +8,18 @@ from hashlib import sha1
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
     caches obj.ATTR link data as obj._ATTR_link'''
-    def __init__(self, attr, fetcher, **kwargs):
+    def __init__(self, attr, fetcher, noData=False, **kwargs):
         self.attr = attr
         self.fetcher = fetcher
         self.kwargs = kwargs
+        self.noData = noData
     def __get__(self, obj, objtype):
         'actually fetch the object(s) specified by cached data'
-        data = getattr(obj, '_' + self.attr + '_link')
-        target = self.fetcher(obj, data, **self.kwargs)
+        if self.noData: # just fetch using object
+            target = self.fetcher(obj, **self.kwargs)
+        else: # fetching using cached data
+            data = getattr(obj, '_' + self.attr + '_link')
+            target = self.fetcher(obj, data, **self.kwargs)
         # Save in __dict__ to evade __set__.
         obj.__dict__[self.attr] = target
         return target
@@ -35,6 +39,7 @@ class ObjectProxy(object):
                 setattr(self, attr, v)
             else:
                 saveFunc(self, attr, v)
+        
 
 
 def fetch_person(obj, personID):
@@ -77,6 +82,13 @@ def fetch_papers(obj, papers):
         l.append(Paper(paperDBset, paperID))
     return l
 
+def fetch_subscribers(person):
+    'return list of Person obj who subscribe to specified person'
+    l = []
+    query = dict(subscriptions=ObjectId(person._id))
+    for subscriberDict in person.coll.find(query):
+        l.append(Person(mongoDict=subscriberDict)) # construct from dict
+    return l
 
 
 class Person(ObjectProxy):
@@ -84,18 +96,26 @@ class Person(ObjectProxy):
 
     # attrs that will only be fetched if accessed by user
     papers = LinkDescriptor('papers', fetch_papers)
+    recommendations = LinkDescriptor('recommendations', fetch_recs)
+    subscriptions = LinkDescriptor('subscriptions', fetch_authors)
+    subscribers = LinkDescriptor('subscribers', fetch_subscribers,
+                                 noData=True)
 
-    def __init__(self, coll, personID=None):
+    def __init__(self, coll, personID=None, mongoDict=None):
         self.coll = coll
         if personID: # fetch basic data, make sure personID valid.
             d = coll.find_one(ObjectId(personID)))
             if not d:
                 raise KeyError('personID %s not found' % personID)
             self.save_dict(d)
+        elif mongoDict:
+            self.save_dict(mongoDict)
 
     def authenticate(self, password):
         return self.password == sha1(password).hexdigest()
-    
+
+    def __cmp__(self, other):
+        return cmp(self._id, other._id)
 
 
 class Paper(ObjectProxy):
@@ -108,17 +128,20 @@ class Paper(ObjectProxy):
     # custom attr constructors
     _attrHandler = dict(recommendations=saveattr_recs)
 
-    def __init__(self, dbset, paperID=None):
+    def __init__(self, dbset, paperID=None, mongoDict=None):
         self.dbset = dbset
         if paperID:
-            d = self._get_dict(paperID)
+            if mongoDict: # record what collection this came from
+                self.coll, _id = self.dbset.get_collection(paperID)
+            else: # retrieve document dict
+                mongoDict = self._get_dict(paperID)
             try: # handle redirect to primary record in another paperDB
-                paperID = d['redirectID']
+                paperID = mongoDict['redirectID']
             except KeyError:
                 pass
             else:
-                d = self._get_dict(paperID)
-            self.save_dict(d)
+                mongoDict = self._get_dict(paperID)
+            self.save_dict(mongoDict)
             self.paperID = paperID
 
     def _get_dict(self, paperID):
