@@ -246,12 +246,12 @@ class GplusPersonData(EmbeddedDocument):
         p = Person(docData=dict(name=d['displayName']))
         gps.update_subscribers(p._id)
         return p
-    def update_posts(self, maxDays=20):
+    def update_posts(self, maxDays=20, **kwargs):
         'get new posts from this person, updating old posts with new replies'
         import gplus
         oauth = gplus.publicAccess
         postIt = oauth.get_person_posts(self.id)
-        l = [p for p in oauth.load_recent_posts(postIt, maxDays)
+        l = [p for p in oauth.load_recent_posts(postIt, maxDays, **kwargs)
              if getattr(p, '_isNewInsert', False)]
         return l
     def update_subs_from_gplus(self, subs=None):

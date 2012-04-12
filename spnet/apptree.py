@@ -143,8 +143,8 @@ class PersonCollection(rest.Collection):
                 gpd = person.gplus
             except AttributeError:
                 pass
-            else:
-                l = gpd.update_posts() # list of new posts
+            else: # get list of new posts
+                l = gpd.update_posts(recentEvents=view.recentEventsDeque)
                 if l: # need to update our object representation to see them
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
