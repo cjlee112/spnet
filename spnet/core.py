@@ -1,7 +1,5 @@
 #import spn_config
-import pymongo
 from bson.objectid import ObjectId
-import datetime
 from hashlib import sha1
 
 
@@ -27,9 +25,13 @@ class LinkDescriptor(object):
         'cache some link data for fetching later'
         setattr(obj, '_' + self.attr + '_link', data)
 
+# base document classes
 
 class Document(object):
     'base class provides flexible method for storing dict as attr objects'
+    def _set_coll(self, dbconn):
+        self._dbconn = dbconn
+        self.coll = getattr(dbconn, self._dbname)
     def store_attrs(self, d):
         ''
         try:
@@ -52,6 +54,9 @@ class Document(object):
         self.coll.update({'_id': self._id}, {'$set': updateDict})
         self.store_attrs(updateDict)
         
+    def delete(self):
+        self.coll.remove(self._id)
+
     def __cmp__(self, other):
         return cmp(self._id, other._id)
 
@@ -60,74 +65,62 @@ class EmbeddedDocument(Document):
     def insert(self):
         self.coll.update({'_id': self._parentID},
                          {'$set': {self._dbfield: self._dbDocDict}})
+    def update(self, updateDict):
+        'update the existing embedded doc fields in the parent document'
+        self._dbDocDict.update(updateDict)
+        d = {}
+        for k,v in updateDict.items():
+            d['.'.join((self._dbfield, k))] = v
+        self.coll.update({'_id': self._parentID}, {'$set': d})
+    def __cmp__(self, other):
+        return cmp((self._parentID,self._dbfield),
+                   (other._parentID,other._dbfield))
         
 class ArrayDocument(Document):
     'stores a document inside an array in mongoDB'
     def insert(self):
         'append to the target array in the parent document'
-        target = '.'.join(self._dbfield.split('.')[:-1])
+        arrayField = self._dbfield.split('.')[0]
         self.coll.update({'_id': self._parentID},
-                         {'$push': {target: self._dbDocDict}})
+                         {'$push': {arrayField: self._dbDocDict}})
     def update(self, updateDict):
-        'replace the existing record in the array in the parent document'
+        'update the existing record in the array in the parent document'
         self._dbDocDict.update(updateDict)
-        target = '.'.join(self._dbfield.split('.')[:-1]) + '.$'
+        arrayField = self._dbfield.split('.')[0]
+        d = {}
+        for k,v in updateDict.items():
+            d['.'.join((arrayField, '$', k))] = v
         self.coll.update({'_id': self._parentID,
-                          self._dbfield: self._arrayKey},
-                         {'$set': {target: self._dbDocDict}})
+                          self._dbfield: self._arrayKey}, {'$set': d})
+
+    def delete(self):
+        'delete this record from the array in the parent document'
+        arrayField, keyField = self._dbfield.split('.')
+        self.coll.update({'_id': self._parentID},
+                         {'$pull': {arrayField: {keyField: self._arrayKey}}})
         
     def __cmp__(self, other):
         return cmp((self._parentID,self._arrayKey),
                    (other._parentID,other._arrayKey))
 
 
+##########################################################
+
+# fetch functions for use with LinkDescriptor 
+
 def fetch_person(obj, personID):
     'fetch Person object from the default personColl collection'
-    return Person(personColl, personID)
+    return Person(obj._dbconn, personID)
 
 def fetch_authors(obj, authors):
     'fetch Person objects for non-null author IDs'
     l = []
     for personID in authors:
         if personID:
-            l.append(Person(personColl, personID))
+            l.append(Person(obj._dbconn, personID))
         else:
             l.append(None)
     return l
-
-
-class Recommendation(ArrayDocument):
-
-    # attrs that will only be fetched if accessed by user
-    paper = LinkDescriptor('paper', fetch_paper)
-    author = LinkDescriptor('author', fetch_person)
-    forwards = LinkDescriptor('forwards', fetch_authors)
-
-    _dbfield = 'recommendations.author' # dot.name for updating
-
-    def __init__(self, paper, paperID=None, coll=None, insertNew=True,
-                 **kwargs):
-        if paper:
-            self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
-            self._parentID = paper._id
-            self.coll = paper.coll
-        elif paperID:
-            self._paper_link = self._parentID = paperID
-            self.coll = coll
-        else:
-            raise ValueError('must provide Paper or paperID')
-        self._arrayKey = kwargs['author']
-        self.store_attrs(kwargs)
-        if insertNew:
-            self.insert()
-
-
-def saveattr_recs(self, attr, recData):
-    'construct Recommendation objects and store list on attr'
-    l = []
-    for d in recData:
-        l.append(Recommendation(paper=self, insertNew=False, **d))
-    setattr(self, attr, l)
 
 def fetch_recs(person, papers):
     'return list of Recommendation objects for specified list of paperIDs'
@@ -139,14 +132,14 @@ def fetch_recs(person, papers):
     return l
 
 def fetch_paper(obj, paperID):
-    'return list of Paper objects for specified list of paperIDs'
-    return Paper(paperDBset, paperID)
+    'return Paper object for specified paperID'
+    return Paper(obj._dbconn, paperID)
 
 def fetch_papers(obj, papers):
     'return list of Paper objects for specified list of paperIDs'
     l = []
     for paperID in papers:
-        l.append(Paper(paperDBset, paperID))
+        l.append(Paper(obj._dbconn, paperID))
     return l
 
 def fetch_subscribers(person):
@@ -154,12 +147,60 @@ def fetch_subscribers(person):
     l = []
     query = dict(subscriptions=ObjectId(person._id))
     for subscriberDict in person.coll.find(query):
-        l.append(Person(mongoDict=subscriberDict)) # construct from dict
+        l.append(Person(person._dbconn,
+                        mongoDict=subscriberDict)) # construct from dict
     return l
+
+# custom attribute unwrappers
+
+def saveattr_recs(self, attr, recData):
+    'construct Recommendation objects and store list on attr'
+    l = []
+    for d in recData:
+        l.append(Recommendation(paper=self, insertNew=False, **d))
+    setattr(self, attr, l)
+
+
+
+
+######################################################
+
+# main object classes
+
+class Recommendation(ArrayDocument):
+
+    _dbname = 'dbset' # default collection to obtain from dbconn
+
+    # attrs that will only be fetched if accessed by user
+    paper = LinkDescriptor('paper', fetch_paper)
+    author = LinkDescriptor('author', fetch_person)
+    forwards = LinkDescriptor('forwards', fetch_authors)
+
+    _dbfield = 'recommendations.author' # dot.name for updating
+
+    def __init__(self, paper, paperID=None, dbconn=None, insertNew=True,
+                 **kwargs):
+        if paper:
+            self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
+            self._parentID = paper._id
+            self.coll = paper.coll
+        elif paperID:
+            self._paper_link = paperID
+            self._set_coll(dbconn) # get our dbset
+            self.coll, self._parentID = self.coll.get_collection(paperID)
+        else:
+            raise ValueError('must provide Paper or paperID')
+        self._arrayKey = kwargs['author']
+        self.store_attrs(kwargs)
+        if insertNew:
+            self.insert()
+
 
 
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
+
+    _dbname = 'person' # default collection to obtain from dbconn
 
     # attrs that will only be fetched if accessed by user
     papers = LinkDescriptor('papers', fetch_papers)
@@ -168,10 +209,10 @@ class Person(Document):
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
 
-    def __init__(self, coll, personID=None, **kwargs):
-        self.coll = coll
+    def __init__(self, dbconn, personID=None, **kwargs):
+        self._set_coll(dbconn)
         if personID: # fetch basic data, make sure personID valid.
-            d = coll.find_one(ObjectId(personID)))
+            d = self.coll.find_one(ObjectId(personID))
             if not d:
                 raise KeyError('personID %s not found' % personID)
             self.store_attrs(d)
@@ -189,6 +230,8 @@ class Person(Document):
 class Paper(Document):
     '''interface to a specific paper '''
 
+    _dbname = 'dbset' # default collection to obtain from dbconn
+
     # attrs that will only be fetched if accessed by user
     authors = LinkDescriptor('authors', fetch_authors)
     references = LinkDescriptor('references', fetch_papers)
@@ -196,58 +239,38 @@ class Paper(Document):
     # custom attr constructors
     _attrHandler = dict(recommendations=saveattr_recs)
 
-    def __init__(self, dbset, paperID=None, mongoDict=None):
-        self.dbset = dbset
+    def __init__(self, dbconn, paperID=None, paperDB='arxiv',
+                 mongoDict=None):
+        self._set_coll(dbconn)
+        self.dbset = self.coll
+        del self.coll
         if paperID:
             if mongoDict: # record what collection this came from
-                self.coll, _id = self.dbset.get_collection(paperID)
+                self.coll, self._id = self.dbset.get_collection(paperID)
             else: # retrieve document dict
-                mongoDict = self._get_dict(paperID)
+                mongoDict = self._get_doc(paperID)
             try: # handle redirect to primary record in another paperDB
                 paperID = mongoDict['redirectID']
             except KeyError:
                 pass
             else:
-                mongoDict = self._get_dict(paperID)
+                mongoDict = self._get_doc(paperID)
             self.store_attrs(mongoDict)
             self.paperID = paperID
+        elif mongoDict: # create new db document
+            self.coll = self.dbset.get_collection(None, paperDB)[0]
+            self.store_attrs(mongoDict)
+            self.insert()
+        else:
+            raise ValueError('no paperID or mongoDict?')
 
-    def _get_dict(self, paperID):
+    def _get_doc(self, paperID):
         'get document from appropriate paperDB based on paperID'
-        self.coll, _id = self.dbset.get_collection(paperID)
-        d = self.coll.find_one(ObjectId(_id))
+        self.coll, self._id = self.dbset.get_collection(paperID)
+        d = self.coll.find_one(ObjectId(self._id))
         if not d:
             raise KeyError('paperID %s not found' % paperID)
         return d
 
-
-
-class DBSet(object):
-    '''Supports usage of multiple paper databases, using paperID
-    given as dbname:id'''
-    def __init__(self, dbsetDict, defaultDB):
-        self.dbMap = {}
-        for dbname, kwargs in dbsetDict.items():
-            self.dbMap[dbname] = self.connect_db(**kwargs)
-        self.defaultDB = self.dbMap[defaultDB]
-    def connect_db(self, db='paperDB', collection='papers', **kwargs):
-        c = pymongo.connection.Connection(**kwargs)
-        paper_db = c[db]
-        paper_coll = paper_db[collection]
-        return paper_coll
-    def get_collection(self, paperID, dbname=None, collection=None):
-        'get collection object containing paper specified as dbname:id'
-        _id = None
-        if paperID:
-            t = paperID.split(':')
-            if len(t) < 2:
-                raise ValueError('bad paperID: ' + paperID)
-            dbname = t[0]
-            _id = paperID[len(dbname) + 1:]
-        paper_coll = self.dbMap[dbname]
-        if collection:
-            return paper_coll.database[collection], _id
-        else:
-            return paper_coll, _id
 
 
