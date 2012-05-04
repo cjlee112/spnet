@@ -6,7 +6,7 @@ paperDBdict = dict(
     )
 
 connectDict = dict(
-    dbset=DBSet(paperDBdict),
+    dbset=DBSet(paperDBdict, 'arxiv'),
     person='spnet.person',
     )
 

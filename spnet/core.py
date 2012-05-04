@@ -6,17 +6,24 @@ from hashlib import sha1
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
     caches obj.ATTR link data as obj._ATTR_link'''
-    def __init__(self, attr, fetcher, noData=False, **kwargs):
+    def __init__(self, attr, fetcher, noData=False,
+                 missingData=False, **kwargs):
         self.attr = attr
         self.fetcher = fetcher
         self.kwargs = kwargs
         self.noData = noData
+        self.missingData = missingData
     def __get__(self, obj, objtype):
         'actually fetch the object(s) specified by cached data'
         if self.noData: # just fetch using object
             target = self.fetcher(obj, **self.kwargs)
         else: # fetching using cached data
-            data = getattr(obj, '_' + self.attr + '_link')
+            try:
+                data = getattr(obj, '_' + self.attr + '_link')
+            except AttributeError:
+                if self.missingData is not False:
+                    return self.missingData
+                raise
             target = self.fetcher(obj, data, **self.kwargs)
         # Save in __dict__ to evade __set__.
         obj.__dict__[self.attr] = target
@@ -112,23 +119,30 @@ def fetch_person(obj, personID):
     'fetch Person object from the default personColl collection'
     return Person(obj._dbconn, personID)
 
-def fetch_authors(obj, authors):
+def fetch_people(obj, people):
     'fetch Person objects for non-null author IDs'
     l = []
-    for personID in authors:
+    for personID in people:
         if personID:
             l.append(Person(obj._dbconn, personID))
         else:
             l.append(None)
     return l
 
-def fetch_recs(person, papers):
+def fetch_recs(person):
     'return list of Recommendation objects for specified list of paperIDs'
-    papers = fetch_papers(obj, papers)
-    for paper in papers:
-        for rec in paper.recommendations:
-            if rec._author_link == person._id:
-                l.append(rec)
+    coll = person._dbconn.dbset.defaultDB
+    authorID = str(person._id)
+    results = coll.find({'recommendations.author':authorID},
+                        {'recommendations':1})
+    l = []
+    for r in results:
+        paperID = person._dbconn.dbset.get_paperID(r['_id'])
+        for recDict in r['recommendations']:
+            if recDict['author'] == authorID:
+                l.append(Recommendation(None, paperID, person._dbconn,
+                                        False, **recDict))
+                break
     return l
 
 def fetch_paper(obj, paperID):
@@ -145,10 +159,10 @@ def fetch_papers(obj, papers):
 def fetch_subscribers(person):
     'return list of Person obj who subscribe to specified person'
     l = []
-    query = dict(subscriptions=ObjectId(person._id))
+    query = dict(subscriptions=str(person._id))
     for subscriberDict in person.coll.find(query):
         l.append(Person(person._dbconn,
-                        mongoDict=subscriberDict)) # construct from dict
+                        **subscriberDict)) # construct from dict
     return l
 
 # custom attribute unwrappers
@@ -174,7 +188,7 @@ class Recommendation(ArrayDocument):
     # attrs that will only be fetched if accessed by user
     paper = LinkDescriptor('paper', fetch_paper)
     author = LinkDescriptor('author', fetch_person)
-    forwards = LinkDescriptor('forwards', fetch_authors)
+    forwards = LinkDescriptor('forwards', fetch_people)
 
     _dbfield = 'recommendations.author' # dot.name for updating
 
@@ -184,6 +198,7 @@ class Recommendation(ArrayDocument):
             self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
             self._parentID = paper._id
             self.coll = paper.coll
+            self._dbconn = paper._dbconn
         elif paperID:
             self._paper_link = paperID
             self._set_coll(dbconn) # get our dbset
@@ -204,8 +219,10 @@ class Person(Document):
 
     # attrs that will only be fetched if accessed by user
     papers = LinkDescriptor('papers', fetch_papers)
-    recommendations = LinkDescriptor('recommendations', fetch_recs)
-    subscriptions = LinkDescriptor('subscriptions', fetch_authors)
+    recommendations = LinkDescriptor('recommendations', fetch_recs,
+                                     noData=True)
+    subscriptions = LinkDescriptor('subscriptions', fetch_people,
+                                   missingData=())
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
 
@@ -233,7 +250,7 @@ class Paper(Document):
     _dbname = 'dbset' # default collection to obtain from dbconn
 
     # attrs that will only be fetched if accessed by user
-    authors = LinkDescriptor('authors', fetch_authors)
+    authors = LinkDescriptor('authors', fetch_people)
     references = LinkDescriptor('references', fetch_papers)
 
     # custom attr constructors

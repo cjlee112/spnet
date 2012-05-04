@@ -1,4 +1,5 @@
 import pymongo
+from bson.objectid import ObjectId
 
 class DBSet(object):
     '''Supports usage of multiple paper databases, using paperID
@@ -8,7 +9,8 @@ class DBSet(object):
         for dbname, kwargs in dbsetDict.items():
             self.dbMap[dbname] = self.connect_db(**kwargs)
         if defaultDB:
-            setattr(self, defaultDB, self.dbMap[defaultDB])
+            self.defaultDB = self.dbMap[defaultDB]
+            self._defaultDB = defaultDB
     def connect_db(self, db='paperDB', collection='papers', **kwargs):
         c = pymongo.connection.Connection(**kwargs)
         paper_db = c[db]
@@ -22,12 +24,16 @@ class DBSet(object):
             if len(t) < 2:
                 raise ValueError('bad paperID: ' + paperID)
             dbname = t[0]
-            _id = paperID[len(dbname) + 1:]
+            _id = ObjectId(paperID[len(dbname) + 1:])
         paper_coll = self.dbMap[dbname]
         if collection:
             return paper_coll.database[collection], _id
         else:
             return paper_coll, _id
+    def get_paperID(self, objID, paperDB=None):
+        if not paperDB:
+            paperDB = self._defaultDB
+        return paperDB + ':' + str(objID)
 
 
 class DBConnection(object):
