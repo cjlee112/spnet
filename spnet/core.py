@@ -28,9 +28,14 @@ class LinkDescriptor(object):
         setattr(obj, '_' + self.attr + '_link', data)
 
 
-class ObjectProxy(object):
+class Document(object):
     'base class provides flexible method for storing dict as attr objects'
-    def save_dict(self, d):
+    def store_attrs(self, d):
+        ''
+        try:
+            self._dbDocDict.update(d)
+        except AttributeError:
+            self._dbDocDict = d
         attrHandler = getattr(self, '_attrHandler', {})
         for attr, v in d.items():
             try:
@@ -39,7 +44,41 @@ class ObjectProxy(object):
                 setattr(self, attr, v)
             else:
                 saveFunc(self, attr, v)
+
+    def insert(self):
+        self._id = self.coll.insert(self._dbDocDict)
+
+    def update(self, updateDict):
+        self.coll.update({'_id': self._id}, {'$set': updateDict})
+        self.store_attrs(updateDict)
         
+    def __cmp__(self, other):
+        return cmp(self._id, other._id)
+
+class EmbeddedDocument(Document):
+    'stores a document inside another document in mongoDB'
+    def insert(self):
+        self.coll.update({'_id': self._parentID},
+                         {'$set': {self._dbfield: self._dbDocDict}})
+        
+class ArrayDocument(Document):
+    'stores a document inside an array in mongoDB'
+    def insert(self):
+        'append to the target array in the parent document'
+        target = '.'.join(self._dbfield.split('.')[:-1])
+        self.coll.update({'_id': self._parentID},
+                         {'$push': {target: self._dbDocDict}})
+    def update(self, updateDict):
+        'replace the existing record in the array in the parent document'
+        self._dbDocDict.update(updateDict)
+        target = '.'.join(self._dbfield.split('.')[:-1]) + '.$'
+        self.coll.update({'_id': self._parentID,
+                          self._dbfield: self._arrayKey},
+                         {'$set': {target: self._dbDocDict}})
+        
+    def __cmp__(self, other):
+        return cmp((self._parentID,self._arrayKey),
+                   (other._parentID,other._arrayKey))
 
 
 def fetch_person(obj, personID):
@@ -57,23 +96,51 @@ def fetch_authors(obj, authors):
     return l
 
 
-class Recommendation(ObjectProxy):
+class Recommendation(ArrayDocument):
 
     # attrs that will only be fetched if accessed by user
+    paper = LinkDescriptor('paper', fetch_paper)
     author = LinkDescriptor('author', fetch_person)
     forwards = LinkDescriptor('forwards', fetch_authors)
 
-    def __init__(self, paper, **kwargs):
-        self.paper = paper
-        self.save_dict(kwargs)
+    _dbfield = 'recommendations.author' # dot.name for updating
+
+    def __init__(self, paper, paperID=None, coll=None, insertNew=True,
+                 **kwargs):
+        if paper:
+            self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
+            self._parentID = paper._id
+            self.coll = paper.coll
+        elif paperID:
+            self._paper_link = self._parentID = paperID
+            self.coll = coll
+        else:
+            raise ValueError('must provide Paper or paperID')
+        self._arrayKey = kwargs['author']
+        self.store_attrs(kwargs)
+        if insertNew:
+            self.insert()
 
 
 def saveattr_recs(self, attr, recData):
     'construct Recommendation objects and store list on attr'
     l = []
     for d in recData:
-        l.append(Recommendation(paper=self, **d))
+        l.append(Recommendation(paper=self, insertNew=False, **d))
     setattr(self, attr, l)
+
+def fetch_recs(person, papers):
+    'return list of Recommendation objects for specified list of paperIDs'
+    papers = fetch_papers(obj, papers)
+    for paper in papers:
+        for rec in paper.recommendations:
+            if rec._author_link == person._id:
+                l.append(rec)
+    return l
+
+def fetch_paper(obj, paperID):
+    'return list of Paper objects for specified list of paperIDs'
+    return Paper(paperDBset, paperID)
 
 def fetch_papers(obj, papers):
     'return list of Paper objects for specified list of paperIDs'
@@ -91,7 +158,7 @@ def fetch_subscribers(person):
     return l
 
 
-class Person(ObjectProxy):
+class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
 
     # attrs that will only be fetched if accessed by user
@@ -101,24 +168,25 @@ class Person(ObjectProxy):
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
 
-    def __init__(self, coll, personID=None, mongoDict=None):
+    def __init__(self, coll, personID=None, **kwargs):
         self.coll = coll
         if personID: # fetch basic data, make sure personID valid.
             d = coll.find_one(ObjectId(personID)))
             if not d:
                 raise KeyError('personID %s not found' % personID)
-            self.save_dict(d)
-        elif mongoDict:
-            self.save_dict(mongoDict)
+            self.store_attrs(d)
+        elif kwargs:
+            self.store_attrs(kwargs)
+            if '_id' not in kwargs:
+                self.insert()
+        else:
+            raise ValueError('''you must specify either personID for
+            retrieval or kwargs for save new record''')
 
     def authenticate(self, password):
         return self.password == sha1(password).hexdigest()
 
-    def __cmp__(self, other):
-        return cmp(self._id, other._id)
-
-
-class Paper(ObjectProxy):
+class Paper(Document):
     '''interface to a specific paper '''
 
     # attrs that will only be fetched if accessed by user
@@ -141,7 +209,7 @@ class Paper(ObjectProxy):
                 pass
             else:
                 mongoDict = self._get_dict(paperID)
-            self.save_dict(mongoDict)
+            self.store_attrs(mongoDict)
             self.paperID = paperID
 
     def _get_dict(self, paperID):
