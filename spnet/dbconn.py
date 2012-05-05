@@ -4,8 +4,9 @@ from bson.objectid import ObjectId
 class DBSet(object):
     '''Supports usage of multiple paper databases, using paperID
     given as dbname:id'''
-    def __init__(self, dbsetDict, defaultDB=None):
+    def __init__(self, dbsetDict, defaultDB=None, idType=ObjectId):
         self.dbMap = {}
+        self.idType = idType
         for dbname, kwargs in dbsetDict.items():
             self.dbMap[dbname] = self.connect_db(**kwargs)
         if defaultDB:
@@ -24,7 +25,7 @@ class DBSet(object):
             if len(t) < 2:
                 raise ValueError('bad paperID: ' + paperID)
             dbname = t[0]
-            _id = ObjectId(paperID[len(dbname) + 1:])
+            _id = self.idType(paperID[len(dbname) + 1:])
         paper_coll = self.dbMap[dbname]
         if collection:
             return paper_coll.database[collection], _id

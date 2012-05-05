@@ -15,6 +15,10 @@ class LinkDescriptor(object):
         self.missingData = missingData
     def __get__(self, obj, objtype):
         'actually fetch the object(s) specified by cached data'
+        try: # return the cached attribute
+            return obj.__dict__[self.attr]
+        except KeyError:
+            pass
         if self.noData: # just fetch using object
             target = self.fetcher(obj, **self.kwargs)
         else: # fetching using cached data
@@ -132,14 +136,13 @@ def fetch_people(obj, people):
 def fetch_recs(person):
     'return list of Recommendation objects for specified list of paperIDs'
     coll = person._dbconn.dbset.defaultDB
-    authorID = str(person._id)
-    results = coll.find({'recommendations.author':authorID},
+    results = coll.find({'recommendations.author':person._id},
                         {'recommendations':1})
     l = []
     for r in results:
         paperID = person._dbconn.dbset.get_paperID(r['_id'])
         for recDict in r['recommendations']:
-            if recDict['author'] == authorID:
+            if recDict['author'] == person._id:
                 l.append(Recommendation(None, paperID, person._dbconn,
                                         False, **recDict))
                 break
@@ -156,12 +159,20 @@ def fetch_papers(obj, papers):
         l.append(Paper(obj._dbconn, paperID))
     return l
 
+def fetch_author_papers(author):
+    'return list of Papers with this author'
+    l = []
+    query = dict(authors=author._id)
+    for paperDict in author._dbconn.dbset.defaultDB.find(query):
+        l.append(Paper(author._dbconn, insertNew=False, **paperDict))
+    return l
+
 def fetch_subscribers(person):
     'return list of Person obj who subscribe to specified person'
     l = []
-    query = dict(subscriptions=str(person._id))
+    query = dict(subscriptions=person._id)
     for subscriberDict in person.coll.find(query):
-        l.append(Person(person._dbconn,
+        l.append(Person(person._dbconn, insertNew=False,
                         **subscriberDict)) # construct from dict
     return l
 
@@ -218,7 +229,7 @@ class Person(Document):
     _dbname = 'person' # default collection to obtain from dbconn
 
     # attrs that will only be fetched if accessed by user
-    papers = LinkDescriptor('papers', fetch_papers)
+    papers = LinkDescriptor('papers', fetch_author_papers, noData=True)
     recommendations = LinkDescriptor('recommendations', fetch_recs,
                                      noData=True)
     subscriptions = LinkDescriptor('subscriptions', fetch_people,
@@ -226,16 +237,16 @@ class Person(Document):
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
 
-    def __init__(self, dbconn, personID=None, **kwargs):
+    def __init__(self, dbconn, personID=None, insertNew=True, **kwargs):
         self._set_coll(dbconn)
         if personID: # fetch basic data, make sure personID valid.
-            d = self.coll.find_one(ObjectId(personID))
+            d = self.coll.find_one(personID)
             if not d:
                 raise KeyError('personID %s not found' % personID)
             self.store_attrs(d)
         elif kwargs:
             self.store_attrs(kwargs)
-            if '_id' not in kwargs:
+            if insertNew:
                 self.insert()
         else:
             raise ValueError('''you must specify either personID for
@@ -257,34 +268,35 @@ class Paper(Document):
     _attrHandler = dict(recommendations=saveattr_recs)
 
     def __init__(self, dbconn, paperID=None, paperDB='arxiv',
-                 mongoDict=None):
+                 insertNew=True, **kwargs):
         self._set_coll(dbconn)
         self.dbset = self.coll
         del self.coll
         if paperID:
-            if mongoDict: # record what collection this came from
+            if kwargs: # record what collection this came from
                 self.coll, self._id = self.dbset.get_collection(paperID)
             else: # retrieve document dict
-                mongoDict = self._get_doc(paperID)
+                kwargs = self._get_doc(paperID)
             try: # handle redirect to primary record in another paperDB
-                paperID = mongoDict['redirectID']
+                paperID = kwargs['redirectID']
             except KeyError:
                 pass
             else:
-                mongoDict = self._get_doc(paperID)
-            self.store_attrs(mongoDict)
+                kwargs = self._get_doc(paperID)
+            self.store_attrs(kwargs)
             self.paperID = paperID
-        elif mongoDict: # create new db document
+        elif kwargs: # create new db document
             self.coll = self.dbset.get_collection(None, paperDB)[0]
-            self.store_attrs(mongoDict)
-            self.insert()
+            self.store_attrs(kwargs)
+            if insertNew:
+                self.insert()
         else:
             raise ValueError('no paperID or mongoDict?')
 
     def _get_doc(self, paperID):
         'get document from appropriate paperDB based on paperID'
         self.coll, self._id = self.dbset.get_collection(paperID)
-        d = self.coll.find_one(ObjectId(self._id))
+        d = self.coll.find_one(self._id)
         if not d:
             raise KeyError('paperID %s not found' % paperID)
         return d
