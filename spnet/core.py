@@ -193,12 +193,43 @@ def saveattr_recs(self, attr, recData):
         l.append(Recommendation(paper=self, insertNew=False, **d))
     setattr(self, attr, l)
 
+def saveattr_email(self, attr, emailData):
+    'construct Recommendation objects and store list on attr'
+    l = []
+    for d in emailData:
+        l.append(EmailAddress(person=self, insertNew=False, **d))
+    setattr(self, attr, l)
+
 
 
 
 ######################################################
 
 # main object classes
+
+class EmailAddress(ArrayDocument):
+    _dbname = 'person' # default collection to obtain from dbconn
+    _dbfield = 'email.address' # dot.name for updating
+
+    def __init__(self, person, address, dbconn=None, insertNew=True,
+                 fetch=False, **kwargs):
+        if isinstance(person, Person):
+            self._parentID = person._id
+            self.coll = person.coll
+            self._dbconn = person._dbconn
+        else:
+            self._set_coll(dbconn) # get our dbset
+            self._parentID = person
+        self._arrayKey = address
+        if fetch:
+            d = self._get_doc()
+            self.store_attrs(d)
+        else:
+            d = kwargs.copy()
+            d['address'] = address
+            self.store_attrs(d)
+            if insertNew:
+                self.insert()
 
 class Recommendation(ArrayDocument):
 
@@ -248,6 +279,9 @@ class Person(Document):
                                    missingData=())
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
+
+    # custom attr constructors
+    _attrHandler = dict(email=saveattr_email)
 
     def __init__(self, dbconn, personID=None, insertNew=True, **kwargs):
         self._set_coll(dbconn)
@@ -302,6 +336,7 @@ class Paper(Document):
             self.store_attrs(kwargs)
             if insertNew:
                 self.insert()
+                self.paperID = self.dbset.get_paperID(self._id, paperDB)
         else:
             raise ValueError('no paperID or mongoDict?')
 
