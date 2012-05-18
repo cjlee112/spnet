@@ -30,3 +30,8 @@ assert jojo.recommendations[0] == rec2
 assert len(jojo.papers) == 2
 assert len(fred.papers) == 1
 
+rec2.update(dict(text='simply dreadful!', score=27))
+rec3 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,
+                           author=jojo._id, fetch=True)
+assert rec3.score == 27
+

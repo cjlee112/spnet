@@ -89,6 +89,14 @@ class EmbeddedDocument(Document):
         
 class ArrayDocument(Document):
     'stores a document inside an array in mongoDB'
+    def _get_doc(self):
+        'retrieve DB array record containing this document'
+        arrayField, keyField = self._dbfield.split('.')
+        d = self.coll.find_one(self._parentID, {arrayField: 1})
+        for record in d[arrayField]:
+            if record[keyField] == self._arrayKey:
+                return record
+        raise ValueError('no matching ArrayDocument!')
     def insert(self):
         'append to the target array in the parent document'
         arrayField = self._dbfield.split('.')[0]
@@ -204,7 +212,7 @@ class Recommendation(ArrayDocument):
     _dbfield = 'recommendations.author' # dot.name for updating
 
     def __init__(self, paper, paperID=None, dbconn=None, insertNew=True,
-                 **kwargs):
+                 fetch=False, **kwargs):
         if paper:
             self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
             self._parentID = paper._id
@@ -217,9 +225,13 @@ class Recommendation(ArrayDocument):
         else:
             raise ValueError('must provide Paper or paperID')
         self._arrayKey = kwargs['author']
-        self.store_attrs(kwargs)
-        if insertNew:
-            self.insert()
+        if fetch:
+            d = self._get_doc()
+            self.store_attrs(d)
+        else:
+            self.store_attrs(kwargs)
+            if insertNew:
+                self.insert()
 
 
 
