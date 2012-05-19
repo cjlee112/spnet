@@ -89,10 +89,15 @@ class EmbeddedDocument(Document):
         
 class ArrayDocument(Document):
     'stores a document inside an array in mongoDB'
-    def _get_doc(self):
+    def _get_doc(self, useArrayKey=False):
         'retrieve DB array record containing this document'
         arrayField, keyField = self._dbfield.split('.')
-        d = self.coll.find_one(self._parentID, {arrayField: 1})
+        if useArrayKey:
+            d = self.coll.find_one({self._dbfield: self._arrayKey},
+                                   {arrayField: 1})
+            self._parentID = d['_id']
+        else:
+            d = self.coll.find_one(self._parentID, {arrayField: 1})
         for record in d[arrayField]:
             if record[keyField] == self._arrayKey:
                 return record
@@ -211,18 +216,22 @@ class EmailAddress(ArrayDocument):
     _dbname = 'person' # default collection to obtain from dbconn
     _dbfield = 'email.address' # dot.name for updating
 
-    def __init__(self, person, address, dbconn=None, insertNew=True,
+    def __init__(self, address, person=None, dbconn=None, insertNew=True,
                  fetch=False, **kwargs):
+        useArrayKey = False
         if isinstance(person, Person):
             self._parentID = person._id
             self.coll = person.coll
             self._dbconn = person._dbconn
         else:
             self._set_coll(dbconn) # get our dbset
-            self._parentID = person
+            if person:
+                self._parentID = person
+            else:
+                useArrayKey = True
         self._arrayKey = address
         if fetch:
-            d = self._get_doc()
+            d = self._get_doc(useArrayKey)
             self.store_attrs(d)
         else:
             d = kwargs.copy()

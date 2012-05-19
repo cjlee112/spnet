@@ -5,10 +5,10 @@ connect.dbconn._conn.drop_database('spnet')
 connect.dbconn._conn.drop_database('paperDB')
 
 jojo = core.Person(connect.dbconn, name='jojo', age=37)
-a1 = core.EmailAddress(jojo, 'jojo@nowhere.edu', current=True)
+a1 = core.EmailAddress('jojo@nowhere.edu', jojo, current=True)
 fred = core.Person(connect.dbconn, name='fred', age=56)
-a2 = core.EmailAddress(fred, 'fred@dotzler.com', authenticated=False)
-a3 = core.EmailAddress(fred, 'fred@gmail.com', note='personal account')
+a2 = core.EmailAddress('fred@dotzler.com', fred, authenticated=False)
+a3 = core.EmailAddress('fred@gmail.com', fred, note='personal account')
 paper1 = core.Paper(connect.dbconn, title='boring article', year=2011,
                     authors=[jojo._id])
 paper2 = core.Paper(connect.dbconn, title='great article', year=2012,
@@ -37,3 +37,5 @@ rec3 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,
                            author=jojo._id, fetch=True)
 assert rec3.score == 27
 
+a4 = core.EmailAddress('fred@dotzler.com', dbconn=connect.dbconn, fetch=True)
+assert a4._parentID == fred._id
