@@ -40,3 +40,17 @@ assert rec3.score == 27
 a4 = core.EmailAddress('fred@dotzler.com', dbconn=connect.dbconn, fetch=True)
 assert a4._parentID == fred._id
 assert a4.person == fred
+
+try:
+    p = core.Person(connect.dbconn, 'abcdefg')
+except KeyError:
+    pass
+else:
+    raise AssertionError('failed to trap bad personID')
+
+try:
+    a = core.EmailAddress('bob@yoyo.com', dbconn=connect.dbconn, fetch=True)
+except KeyError:
+    pass
+else:
+    raise AssertionError('failed to trap bad email')

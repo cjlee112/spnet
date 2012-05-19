@@ -95,9 +95,14 @@ class ArrayDocument(Document):
         if useArrayKey:
             d = self.coll.find_one({self._dbfield: self._arrayKey},
                                    {arrayField: 1})
+            if not d:
+                raise KeyError('no such record: %s=%s'
+                               % (self._dbfield, self._arrayKey))
             self._parentID = d['_id']
         else:
             d = self.coll.find_one(self._parentID, {arrayField: 1})
+            if not d:
+                raise KeyError('no such record: _id=%s' % self._parentID)
         for record in d[arrayField]:
             if record[keyField] == self._arrayKey:
                 return record
