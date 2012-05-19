@@ -189,6 +189,10 @@ def fetch_subscribers(person):
                         **subscriberDict)) # construct from dict
     return l
 
+def fetch_email_person(email):
+    'return Person obj for this email address'
+    return Person(email._dbconn, email._parentID)
+
 # custom attribute unwrappers
 
 def saveattr_recs(self, attr, recData):
@@ -215,6 +219,8 @@ def saveattr_email(self, attr, emailData):
 class EmailAddress(ArrayDocument):
     _dbname = 'person' # default collection to obtain from dbconn
     _dbfield = 'email.address' # dot.name for updating
+
+    person = LinkDescriptor('person', fetch_email_person, noData=True)
 
     def __init__(self, address, person=None, dbconn=None, insertNew=True,
                  fetch=False, **kwargs):

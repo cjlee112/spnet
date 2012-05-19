@@ -39,3 +39,4 @@ assert rec3.score == 27
 
 a4 = core.EmailAddress('fred@dotzler.com', dbconn=connect.dbconn, fetch=True)
 assert a4._parentID == fred._id
+assert a4.person == fred
