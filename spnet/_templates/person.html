@@ -1,0 +1,10 @@
+
+<h1>Papers by
+{{ person.name }}
+</h1>
+
+{% for paper in person.papers %}
+<li><A HREF="/view?view=paper&paper={{- paper.paperID -}}">
+{{ paper.title }}
+</A></li>
+{% endfor %}

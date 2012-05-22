@@ -1,0 +1,23 @@
+
+<h1>
+{{ paper.title }}
+</h1>
+
+Authors:
+
+{% for author in paper.authors %}
+<li><A HREF="/view?view=person&person={{- author._id -}}">
+{{ author.name }}
+</A></li>
+{% endfor %}
+
+Recommendations:
+
+{% for rec in paper.recommendations %}
+<li><A HREF="/view?view=person&person={{- rec.author._id -}}">
+{{ rec.author.name }}
+</A> says:
+{{ rec.text }}
+</li>
+{% endfor %}
+
