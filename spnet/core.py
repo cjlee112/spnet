@@ -182,7 +182,8 @@ def fetch_author_papers(author):
     l = []
     query = dict(authors=author._id)
     for paperDict in author._dbconn.dbset.defaultDB.find(query):
-        l.append(Paper(author._dbconn, insertNew=False, **paperDict))
+        l.append(Paper(author._dbconn, insertNew=False,
+                       paperDB=author._dbconn.dbset._defaultDB, **paperDict))
     return l
 
 def fetch_subscribers(person):
@@ -356,7 +357,7 @@ class Paper(Document):
             self.store_attrs(kwargs)
             if insertNew:
                 self.insert()
-                self.paperID = self.dbset.get_paperID(self._id, paperDB)
+            self.paperID = self.dbset.get_paperID(self._id, paperDB)
         else:
             raise ValueError('no paperID or mongoDict?')
 
