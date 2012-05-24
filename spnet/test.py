@@ -15,7 +15,7 @@ paper2 = core.Paper(connect.dbconn, title='great article', year=2012,
                     authors=[fred._id,jojo._id])
 
 rec1 = core.Recommendation(paper1, author=fred._id, text='I like this paper')
-rec2 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,
+rec2 = core.Recommendation('arxiv:' + str(paper2._id), connect.dbconn,
                            author=jojo._id, text='must read!')
 
 issue1 = core.Issue(paper1, title='The claims are garbage',
@@ -39,7 +39,7 @@ assert len(p.issues) == 1
 assert p.issues[0] == issue1
 
 rec2.update(dict(text='simply dreadful!', score=27))
-rec3 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,
+rec3 = core.Recommendation('arxiv:' + str(paper2._id), connect.dbconn,
                            author=jojo._id, fetch=True)
 assert rec3.score == 27
 

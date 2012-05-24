@@ -155,7 +155,7 @@ def fetch_people(obj, people):
     return l
 
 def fetch_recs(person):
-    'return list of Recommendation objects for specified list of paperIDs'
+    'return list of Recommendation objects for specified person'
     coll = person._dbconn.dbset.defaultDB
     results = coll.find({'recommendations.author':person._id},
                         {'recommendations':1})
@@ -164,7 +164,7 @@ def fetch_recs(person):
         paperID = person._dbconn.dbset.get_paperID(r['_id'])
         for recDict in r['recommendations']:
             if recDict['author'] == person._id:
-                l.append(Recommendation(None, paperID, person._dbconn,
+                l.append(Recommendation(paperID, person._dbconn,
                                         False, **recDict))
                 break
     return l
@@ -266,19 +266,9 @@ class Recommendation(ArrayDocument):
 
     _dbfield = 'recommendations.author' # dot.name for updating
 
-    def __init__(self, paper, paperID=None, dbconn=None, insertNew=True,
+    def __init__(self, paper, dbconn=None, insertNew=True,
                  fetch=False, **kwargs):
-        if paper:
-            self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
-            self._parentID = paper._id
-            self.coll = paper.coll
-            self._dbconn = paper._dbconn
-        elif paperID:
-            self._paper_link = paperID
-            self._set_coll(dbconn) # get our dbset
-            self.coll, self._parentID = self.coll.get_collection(paperID)
-        else:
-            raise ValueError('must provide Paper or paperID')
+        set_paper_or_id(self, paper, dbconn)
         self._arrayKey = kwargs['author']
         if fetch:
             d = self._get_doc()
