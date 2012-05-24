@@ -18,7 +18,9 @@ rec1 = core.Recommendation(paper1, author=fred._id, text='I like this paper')
 rec2 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,
                            author=jojo._id, text='must read!')
 
-
+issue1 = core.Issue(paper1, title='The claims are garbage',
+                    category='validity', author=jojo._id,
+                    description='there is a major flaw in the first step of your proof')
 
 assert len(rec1.paper.authors) == 1
 assert rec1.paper.authors[0] == jojo
@@ -31,6 +33,10 @@ assert jojo.recommendations[0] == rec2
 assert len(jojo.papers) == 2
 assert len(fred.papers) == 1
 assert len(paper2.authors[0].email) == 2
+assert issue1.author == jojo
+p = core.Paper(connect.dbconn, paper1.paperID)
+assert len(p.issues) == 1
+assert p.issues[0] == issue1
 
 rec2.update(dict(text='simply dreadful!', score=27))
 rec3 = core.Recommendation(None, 'arxiv:' + str(paper2._id), connect.dbconn,

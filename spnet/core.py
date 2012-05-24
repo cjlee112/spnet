@@ -50,13 +50,16 @@ class Document(object):
         except AttributeError:
             self._dbDocDict = d
         attrHandler = getattr(self, '_attrHandler', {})
+        l = []
         for attr, v in d.items():
             try:
                 saveFunc = attrHandler[attr]
             except KeyError:
                 setattr(self, attr, v)
             else:
-                saveFunc(self, attr, v)
+                l.append((saveFunc, attr, v))
+        for saveFunc, attr, v in l: # run saveFuncs after regular attrs
+            saveFunc(self, attr, v)
 
     def insert(self):
         self._id = self.coll.insert(self._dbDocDict)
@@ -201,20 +204,20 @@ def fetch_email_person(email):
 
 # custom attribute unwrappers
 
-def saveattr_recs(self, attr, recData):
-    'construct Recommendation objects and store list on attr'
-    l = []
-    for d in recData:
-        l.append(Recommendation(paper=self, insertNew=False, **d))
-    setattr(self, attr, l)
-
-def saveattr_email(self, attr, emailData):
-    'construct Recommendation objects and store list on attr'
-    l = []
-    for d in emailData:
-        l.append(EmailAddress(person=self, insertNew=False, **d))
-    setattr(self, attr, l)
-
+class SaveAttr(object):
+    'unwrap list of dicts using specified klass'
+    def __init__(self, klass, arg, **kwargs):
+        self.klass = klass
+        self.kwargs = kwargs
+        self.arg = arg
+    def __call__(self, obj, attr, data):
+        l = []
+        for d in data:
+            kwargs = self.kwargs.copy()
+            kwargs[self.arg] = obj
+            kwargs.update(d)
+            l.append(self.klass(**kwargs))
+        setattr(obj, attr, l)
 
 
 
@@ -285,6 +288,44 @@ class Recommendation(ArrayDocument):
             if insertNew:
                 self.insert()
 
+def set_paper_or_id(self, paper, dbconn):
+    'properly handle paper either as Paper object or ID'
+    if isinstance(paper, Paper):
+        self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
+        self._parentID = paper._id
+        self.coll = paper.coll
+        self._dbconn = paper._dbconn
+    elif isinstance(paper, basestring): # treat string as paper ID
+        self._paper_link = paper
+        self._set_coll(dbconn) # get our dbset
+        self.coll, self._parentID = self.coll.get_collection(paper)
+    else:
+        raise ValueError('must provide Paper or paperID')
+
+class Issue(ArrayDocument):
+    '''interface for a question raised about a paper '''
+
+    _dbname = 'dbset' # default collection to obtain from dbconn
+    _dbfield = 'issues.hash' # dot.name for updating
+
+    # attrs that will only be fetched if accessed by user
+    paper = LinkDescriptor('paper', fetch_paper)
+    author = LinkDescriptor('author', fetch_person)
+
+    def __init__(self, paper, dbconn=None, insertNew=True,
+                 fetch=False, **kwargs):
+        set_paper_or_id(self, paper, dbconn)
+        if fetch:
+            self._arrayKey = kwargs['hash']
+            d = self._get_doc()
+            self.store_attrs(d)
+        else:
+            self.store_attrs(kwargs)
+            if insertNew:
+                kwargs['hash'] = sha1(kwargs['title']).hexdigest()
+                self.insert()
+            self._arrayKey = kwargs['hash']
+
 
 
 class Person(Document):
@@ -302,7 +343,9 @@ class Person(Document):
                                  noData=True)
 
     # custom attr constructors
-    _attrHandler = dict(email=saveattr_email)
+    _attrHandler = dict(
+        email=SaveAttr(EmailAddress, 'person', insertNew=False),
+        )
 
     def __init__(self, dbconn, personID=None, insertNew=True, **kwargs):
         self._set_coll(dbconn)
@@ -332,7 +375,10 @@ class Paper(Document):
     references = LinkDescriptor('references', fetch_papers)
 
     # custom attr constructors
-    _attrHandler = dict(recommendations=saveattr_recs)
+    _attrHandler = dict(
+        recommendations=SaveAttr(Recommendation, 'paper', insertNew=False),
+        issues=SaveAttr(Issue, 'paper', insertNew=False),
+        )
 
     def __init__(self, dbconn, paperID=None, paperDB='arxiv',
                  insertNew=True, **kwargs):
