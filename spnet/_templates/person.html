@@ -4,7 +4,7 @@
 </h1>
 
 {% for paper in person.papers %}
-<li><A HREF="/view?view=paper&paper={{- paper.paperID -}}">
+<li><A HREF="/view?view=paper&paper={{- paper._id -}}">
 {{ paper.title }}
 </A></li>
 {% endfor %}
