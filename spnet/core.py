@@ -61,8 +61,12 @@ class Document(object):
         for saveFunc, attr, v in l: # run saveFuncs after regular attrs
             saveFunc(self, attr, v)
 
-    def insert(self):
-        self._id = self.coll.insert(self._dbDocDict)
+    def insert(self, saveDict=None):
+        d = self._dbDocDict
+        if saveDict:
+            d = d.copy()
+            d.update(saveDict)
+        self._id = self.coll.insert(d)
 
     def update(self, updateDict):
         self.coll.update({'_id': self._id}, {'$set': updateDict})
@@ -202,6 +206,16 @@ def fetch_email_person(email):
     'return Person obj for this email address'
     return Person(email._dbconn, email._parentID)
 
+def fetch_issues(paper):
+    'return list of Person obj who subscribe to specified person'
+    l = []
+    query = dict(paper=paper.paperID)
+    coll = paper.coll.database['issues']
+    for issueDict in coll.find(query):
+        l.append(Issue(dbconn=paper._dbconn, insertNew=False,
+                        **issueDict)) # construct from dict
+    return l
+
 # custom attribute unwrappers
 
 class SaveAttr(object):
@@ -278,43 +292,54 @@ class Recommendation(ArrayDocument):
             if insertNew:
                 self.insert()
 
-def set_paper_or_id(self, paper, dbconn):
+def set_paper_or_id(self, paper, dbconn, collection=None):
     'properly handle paper either as Paper object or ID'
     if isinstance(paper, Paper):
         self.__dict__['paper'] = paper # bypass LinkDescriptor mechanism
         self._parentID = paper._id
-        self.coll = paper.coll
+        if collection:
+            self.coll = paper.coll.database[collection]
+        else:
+            self.coll = paper.coll
         self._dbconn = paper._dbconn
+        return paper.paperID
     elif isinstance(paper, basestring): # treat string as paper ID
         self._paper_link = paper
         self._set_coll(dbconn) # get our dbset
-        self.coll, self._parentID = self.coll.get_collection(paper)
+        self.coll, self._parentID = self.coll.get_collection(paper,
+                                                    collection=collection)
+        return paper
     else:
         raise ValueError('must provide Paper or paperID')
 
-class Issue(ArrayDocument):
+class Issue(Document):
     '''interface for a question raised about a paper '''
 
     _dbname = 'dbset' # default collection to obtain from dbconn
-    _dbfield = 'issues.hash' # dot.name for updating
+    _collname = 'issues'
 
     # attrs that will only be fetched if accessed by user
     paper = LinkDescriptor('paper', fetch_paper)
     author = LinkDescriptor('author', fetch_person)
 
-    def __init__(self, paper, dbconn=None, insertNew=True,
-                 fetch=False, **kwargs):
-        set_paper_or_id(self, paper, dbconn)
-        if fetch:
-            self._arrayKey = kwargs['hash']
-            d = self._get_doc()
+    def __init__(self, issueID=None, paper=None, dbconn=None, insertNew=True,
+                 paperDB='arxiv', **kwargs):
+        saveDict = None
+        if paper:
+            paperID = set_paper_or_id(self, paper, dbconn, self._collname)
+            saveDict = dict(paper=paperID)
+            del self._parentID
+        else:
+            self._set_coll(dbconn)
+            dbset = self.coll
+            self.coll = dbset.get_collection(None, paperDB, self._collname)[0]
+        if issueID:
+            d = self.coll.find_one(issueID)
             self.store_attrs(d)
         else:
             self.store_attrs(kwargs)
             if insertNew:
-                kwargs['hash'] = sha1(kwargs['title']).hexdigest()
-                self.insert()
-            self._arrayKey = kwargs['hash']
+                self.insert(saveDict)
 
 
 
@@ -363,11 +388,12 @@ class Paper(Document):
     # attrs that will only be fetched if accessed by user
     authors = LinkDescriptor('authors', fetch_people)
     references = LinkDescriptor('references', fetch_papers)
+    issues = LinkDescriptor('issues', fetch_issues,
+                            noData=True)
 
     # custom attr constructors
     _attrHandler = dict(
         recommendations=SaveAttr(Recommendation, 'paper', insertNew=False),
-        issues=SaveAttr(Issue, 'paper', insertNew=False),
         )
 
     def __init__(self, dbconn, paperID=None, paperDB='arxiv',
@@ -386,14 +412,18 @@ class Paper(Document):
                 pass
             else:
                 kwargs = self._get_doc(paperID)
-            self.store_attrs(kwargs)
             self.paperID = paperID
+            self.store_attrs(kwargs)
         elif kwargs: # create new db document
             self.coll = self.dbset.get_collection(None, paperDB)[0]
+            try:
+                self.paperID = self.dbset.get_paperID(kwargs['_id'], paperDB)
+            except KeyError:
+                pass
             self.store_attrs(kwargs)
             if insertNew:
                 self.insert()
-            self.paperID = self.dbset.get_paperID(self._id, paperDB)
+                self.paperID = self.dbset.get_paperID(self._id, paperDB)
         else:
             raise ValueError('no paperID or mongoDict?')
 

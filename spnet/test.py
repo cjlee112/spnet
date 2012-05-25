@@ -18,7 +18,7 @@ rec1 = core.Recommendation(paper1, author=fred._id, text='I like this paper')
 rec2 = core.Recommendation('arxiv:' + str(paper2._id), connect.dbconn,
                            author=jojo._id, text='must read!')
 
-issue1 = core.Issue(paper1, title='The claims are garbage',
+issue1 = core.Issue(paper=paper1, title='The claims are garbage',
                     category='validity', author=jojo._id,
                     description='there is a major flaw in the first step of your proof')
 
