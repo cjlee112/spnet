@@ -22,6 +22,8 @@ issue1 = core.Issue(paper=paper1, title='The claims are garbage',
                     category='validity', author=jojo._id,
                     description='there is a major flaw in the first step of your proof')
 
+vote1 = core.IssueVote(jojo, issue1, rating='crucial', status='open')
+
 assert len(rec1.paper.authors) == 1
 assert rec1.paper.authors[0] == jojo
 assert len(rec2.paper.authors) == 2
@@ -37,6 +39,7 @@ assert issue1.author == jojo
 p = core.Paper(connect.dbconn, paper1.paperID)
 assert len(p.issues) == 1
 assert p.issues[0] == issue1
+assert len(p.issues[0].votes) == 1
 
 rec2.update(dict(text='simply dreadful!', score=27))
 rec3 = core.Recommendation('arxiv:' + str(paper2._id), connect.dbconn,

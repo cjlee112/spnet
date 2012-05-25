@@ -114,11 +114,15 @@ class ArrayDocument(Document):
             if record[keyField] == self._arrayKey:
                 return record
         raise ValueError('no matching ArrayDocument!')
-    def insert(self):
+    def insert(self, saveDict=None):
         'append to the target array in the parent document'
         arrayField = self._dbfield.split('.')[0]
+        d = self._dbDocDict
+        if saveDict:
+            d = d.copy()
+            d.update(saveDict)
         self.coll.update({'_id': self._parentID},
-                         {'$push': {arrayField: self._dbDocDict}})
+                         {'$push': {arrayField: d}})
     def update(self, updateDict):
         'update the existing record in the array in the parent document'
         self._dbDocDict.update(updateDict)
@@ -176,6 +180,10 @@ def fetch_recs(person):
 def fetch_paper(obj, paperID):
     'return Paper object for specified paperID'
     return Paper(obj._dbconn, paperID)
+
+def fetch_issue(obj, issueID):
+    'return Paper object for specified paperID'
+    return Issue(obj._dbconn, paperID)
 
 def fetch_papers(obj, papers):
     'return list of Paper objects for specified list of paperIDs'
@@ -304,13 +312,49 @@ def set_paper_or_id(self, paper, dbconn, collection=None):
         self._dbconn = paper._dbconn
         return paper.paperID
     elif isinstance(paper, basestring): # treat string as paper ID
-        self._paper_link = paper
+        self.paper = paper # use LinkDescriptor mechanism
         self._set_coll(dbconn) # get our dbset
         self.coll, self._parentID = self.coll.get_collection(paper,
                                                     collection=collection)
         return paper
     else:
         raise ValueError('must provide Paper or paperID')
+
+class IssueVote(ArrayDocument):
+    _dbname = 'dbset' # default collection to obtain from dbconn
+    _collname = 'issues'
+    _dbfield = 'votes.person' # dot.name for updating
+    person = LinkDescriptor('person', fetch_person)
+    issue = LinkDescriptor('issue', fetch_issue)
+    def __init__(self, person, issue, dbconn=None, insertNew=True,
+                 paperDB='arxiv', fetch=False, **kwargs):
+        if isinstance(issue, Issue):
+            self._parentID = issue._id
+            self.coll = issue.coll
+            self._dbconn = issue._dbconn
+            self.__dict__['issue'] = issue # bypass LinkDescriptor mechanism
+        else: # treat as issue _id
+            self._parentID = issue
+            self.issue = issue # use LinkDescriptor mechanism
+            if not dbconn:
+                dbconn = person._dbconn
+            self._set_coll(dbconn)
+            dbset = self.coll
+            self.coll = dbset.get_collection(None, paperDB, self._collname)[0]
+        if isinstance(person, Person):
+            self._arrayKey = person._id
+            self.__dict__['person'] = person # bypass LinkDescriptor mechanism
+        else:
+            self._arrayKey = person # use LinkDescriptor mechanism
+            self.person = person
+        if fetch:
+            d = self._get_doc()
+            self.store_attrs(d)
+        else:
+            self.store_attrs(kwargs)
+            if insertNew:
+                self.insert(dict(person=self._arrayKey))
+
 
 class Issue(Document):
     '''interface for a question raised about a paper '''
@@ -321,6 +365,12 @@ class Issue(Document):
     # attrs that will only be fetched if accessed by user
     paper = LinkDescriptor('paper', fetch_paper)
     author = LinkDescriptor('author', fetch_person)
+
+    # custom attr constructors
+    _attrHandler = dict(
+        votes=SaveAttr(IssueVote, 'issue', insertNew=False),
+        )
+
 
     def __init__(self, issueID=None, paper=None, dbconn=None, insertNew=True,
                  paperDB='arxiv', **kwargs):
@@ -340,7 +390,6 @@ class Issue(Document):
             self.store_attrs(kwargs)
             if insertNew:
                 self.insert(saveDict)
-
 
 
 class Person(Document):
