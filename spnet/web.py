@@ -2,7 +2,6 @@ import cherrypy
 import thread
 import core, connect
 from jinja2 import Template
-from bson.objectid import ObjectId
 import os
 import glob
 import sys
@@ -48,27 +47,26 @@ def fetch_data(dbconn, d):
     except KeyError:
         pass
     else:
-        d['paper'] = core.Paper(dbconn, paperID)
+        d['paper'] = core.Paper(paperID)
     try: # get requested person
-        personID = ObjectId(d['person'])
+        personID = d['person']
     except KeyError:
         pass
     else:
-        d['person'] = core.Person(dbconn, personID)
+        d['person'] = core.Person(personID)
     try: # get requested email
         email = d['email']
     except KeyError:
         pass
     else:
-        d['email'] = core.EmailAddress(email, dbconn=dbconn, fetch=True)
+        d['email'] = core.EmailAddress(email)
     try: # get requested recommendation
         recPaper = d['recPaper']
         recAuthor = ObjectId(d['recAuthor'])
     except KeyError:
         pass
     else:
-        d['rec'] = core.Recommendation(None, recPaper, connect.dbconn,
-                                       author=recAuthor, fetch=True)
+        d['rec'] = core.Recommendation((recPaper, recAuthor))
         del d['recPaper']
         del d['recAuthor']
 
@@ -129,6 +127,7 @@ if __name__ == '__main__':
     templateDict = load_templates()
     templateVars = load_template_vars()
     views = init_template_views(templateDict, templateVars)
-    s = Server(connect.dbconn, views)
+    dbconn = connect.init_connection()
+    s = Server(dbconn, views)
     print 'starting server...'
     s.serve_forever()
