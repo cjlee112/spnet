@@ -1,14 +1,20 @@
 
-from dbconn import DBSet, DBConnection
+from dbconn import DBConnection
+from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote
 
-paperDBdict = dict(
-    arxiv={}
-    )
+connectDict = {
+    Paper:'spnet.paper',
+    Person:'spnet.person',
+    Recommendation:'spnet.paper',
+    EmailAddress:'spnet.person',
+    Issue:'spnet.issue',
+    IssueVote:'spnet.issue',
+    }
 
-connectDict = dict(
-    dbset=DBSet(paperDBdict, 'arxiv'),
-    person='spnet.person',
-    )
 
 
-dbconn = DBConnection(**connectDict)
+def init_connection(**kwargs):
+    'set klass.coll on each db class to give it db connection'
+    dbconn = DBConnection(connectDict, **kwargs)
+    return dbconn
+    
