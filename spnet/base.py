@@ -1,3 +1,6 @@
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
+
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
     caches obj.ATTR link data as obj._ATTR_link'''
@@ -31,10 +34,18 @@ class LinkDescriptor(object):
         'cache some link data for fetching later'
         setattr(obj, '_' + self.attr + '_link', data)
 
+def _get_object_id(fetchID):
+    try:
+        return ObjectId(fetchID)
+    except InvalidId, e:
+        raise KeyError(str(e))
+
 # base document classes
 
 class Document(object):
     'base class provides flexible method for storing dict as attr objects'
+    useObjectId = True
+    
     def __init__(self, fetchID=None, docData=None, docLinks={},
                  insertNew=True):
         if fetchID:
@@ -47,6 +58,8 @@ class Document(object):
 
     def _get_doc(self, fetchID):
         'get doc dict from DB'
+        if getattr(self, 'useObjectId', False):
+            fetchID = _get_object_id(fetchID)
         d = self.coll.find_one(fetchID)
         if not d:
             raise KeyError('%s %s not found'
@@ -127,6 +140,8 @@ class ArrayDocument(Document):
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         self._parent_link,subID = fetchID
+        if getattr(self, 'useObjectId', False):
+            self._parent_link = _get_object_id(self._parent_link)
         arrayField, keyField = self._dbfield.split('.')
         d = self.coll.find_one(self._parent_link, {arrayField: 1})
         if not d:
