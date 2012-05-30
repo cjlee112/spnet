@@ -48,6 +48,9 @@ def rss_gen(categories=None, base_url="http://export.arxiv.org/rss/", verbose=Fa
         time.sleep(20) #robots.txt
 
 def load_cache(filename=cache_filename):
+    if not os.path.isfile(cache_filename):
+        print "Cache file %s does not exist. You must invoke the feed downloader at least once with get_papers(download=True)" % cache_filename
+        exit()
     with open(cache_filename) as cache_file:
         papers = pickle.load(cache_file)
     return papers
@@ -71,8 +74,7 @@ def append_to_cache(papers, filename=cache_filename):
 def get_papers(download=False, verbose=False):
     """Returns the papers in the cache. Downloads new papers if the cache is empty or if cache=True."""
     if not download:
-        if os.path.isfile(cache_filename):
-            return load_cache()
+        return load_cache()
     all_papers = []
     for paper in rss_gen(verbose=verbose):
         all_papers.append(paper)
