@@ -121,7 +121,12 @@ class Document(object):
                 yield d['_id']
             else:
                 yield d
-        
+
+    @classmethod
+    def find_obj(klass, queryDict={}, **kwargs):
+        'same as find() but returns objects'
+        for d in klass.find(queryDict, None, False, **kwargs):
+            yield klass(docData=d, insertNew=False)
 
 class EmbeddedDocument(Document):
     'stores a document inside another document in mongoDB'
@@ -203,7 +208,8 @@ class ArrayDocument(Document):
             return False
 
     @classmethod
-    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+    def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
+             **kwargs):
         'generic class method for searching a specific collection'
         if idOnly:
             fields = {klass._dbfield:1}
@@ -212,8 +218,18 @@ class ArrayDocument(Document):
             for d2 in d[arrayField]:
                 if idOnly:
                     yield (d['_id'], d2[keyField])
+                elif parentID:
+                    yield d['_id'], d2
                 else:
                     yield d2
+
+    @classmethod
+    def find_obj(klass, queryDict={}, **kwargs):
+        'same as find() but returns objects'
+        arrayField = klass._dbfield.split('.')[0]
+        for parentID, d in klass.find(queryDict, {arrayField:1},
+                                      False, True, **kwargs):
+            yield klass(docData=d, parent=parentID, insertNew=False)
 
 
 
@@ -228,7 +244,8 @@ class UniqueArrayDocument(ArrayDocument):
         return self._extract_doc(d, arrayField, keyField, fetchID)
 
     @classmethod
-    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+    def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
+             **kwargs):
         'generic class method for searching a specific collection'
         if idOnly:
             fields = {'_id':0, klass._dbfield:1}
@@ -237,6 +254,8 @@ class UniqueArrayDocument(ArrayDocument):
             for d2 in d[arrayField]:
                 if idOnly:
                     yield d2[keyField]
+                elif parentID:
+                    yield d['_id'], d2
                 else:
                     yield d2
 
