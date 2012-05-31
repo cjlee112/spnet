@@ -111,6 +111,18 @@ class Document(object):
     def __cmp__(self, other):
         return cmp(self._id, other._id)
 
+    @classmethod
+    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+        'generic class method for searching a specific collection'
+        if idOnly:
+            fields = {'_id':1}
+        for d in klass.coll.find(queryDict, fields, **kwargs):
+            if idOnly:
+                yield d['_id']
+            else:
+                yield d
+        
+
 class EmbeddedDocument(Document):
     'stores a document inside another document in mongoDB'
     def insert(self):
@@ -190,6 +202,20 @@ class ArrayDocument(Document):
         except AttributeError:
             return False
 
+    @classmethod
+    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+        'generic class method for searching a specific collection'
+        if idOnly:
+            fields = {klass._dbfield:1}
+        arrayField, keyField = klass._dbfield.split('.')
+        for d in klass.coll.find(queryDict, fields, **kwargs):
+            for d2 in d[arrayField]:
+                if idOnly:
+                    yield (d['_id'], d2[keyField])
+                else:
+                    yield d2
+
+
 
 class UniqueArrayDocument(ArrayDocument):
     def _get_doc(self, fetchID):
@@ -200,6 +226,20 @@ class UniqueArrayDocument(ArrayDocument):
             raise KeyError('no such record: %s=%s' % (self._dbfield, fetchID))
         self._parent_link = d['_id'] # save parent ID
         return self._extract_doc(d, arrayField, keyField, fetchID)
+
+    @classmethod
+    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+        'generic class method for searching a specific collection'
+        if idOnly:
+            fields = {'_id':0, klass._dbfield:1}
+        arrayField, keyField = klass._dbfield.split('.')
+        for d in klass.coll.find(queryDict, fields, **kwargs):
+            for d2 in d[arrayField]:
+                if idOnly:
+                    yield d2[keyField]
+                else:
+                    yield d2
+
 
 # generic retrieval classes
 
