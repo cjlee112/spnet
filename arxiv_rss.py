@@ -48,18 +48,18 @@ def rss_gen(categories=None, base_url="http://export.arxiv.org/rss/", verbose=Fa
         time.sleep(20) #robots.txt
 
 def load_cache(filename=cache_filename):
-    if not os.path.isfile(cache_filename):
-        print "Cache file %s does not exist. You must invoke the feed downloader at least once with get_papers(download=True)" % cache_filename
+    if not os.path.isfile(filename):
+        print "Cache file %s does not exist. You must invoke the feed downloader at least once with get_papers(download=True)" % filename
         exit()
-    with open(cache_filename) as cache_file:
+    with open(filename) as cache_file:
         papers = pickle.load(cache_file)
     return papers
 
 def append_to_cache(papers, filename=cache_filename):
     """Add newly downloaded files to the cache, making sure not to add duplicates. May not scale well for a large number of papers."""
     hashable_papers = set()
-    if os.path.isfile(cache_filename):
-        with open(cache_filename) as cache_file:
+    if os.path.isfile(filename):
+        with open(filename) as cache_file:
             cached_papers = pickle.load(cache_file)
             for paper in cached_papers:
                 hashable_papers.add(frozenset(tuple(paper.items())))
@@ -68,20 +68,20 @@ def append_to_cache(papers, filename=cache_filename):
     new_cache = []
     for paper in hashable_papers:
         new_cache.append(dict(paper))
-    with open(cache_filename, 'w') as cache_file:
+    with open(filename, 'w') as cache_file:
         pickle.dump(new_cache, cache_file)
         
-def get_papers(download=False, verbose=False):
+def get_papers(download=False, verbose=False, filename=cache_filename):
     """Returns the papers in the cache. Downloads new papers if the cache is empty or if cache=True."""
     if not download:
-        return load_cache()
+        return load_cache(filename)
     all_papers = []
     for paper in rss_gen(verbose=verbose):
         all_papers.append(paper)
-    append_to_cache(all_papers)
+    append_to_cache(all_papers, filename)
     if verbose:
-        "Papers cached in %s ." % cache_filename 
-    return load_cache()
+        "Papers cached in %s ." % filename 
+    return load_cache(filename)
         
 if __name__ == '__main__':
     if os.path.isfile(cache_filename):
