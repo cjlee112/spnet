@@ -49,6 +49,7 @@ class EmailAddress(UniqueArrayDocument):
 
 
 class Recommendation(ArrayDocument):
+    useObjectId = False # input data will supply _id
     # attrs that will only be fetched if accessed by user
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
@@ -101,6 +102,7 @@ class Person(Document):
 
 class Paper(Document):
     '''interface to a specific paper '''
+    useObjectId = False # input data will supply _id
 
     # attrs that will only be fetched if accessed by user
     authors = LinkDescriptor('authors', fetch_people)

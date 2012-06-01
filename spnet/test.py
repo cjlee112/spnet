@@ -14,9 +14,9 @@ a2 = core.EmailAddress(docData=dict(address='fred@dotzler.com',
 a3 = core.EmailAddress(docData=dict(address='fred@gmail.com',
                                     note='personal account'), parent=fred)
 paper1 = core.Paper(docData=dict(title='boring article', year=2011,
-                                 authors=[jojo._id]))
+                                 authors=[jojo._id], _id='1'))
 paper2 = core.Paper(docData=dict(title='great article', year=2012,
-                                 authors=[fred._id,jojo._id]))
+                                 authors=[fred._id,jojo._id], _id='2'))
 
 rec1 = core.Recommendation(docData=dict(author=fred._id,
                                         text='I like this paper'),
