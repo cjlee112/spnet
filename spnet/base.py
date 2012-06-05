@@ -114,6 +114,8 @@ class Document(object):
     @classmethod
     def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
         'generic class method for searching a specific collection'
+        if fields:
+            idOnly = False
         if idOnly:
             fields = {'_id':1}
         for d in klass.coll.find(queryDict, fields, **kwargs):
@@ -211,6 +213,8 @@ class ArrayDocument(Document):
     def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
              **kwargs):
         'generic class method for searching a specific collection'
+        if fields:
+            idOnly = False
         if idOnly:
             fields = {klass._dbfield:1}
         arrayField, keyField = klass._dbfield.split('.')
@@ -247,6 +251,8 @@ class UniqueArrayDocument(ArrayDocument):
     def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
              **kwargs):
         'generic class method for searching a specific collection'
+        if fields:
+            idOnly = False
         if idOnly:
             fields = {'_id':0, klass._dbfield:1}
         arrayField, keyField = klass._dbfield.split('.')
