@@ -53,3 +53,5 @@ if __name__ == '__main__':
     print 'Loading %d papers...' % len(papers)
     n = load_papers(papers)
     print 'Loaded %d new papers.' % n
+    update_person_db()
+    
