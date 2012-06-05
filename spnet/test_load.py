@@ -24,24 +24,26 @@ def load_papers(papers):
 
 def update_person_db():
     'use Paper database authors to construct Person db'
-    authors = set()
+    authors = {}
+    for d in core.Person.find(fields=dict(name=1)):
+        authors[d['name']] = d['_id']
     papersToUpdate = []
+    n = 0
     for paper in core.Paper.find(fields=dict(authors=1), idOnly=False):
         if isinstance(paper['authors'][0], ObjectId):
             continue # already saved as Person records
         paperID = paper['_id']
         papersToUpdate.append(paperID)
         for a in paper['authors']:
-            authors.add(a)
-    people = {}
-    print 'Saving %d new author records...' % len(authors)
-    for a in authors:
-        p = core.Person(docData=dict(name=a))
-        people[a] = p._id
+            if a not in authors: # create new person record
+                p = core.Person(docData=dict(name=a))
+                authors[a] = p._id
+                n += 1
+    print 'Saved %d new author records...' % n
     print 'Updating %d paper records...' % len(papersToUpdate)
     for paperID in papersToUpdate:
         paper = core.Paper(paperID)
-        authorIDs = [people[a] for a in paper._dbDocDict['authors']]
+        authorIDs = [authors[a] for a in paper._dbDocDict['authors']]
         paper.update(dict(authors=authorIDs))
 
 if __name__ == '__main__':
