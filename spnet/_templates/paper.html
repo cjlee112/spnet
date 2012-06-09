@@ -21,3 +21,11 @@ Recommendations:
 </li>
 {% endfor %}
 
+<h3>Recommend This</h3>
+<FORM ACTION="/view" METHOD="POST">
+<INPUT TYPE="hidden" NAME="view" VALUE="new_rec">
+<INPUT TYPE="hidden" NAME="paper" VALUE="{{- paper._id -}}">
+Enter your recommendation below:<br>
+<TEXTAREA NAME="text" COLS=50 ROWS=20></TEXTAREA>
+<INPUT TYPE="submit">
+</FORM>
