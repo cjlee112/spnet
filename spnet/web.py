@@ -6,6 +6,16 @@ import os
 import glob
 import sys
 
+def redirect(path='/', body=None, delay=0):
+    'redirect browser, if desired after showing a message'
+    s = '<HTML><HEAD>\n'
+    s += '<meta http-equiv="Refresh" content="%d; url=%s">\n' % (delay, path)
+    s += '</HEAD>\n'
+    if body:
+        s += '<BODY>%s</BODY>\n' % body
+    s += '</HTML>\n'
+    return s
+
 def load_templates(path='_templates/*.html'):
     'return dictionary of Jinja2 templates from specified path/*.html'
     d = {}
@@ -18,26 +28,37 @@ def load_templates(path='_templates/*.html'):
 
 def load_template_vars(path='_templates'):
     sys.path.append(path)
+    spnet_base = os.path.dirname(os.path.realpath(core.__file__))
+    sys.path.append(spnet_base)
     try:
         import template_vars
-        return template_vars.templates
+        return template_vars.templates, template_vars.views
     except ImportError:
         print 'Warning: no %s/template_vars.py?' % path
     except AttributeError:
-        raise ImportError('template_vars.py must define templates')
+        raise ImportError('template_vars.py must define templates, views')
 
 
 def render_jinja(template, **kwargs):
     'apply the template to kwargs'
     return template.render(**kwargs)
 
-def init_template_views(templateDict, templateVars={}):
+def init_template_views(templateDict, templateVars={}, templateViews={}):
     'set up views for jinja templates'
     d = {}
-    for k,v in templateDict.items():
-        funcArgs = dict(template=v)
+    for k,viewFunc in templateViews.items(): # add view functions
+        funcArgs = {}
+        try:
+            funcArgs['template'] = templateDict[k]
+        except KeyError:
+            pass
         funcArgs.update(templateVars.get(k, {}))
-        d[k] = (render_jinja, funcArgs)
+        d[k] = (viewFunc, funcArgs)
+    for k,v in templateDict.items():
+        if k not in d: # use render_jinja trivial view function
+            funcArgs = dict(template=v)
+            funcArgs.update(templateVars.get(k, {}))
+            d[k] = (render_jinja, funcArgs)
     return d
 
 def fetch_data(dbconn, d):
@@ -85,15 +106,16 @@ class Server(object):
     def login(self, email, password):
         'check password and create session if authenticated'
         try:
-            a = core.EmailAddress(email, dbconn=self.dbconn, fetch=True)
+            a = core.EmailAddress(email)
         except KeyError:
             return 'no such email address'
-        p = a.person
+        p = a.parent
         if p.authenticate(password):
             cherrypy.session['email'] = email
             cherrypy.session['person'] = p
         else:
             return 'bad password'
+        return redirect('/view?view=person&person=' + str(p._id))
     login.exposed = True
 
     def index(self):
@@ -114,8 +136,14 @@ class Server(object):
         # use intargs to check things like privileges before calling func
         d = funcargs.copy()
         d.update(kwargs)
-        fetch_data(self.dbconn, d) # retrieve objects from DB
-        return func(**d) # run the requested view function
+        try:
+            fetch_data(self.dbconn, d) # retrieve objects from DB
+            s = func(**d) # run the requested view function
+        except Exception, e:
+            cherrypy.log.error('view function error', traceback=True)
+            cherrypy.response.status = 500
+            return 'server error'
+        return s
     view.exposed = True
 
     def get_json(self, **kwargs):
@@ -125,8 +153,8 @@ class Server(object):
 if __name__ == '__main__':
     print 'loading templates...'
     templateDict = load_templates()
-    templateVars = load_template_vars()
-    views = init_template_views(templateDict, templateVars)
+    templateVars, templateViews = load_template_vars()
+    views = init_template_views(templateDict, templateVars, templateViews)
     dbconn = connect.init_connection()
     s = Server(dbconn, views)
     print 'starting server...'
