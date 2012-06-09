@@ -46,6 +46,22 @@ def update_person_db():
         authorIDs = [authors[a] for a in paper._dbDocDict['authors']]
         paper.update(dict(authors=authorIDs))
 
+def new_email(email, name):
+    'add an email address to the specified name'
+    l = list(core.Person.find(dict(name=name)))
+    if l:
+        return core.EmailAddress(docData=dict(address=email), parent=l[0])
+    else:
+        raise ValueError('Person "%s" not found' % name)
+
+def set_password(password, name):
+    'set password on the specified name'
+    l = list(core.Person.find_obj(dict(name=name)))
+    if l:
+        l[0].set_password(password)
+    else:
+        raise ValueError('Person "%s" not found' % name)
+
 if __name__ == '__main__':
     connect.init_connection()
     with open(cache_filename) as cache_file:

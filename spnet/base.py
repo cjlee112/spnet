@@ -54,6 +54,14 @@ class Document(object):
         else:
             self.store_data_links(docData, docLinks)
             if insertNew:
+                try:
+                    func = self._new_fields # custom initializer
+                except AttributeError:
+                    pass
+                else:
+                    d = func() # get dict from initializer
+                    if d:
+                        self.store_attrs(d)
                 self.insert()
 
     def _get_doc(self, fetchID):
