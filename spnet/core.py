@@ -96,7 +96,12 @@ class Person(Document):
         )
 
     def authenticate(self, password):
-        return self.password == sha1(password).hexdigest()
+        try:
+            return self.password == sha1(password).hexdigest()
+        except AttributeError:
+            return False
+    def set_password(self, password):
+        self.update(dict(password=sha1(password).hexdigest()))
 
 
 
@@ -116,6 +121,18 @@ class Paper(Document):
         recommendations=SaveAttr(Recommendation, 'parent', insertNew=False),
         )
 
+
+class Tag(Document):
+    'a specific keyword tag'
+    pass
+    ## def _new_fields(self):
+    ##     'check that new tag is unique before inserting'
+    ##     try:
+    ##         name = self._dbDocDict['name']
+    ##     except KeyError:
+    ##         raise ValueError('new Tag has no name attribute!')
+    ##     if list(self.__class__.find(dict(name=name))):
+    ##         raise ValueError('Tag "%s" already exists!' % name)
 
 # connect forward declarations to their target classes
 fetch_paper.klass = Paper
