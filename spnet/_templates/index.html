@@ -1,5 +1,19 @@
-hello world!
+<h3>Login</h3>
+<FORM ACTION="/login" METHOD="GET">
+your email:<INPUT TYPE="text" NAME="email" SIZE=30><BR>
+password:<INPUT TYPE="password" NAME="password" SIZE=30><BR>
+<INPUT TYPE="submit">
+</FORM>
 
-Papers by <A HREF="/view?view=person&person={{- email.parent._id -}}">
-{{ email.parent.name }}
-</A>
+<h3>Search</h3>
+<FORM ACTION="/view" METHOD="GET">
+<INPUT TYPE="hidden" NAME="view" VALUE="search">
+Search
+<SELECT NAME="collection">
+<OPTION VALUE="paper">Papers</OPTION>
+<OPTION VALUE="person">Authors</OPTION>
+</SELECT>
+for <INPUT TYPE="text" NAME="query" SIZE=30>
+<INPUT TYPE="submit">
+</FORM>
+
