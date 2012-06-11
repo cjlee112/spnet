@@ -62,6 +62,10 @@ class Document(object):
                     d = func() # get dict from initializer
                     if d:
                         self.store_attrs(d)
+                for attr in getattr(self, '_requiredFields', ()):
+                    if attr not in self._dbDocDict:
+                        raise ValueError('missing required field %s'
+                                         % attr)
                 self.insert()
 
     def _get_doc(self, fetchID):

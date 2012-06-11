@@ -71,3 +71,10 @@ except KeyError:
     pass
 else:
     raise AssertionError('failed to trap bad email')
+
+try:
+    jojo = core.Person(docData=dict(name2='jojo', age=37))
+except ValueError:
+    pass
+else:
+    raise AssertionError('failed to trap Person w/o name')

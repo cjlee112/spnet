@@ -80,7 +80,7 @@ class Issue(Document):
 
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
-
+    _requiredFields = ('name',)
     # attrs that will only be fetched if accessed by user
     papers = LinkDescriptor('papers', fetch_author_papers, noData=True)
     recommendations = LinkDescriptor('recommendations', fetch_recs,
