@@ -1,6 +1,7 @@
 import core
 import connect
 import pickle
+import random
 from bson.objectid import ObjectId
 
 cache_filename = 'arxiv.pickle'
@@ -45,6 +46,15 @@ def update_person_db():
         paper = core.Paper(paperID)
         authorIDs = [authors[a] for a in paper._dbDocDict['authors']]
         paper.update(dict(authors=authorIDs))
+
+def add_random_recs():
+    'for each person, add one rec to a randomly selected paper'
+    papers = list(core.Paper.find()) # get all paperID
+    for personID in core.Person.find():
+        paperID = random.choice(papers)
+        core.Recommendation(docData=dict(author=personID,
+                                         text='I like this paper'),
+                            parent=paperID)
 
 def new_email(email, name):
     'add an email address to the specified name'
