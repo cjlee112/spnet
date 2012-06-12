@@ -1,0 +1,11 @@
+<h1>
+Specific Interest Group: {{ sig.name }}
+</h1>
+
+<h3>Papers</h3>
+
+{% for paper in sig.papers %}
+<li><A HREF="/view?view=paper&paper={{- paper._id -}}">
+{{ paper.title }}
+</A></li>
+{% endfor %}

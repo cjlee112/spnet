@@ -3,7 +3,7 @@
 {{ paper.title }}
 </h1>
 
-Authors:
+<h3>Authors</h3>
 
 {% for author in paper.authors %}
 <li><A HREF="/view?view=person&person={{- author._id -}}">
@@ -11,7 +11,21 @@ Authors:
 </A></li>
 {% endfor %}
 
-Recommendations:
+<h3>SIG Topics</h3>
+
+{% for sig in paper.sigs %}
+<li><A HREF="/view?view=sig&sig={{- sig._id -}}">
+{{ sig.name }}
+</A>
+</li>
+{% endfor %}
+
+<h3>Abstract</h3>
+
+{{ paper.abstract }}
+
+
+<h3>Recommendations</h3>
 
 {% for rec in paper.recommendations %}
 <li><A HREF="/view?view=person&person={{- rec.author._id -}}">
