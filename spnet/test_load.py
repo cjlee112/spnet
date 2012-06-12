@@ -80,9 +80,36 @@ def add_dummy_login(email='me@u.edu', password='testme', query={}):
         return core.EmailAddress(docData=dict(address=email), parent=person)
     raise ValueError('No person matching query: ' + str(query))
 
+def add_paper_sigs(field='arxiv-topic-area'):
+    'add SIGs based on paper field strings, and tag papers accordingly'
+    sigs = {}
+    n = 0
+    ntag = 0
+    for sig in core.SIG.find_obj():
+        sigs[sig.name] = sig
+    for paper in core.Paper.find_obj():
+        try:
+            name = paper._dbDocDict[field]
+        except KeyError:
+            continue # paper has no field name, so nothing to do 
+        try:
+            sig = sigs[name]
+        except KeyError:
+            sig = core.SIG(docData=dict(name=name))
+            sigs[name] = sig
+            n += 1
+        if sig not in paper.sigs:
+            paper.array_append('sigs', sig)
+            ntag += 1
+    return n, ntag
+
 
 if __name__ == '__main__':
-    connect.init_connection()
+    import sys
+    dbconn = connect.init_connection()
+    if len(sys.argv) > 1 and sys.argv[1] == '--drop':
+        dbconn._conn.drop_database('spnet')
+        print 'Erased existing spnet database.'
     with open(cache_filename) as cache_file:
         papers = pickle.load(cache_file)
     print 'Loading %d papers...' % len(papers)
@@ -93,3 +120,5 @@ if __name__ == '__main__':
         add_dummy_login()
         print 'Adding random recommendations...'
         add_random_recs()
+        n, ntag = add_paper_sigs()
+        print 'Added %d SIGs, tagged %d papers.' % (n, ntag)
