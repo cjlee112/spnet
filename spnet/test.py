@@ -78,3 +78,17 @@ except ValueError:
     pass
 else:
     raise AssertionError('failed to trap Person w/o name')
+
+fred.array_append('numbers', 17)
+assert core.Person(fred._id).numbers == [17]
+fred.array_append('numbers', 6)
+assert core.Person(fred._id).numbers == [17, 6]
+fred.array_del('numbers', 17)
+assert core.Person(fred._id).numbers == [6]
+
+a4.array_append('numbers', 17)
+assert core.EmailAddress(a4.address).numbers == [17]
+a4.array_append('numbers', 6)
+assert core.EmailAddress(a4.address).numbers == [17, 6]
+a4.array_del('numbers', 17)
+assert core.EmailAddress(a4.address).numbers == [6]

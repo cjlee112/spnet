@@ -40,6 +40,18 @@ def _get_object_id(fetchID):
     except InvalidId, e:
         raise KeyError(str(e))
 
+def del_list_value(l, v):
+    for i,v2 in enumerate(l):
+        if v2 == v:
+            del l[i]
+            return True
+
+def convert_to_id(v):
+    try:
+        return v._id
+    except AttributeError:
+        return v
+
 # base document classes
 
 class Document(object):
@@ -119,6 +131,16 @@ class Document(object):
     def delete(self):
         'delete this record from the DB'
         self.coll.remove(self._id)
+
+    def array_append(self, attr, v):
+        'append v to array stored as attr'
+        v = convert_to_id(v)
+        self.coll.update({'_id': self._id}, {'$push': {attr: v}})
+
+    def array_del(self, attr, v):
+        'remove element v from array stored as attr'
+        v = convert_to_id(v)
+        self.coll.update({'_id': self._id}, {'$pull': {attr: v}})
 
     def __cmp__(self, other):
         return cmp(self._id, other._id)
@@ -213,6 +235,33 @@ class ArrayDocument(Document):
         subID = self._get_id()
         self.coll.update({'_id': self._parent_link},
                          {'$pull': {arrayField: {keyField: subID}}})
+
+    def _array_update(self, attr, l):
+        'replace attr array in db by the specified list l'
+        arrayField = self._dbfield.split('.')[0]
+        subID = self._get_id()
+        target = '.'.join((arrayField, '$', attr))
+        self.coll.update({'_id': self._parent_link, self._dbfield: subID},
+                         {'$set': {target: l}})
+
+    def array_append(self, attr, v):
+        'append v to array stored as attr'
+        v = convert_to_id(v)
+        try:
+            self._dbDocDict[attr].append(v)
+        except KeyError:
+            self._dbDocDict[attr] = [v]
+        self._array_update(attr, self._dbDocDict[attr])
+
+    def array_del(self, attr, v):
+        'remove element v from array stored as attr'
+        v = convert_to_id(v)
+        l = self._dbDocDict[attr]
+        if del_list_value(l, v):
+            self._array_update(attr, l)
+        else:
+            raise IndexError('array %s does not contain %s'
+                             % (attr, str(v)))
         
     def __cmp__(self, other):
         try:
@@ -314,15 +363,18 @@ class FetchParent(FetchObj):
 
 class SaveAttr(object):
     'unwrap list of dicts using specified klass'
-    def __init__(self, klass, arg, **kwargs):
+    def __init__(self, klass, arg='parent', postprocess=None, **kwargs):
         self.klass = klass
         self.kwargs = kwargs
         self.arg = arg
+        self.postprocess = postprocess
     def __call__(self, obj, attr, data):
         l = []
         for d in data:
             kwargs = self.kwargs.copy()
             kwargs[self.arg] = obj
             l.append(self.klass(docData=d, **kwargs))
+        if self.postprocess:
+            self.postprocess(obj, attr, l)
         setattr(obj, attr, l)
 
