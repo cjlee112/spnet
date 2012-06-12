@@ -18,10 +18,14 @@ paper1 = core.Paper(docData=dict(title='boring article', year=2011,
 paper2 = core.Paper(docData=dict(title='great article', year=2012,
                                  authors=[fred._id,jojo._id], _id='2'))
 
+sig1 = core.SIG(docData=dict(name='math'))
+sig2 = core.SIG(docData=dict(name='physics'))
+
 rec1 = core.Recommendation(docData=dict(author=fred._id,
                                         text='I like this paper'),
                            parent=paper1)
-rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!'),
+rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
+                                        sigs=[sig1._id, sig2._id]),
                            parent=paper2._id)
 
 issue1 = core.Issue(docLinks=dict(paper=paper1),
@@ -49,6 +53,13 @@ p = core.Paper(paper1._id)
 assert len(p.issues) == 1
 assert p.issues[0] == issue1
 assert len(p.issues[0].votes) == 1
+assert len(rec2.sigs) == 2
+assert rec2.sigs[0] == sig1
+assert sig1.recommendations == [rec2]
+
+rec1.array_append('sigs', sig2)
+
+assert len(sig2.recommendations) == 2
 
 rec2.update(dict(text='simply dreadful!', score=27))
 rec3 = core.Recommendation((paper2._id, jojo._id))
@@ -92,3 +103,10 @@ a4.array_append('numbers', 6)
 assert core.EmailAddress(a4.address).numbers == [17, 6]
 a4.array_del('numbers', 17)
 assert core.EmailAddress(a4.address).numbers == [6]
+
+rec3 = core.Recommendation(docData=dict(author=fred._id, text='big_deal',
+                                        sigs=[sig2._id]),
+                           parent=paper2._id)
+
+assert core.SIG(sig1._id).recommendations == [rec2]
+assert len(core.SIG(sig2._id).recommendations) == 3
