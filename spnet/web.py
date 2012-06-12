@@ -81,6 +81,12 @@ def fetch_data(dbconn, d):
         pass
     else:
         d['email'] = core.EmailAddress(email)
+    try: # get requested SIG
+        sig = d['sig']
+    except KeyError:
+        pass
+    else:
+        d['sig'] = core.SIG(sig)
     try: # get requested recommendation
         recPaper = d['recPaper']
         recAuthor = ObjectId(d['recAuthor'])
