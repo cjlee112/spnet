@@ -40,6 +40,18 @@ def _get_object_id(fetchID):
     except InvalidId, e:
         raise KeyError(str(e))
 
+def del_list_value(l, v):
+    for i,v2 in enumerate(l):
+        if v2 == v:
+            del l[i]
+            return True
+
+def convert_to_id(v):
+    try:
+        return v._id
+    except AttributeError:
+        return v
+
 # base document classes
 
 class Document(object):
@@ -62,6 +74,10 @@ class Document(object):
                     d = func() # get dict from initializer
                     if d:
                         self.store_attrs(d)
+                for attr in getattr(self, '_requiredFields', ()):
+                    if attr not in self._dbDocDict:
+                        raise ValueError('missing required field %s'
+                                         % attr)
                 self.insert()
 
     def _get_doc(self, fetchID):
@@ -116,6 +132,16 @@ class Document(object):
         'delete this record from the DB'
         self.coll.remove(self._id)
 
+    def array_append(self, attr, v):
+        'append v to array stored as attr'
+        v = convert_to_id(v)
+        self.coll.update({'_id': self._id}, {'$push': {attr: v}})
+
+    def array_del(self, attr, v):
+        'remove element v from array stored as attr'
+        v = convert_to_id(v)
+        self.coll.update({'_id': self._id}, {'$pull': {attr: v}})
+
     def __cmp__(self, other):
         return cmp(self._id, other._id)
 
@@ -153,6 +179,23 @@ class EmbeddedDocument(Document):
     def __cmp__(self, other):
         return cmp((self._parent_link,self._dbfield),
                    (other._parent_link,other._dbfield))
+
+def find_one_array_doc(array, keyField, subID):
+    'find record in the array with keyField matching subID'
+    for record in array:
+        if record[keyField] == subID:
+            return record
+    raise ValueError('no matching ArrayDocument!')
+        
+def filter_array_docs(array, keyField, subID):
+    'find records in the array with keyField matching subID'
+    for record in array:
+        v = record[keyField]
+        if isinstance(v, list): # handle array fields specially
+            if subID in v:
+                yield record
+        elif v == subID: # regular field
+            yield record
         
 class ArrayDocument(Document):
     'stores a document inside an array in mongoDB'
@@ -173,13 +216,7 @@ class ArrayDocument(Document):
         d = self.coll.find_one(self._parent_link, {arrayField: 1})
         if not d:
             raise KeyError('no such record: _id=%s' % self._parent_link)
-        return self._extract_doc(d, arrayField, keyField, subID)
-    def _extract_doc(self, d, arrayField, keyField, subID):
-        'find record in the array with keyField matching fetchID'
-        for record in d[arrayField]:
-            if record[keyField] == subID:
-                return record
-        raise ValueError('no matching ArrayDocument!')
+        return find_one_array_doc(d[arrayField], keyField, subID)
     def _get_id(self):
         'return subID for this array record'
         keyField = self._dbfield.split('.')[1]
@@ -209,6 +246,33 @@ class ArrayDocument(Document):
         subID = self._get_id()
         self.coll.update({'_id': self._parent_link},
                          {'$pull': {arrayField: {keyField: subID}}})
+
+    def _array_update(self, attr, l):
+        'replace attr array in db by the specified list l'
+        arrayField = self._dbfield.split('.')[0]
+        subID = self._get_id()
+        target = '.'.join((arrayField, '$', attr))
+        self.coll.update({'_id': self._parent_link, self._dbfield: subID},
+                         {'$set': {target: l}})
+
+    def array_append(self, attr, v):
+        'append v to array stored as attr'
+        v = convert_to_id(v)
+        try:
+            self._dbDocDict[attr].append(v)
+        except KeyError:
+            self._dbDocDict[attr] = [v]
+        self._array_update(attr, self._dbDocDict[attr])
+
+    def array_del(self, attr, v):
+        'remove element v from array stored as attr'
+        v = convert_to_id(v)
+        l = self._dbDocDict[attr]
+        if del_list_value(l, v):
+            self._array_update(attr, l)
+        else:
+            raise IndexError('array %s does not contain %s'
+                             % (attr, str(v)))
         
     def __cmp__(self, other):
         try:
@@ -216,6 +280,10 @@ class ArrayDocument(Document):
                        (other._parent_link, other._get_id()))
         except AttributeError:
             return False
+
+    @classmethod
+    def _id_only(klass, d, d2, keyField):
+        return d['_id'], d2[keyField]
 
     @classmethod
     def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
@@ -226,10 +294,18 @@ class ArrayDocument(Document):
         if idOnly:
             fields = {klass._dbfield:1}
         arrayField, keyField = klass._dbfield.split('.')
+        filters = []
+        for k,v in queryDict.items():
+            queryFields = k.split('.')
+            if queryFields[0] == arrayField:
+                filters.append((queryFields[1], v))
         for d in klass.coll.find(queryDict, fields, **kwargs):
-            for d2 in d[arrayField]:
+            array = d[arrayField]
+            for k,v in filters: # apply filters consecutively
+                array = list(filter_array_docs(array, k, v))
+            for d2 in array: # return the filtered results appropriately
                 if idOnly:
-                    yield (d['_id'], d2[keyField])
+                    yield klass._id_only(d, d2, keyField)
                 elif parentID:
                     yield d['_id'], d2
                 else:
@@ -253,25 +329,12 @@ class UniqueArrayDocument(ArrayDocument):
         if not d:
             raise KeyError('no such record: %s=%s' % (self._dbfield, fetchID))
         self._parent_link = d['_id'] # save parent ID
-        return self._extract_doc(d, arrayField, keyField, fetchID)
+        return find_one_array_doc(d[arrayField], keyField, fetchID)
 
     @classmethod
-    def find(klass, queryDict={}, fields=None, idOnly=True, parentID=False,
-             **kwargs):
-        'generic class method for searching a specific collection'
-        if fields:
-            idOnly = False
-        if idOnly:
-            fields = {'_id':0, klass._dbfield:1}
-        arrayField, keyField = klass._dbfield.split('.')
-        for d in klass.coll.find(queryDict, fields, **kwargs):
-            for d2 in d[arrayField]:
-                if idOnly:
-                    yield d2[keyField]
-                elif parentID:
-                    yield d['_id'], d2
-                else:
-                    yield d2
+    def _id_only(klass, d, d2, keyField):
+        return d2[keyField]
+
 
 
 # generic retrieval classes
@@ -297,11 +360,7 @@ class FetchQuery(FetchObj):
         self.queryFunc = queryFunc
     def __call__(self, obj, **kwargs):
         query = self.queryFunc(obj, **kwargs)
-        data = self.klass.coll.find(query)
-        l = []
-        for d in data:
-            l.append(self.klass(docData=d, insertNew=False))
-        return l
+        return list(self.klass.find_obj(query))
 
 class FetchParent(FetchObj):
     def __call__(self, obj):
@@ -310,15 +369,18 @@ class FetchParent(FetchObj):
 
 class SaveAttr(object):
     'unwrap list of dicts using specified klass'
-    def __init__(self, klass, arg, **kwargs):
+    def __init__(self, klass, arg='parent', postprocess=None, **kwargs):
         self.klass = klass
         self.kwargs = kwargs
         self.arg = arg
+        self.postprocess = postprocess
     def __call__(self, obj, attr, data):
         l = []
         for d in data:
             kwargs = self.kwargs.copy()
             kwargs[self.arg] = obj
             l.append(self.klass(docData=d, **kwargs))
+        if self.postprocess:
+            self.postprocess(obj, attr, l)
         setattr(obj, attr, l)
 

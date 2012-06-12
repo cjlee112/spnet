@@ -22,7 +22,17 @@ def fetch_recs(person):
                 break
     return l
 
-
+def merge_sigs(person, attr, sigLinks):
+    'postprocess list of SIGLinks to handle mergeIn requests'
+    d = {}
+    merges = []
+    for sl in sigLinks:
+        d[sl.dbDocDict['sig']] = sl
+        if hasattr(sl, 'mergeIn'):
+            merges.append(sl)
+    for sl in merges:
+        d[sl.mergeIn]._add_merge(sl)
+    
 
 
 ######################################################
@@ -30,6 +40,8 @@ def fetch_recs(person):
 # forward declarations to avoid circular ref problem
 fetch_paper = FetchObj(None)
 fetch_person = FetchObj(None)
+fetch_sig = FetchObj(None)
+fetch_sigs = FetchList(None)
 fetch_people = FetchList(None)
 fetch_papers = FetchList(None)
 fetch_parent_issue = FetchParent(None)
@@ -38,6 +50,10 @@ fetch_parent_paper = FetchParent(None)
 fetch_author_papers = FetchQuery(None, lambda author:dict(authors=author._id))
 fetch_subscribers = FetchQuery(None, lambda person:
                                dict(subscriptions=person._id))
+fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
+fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
+fetch_sig_recs = FetchQuery(None, lambda sig:
+                            {'recommendations.sigs':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
 
 # main object classes
@@ -54,6 +70,7 @@ class Recommendation(ArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     forwards = LinkDescriptor('forwards', fetch_people)
+    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     _dbfield = 'recommendations.author' # dot.name for updating
 
@@ -73,14 +90,34 @@ class Issue(Document):
 
     # custom attr constructors
     _attrHandler = dict(
-        votes=SaveAttr(IssueVote, 'parent', insertNew=False),
+        votes=SaveAttr(IssueVote, insertNew=False),
         )
 
+class SIG(Document):
+    '''interface for a Specific Interest Group'''
+    _requiredFields = ('name',)
 
+    # attrs that will only be fetched if accessed by user
+    members = LinkDescriptor('members', fetch_sig_members, noData=True)
+    papers = LinkDescriptor('papers', fetch_sig_papers, noData=True)
+    recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
+                                      noData=True)
+
+
+class SIGLink(ArrayDocument):
+    _dbfield = 'sigs.sig' # dot.name for updating
+    sig = LinkDescriptor('sig', fetch_sig)
+    parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
+
+    def _add_merge(self, other):
+        try:
+            self._mergeLinks.append(other)
+        except AttributeError:
+            self._mergeLinks = [other]
 
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
-
+    _requiredFields = ('name',)
     # attrs that will only be fetched if accessed by user
     papers = LinkDescriptor('papers', fetch_author_papers, noData=True)
     recommendations = LinkDescriptor('recommendations', fetch_recs,
@@ -92,7 +129,8 @@ class Person(Document):
 
     # custom attr constructors
     _attrHandler = dict(
-        email=SaveAttr(EmailAddress, 'parent', insertNew=False),
+        email=SaveAttr(EmailAddress, insertNew=False),
+        ## sigs=SaveAttr(SIGLink, postprocess=merge_sigs, insertNew=False),
         )
 
     def authenticate(self, password):
@@ -115,10 +153,11 @@ class Paper(Document):
                                 missingData=())
     issues = LinkDescriptor('issues', fetch_issues,
                             noData=True, missingData=())
+    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     # custom attr constructors
     _attrHandler = dict(
-        recommendations=SaveAttr(Recommendation, 'parent', insertNew=False),
+        recommendations=SaveAttr(Recommendation, insertNew=False),
         )
 
 
@@ -137,6 +176,8 @@ class Tag(Document):
 # connect forward declarations to their target classes
 fetch_paper.klass = Paper
 fetch_parent_issue.klass = Issue
+fetch_sig.klass = SIG
+fetch_sigs.klass = SIG
 fetch_person.klass = Person
 fetch_papers.klass = Paper
 fetch_people.klass = Person
@@ -144,5 +185,8 @@ fetch_parent_person.klass = Person
 fetch_parent_paper.klass = Paper
 fetch_author_papers.klass = Paper
 fetch_subscribers.klass = Person
+fetch_sig_members.klass = Person
+fetch_sig_papers.klass = Paper
+fetch_sig_recs.klass = Recommendation
 fetch_issues.klass = Issue
 

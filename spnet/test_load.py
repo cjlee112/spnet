@@ -46,6 +46,7 @@ def update_person_db():
         paper = core.Paper(paperID)
         authorIDs = [authors[a] for a in paper._dbDocDict['authors']]
         paper.update(dict(authors=authorIDs))
+    return n
 
 def add_random_recs():
     'for each person, add one rec to a randomly selected paper'
@@ -72,6 +73,14 @@ def set_password(password, name):
     else:
         raise ValueError('Person "%s" not found' % name)
 
+def add_dummy_login(email='me@u.edu', password='testme', query={}):
+    for person in core.Person.find_obj(query):
+        print 'Adding login for %s: %s, %s' % (person.name, email, password)
+        person.set_password(password)
+        return core.EmailAddress(docData=dict(address=email), parent=person)
+    raise ValueError('No person matching query: ' + str(query))
+
+
 if __name__ == '__main__':
     connect.init_connection()
     with open(cache_filename) as cache_file:
@@ -79,5 +88,8 @@ if __name__ == '__main__':
     print 'Loading %d papers...' % len(papers)
     n = load_papers(papers)
     print 'Loaded %d new papers.' % n
-    update_person_db()
-    
+    n = update_person_db()
+    if n:
+        add_dummy_login()
+        print 'Adding random recommendations...'
+        add_random_recs()
