@@ -1,7 +1,7 @@
 import cherrypy
 import thread
 import core, connect
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 import os
 import glob
 import sys
@@ -19,12 +19,13 @@ def redirect(path='/', body=None, delay=0):
 def load_templates(path='_templates/*.html'):
     'return dictionary of Jinja2 templates from specified path/*.html'
     d = {}
+    loader = FileSystemLoader(os.path.dirname(path))
+    env = Environment(loader=loader)
     for fname in glob.glob(path):
-        ifile = open(fname, 'rU')
-        name = os.path.basename(fname).split('.')[0]
-        d[name] = Template(ifile.read())
-        ifile.close()
-    return d
+        basename = os.path.basename(fname)
+        name = basename.split('.')[0]
+        d[name] = env.get_template(basename)
+    return d, env
 
 def load_template_vars(path='_templates'):
     sys.path.append(path)
@@ -158,7 +159,7 @@ class Server(object):
 
 if __name__ == '__main__':
     print 'loading templates...'
-    templateDict = load_templates()
+    templateDict, env = load_templates()
     templateVars, templateViews = load_template_vars()
     views = init_template_views(templateDict, templateVars, templateViews)
     dbconn = connect.init_connection()
