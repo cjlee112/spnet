@@ -1,4 +1,6 @@
 <h3>Login</h3>
+<A HREF="/twitter_login"><IMG SRC="/images/sign-in-with-twitter-gray.png"></A>
+<BR>
 <FORM ACTION="/login" METHOD="GET">
 your email:<INPUT TYPE="text" NAME="email" SIZE=30><BR>
 password:<INPUT TYPE="password" NAME="password" SIZE=30><BR>
@@ -6,6 +8,12 @@ password:<INPUT TYPE="password" NAME="password" SIZE=30><BR>
 </FORM>
 
 <h3>Search</h3>
+<FORM ACTION="/view" METHOD="GET">
+<INPUT TYPE="hidden" NAME="view" VALUE="paper">
+arXiv ID: <INPUT TYPE="text" NAME="arxivID" VALUE="1302.4871" SIZE=30>
+<INPUT TYPE="submit">
+</FORM>
+<BR>
 <FORM ACTION="/view" METHOD="GET">
 <INPUT TYPE="hidden" NAME="view" VALUE="search">
 Search
