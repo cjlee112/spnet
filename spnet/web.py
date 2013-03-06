@@ -5,6 +5,8 @@ from jinja2 import Environment, FileSystemLoader
 import os
 import glob
 import sys
+import twitter
+import arxiv
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -70,6 +72,11 @@ def fetch_data(dbconn, d):
         pass
     else:
         d['paper'] = core.Paper(paperID)
+    try:
+        arxivID = d['arxivID']
+        d['paper'] = arxiv.get_paper(arxivID)
+    except KeyError:
+        pass
     try: # get requested person
         personID = d['person']
     except KeyError:
@@ -125,6 +132,23 @@ class Server(object):
         return redirect('/view?view=person&person=' + str(p._id))
     login.exposed = True
 
+    def twitter_login(self):
+        redirect_url, tokens = twitter.start_oauth('http://localhost:8000/twitter_oauth')
+        cherrypy.session['twitter_request_token'] = tokens
+        return redirect(redirect_url)
+    twitter_login.exposed = True
+
+    def twitter_oauth(self, oauth_token, oauth_verifier):
+        t = cherrypy.session['twitter_request_token']
+        auth = twitter.complete_oauth(t[0], t[1], oauth_verifier)
+        p, user, api = twitter.get_auth_person(auth)
+        cherrypy.session['person'] = p
+        cherrypy.session['twitter_user'] = user
+        cherrypy.session['twitter_api'] = api
+        self.twitter_auth = auth
+        return redirect('/')
+    twitter_oauth.exposed = True
+
     def index(self):
         'just reroute to our standard index view'
         return self.view('index')
@@ -145,7 +169,7 @@ class Server(object):
         d.update(kwargs)
         try:
             fetch_data(self.dbconn, d) # retrieve objects from DB
-            s = func(**d) # run the requested view function
+            s = func(kwargs=d, hasattr=hasattr, **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500
@@ -155,14 +179,18 @@ class Server(object):
 
     def get_json(self, **kwargs):
         pass
-        
 
-if __name__ == '__main__':
+
+def init_data():
     print 'loading templates...'
     templateDict, env = load_templates()
     templateVars, templateViews = load_template_vars()
     views = init_template_views(templateDict, templateVars, templateViews)
     dbconn = connect.init_connection()
+    return dbconn, views
+
+if __name__ == '__main__':
+    dbconn, views = init_data()
     s = Server(dbconn, views)
     print 'starting server...'
-    s.serve_forever()
+    s.start()
