@@ -145,6 +145,9 @@ class Document(object):
     def __cmp__(self, other):
         return cmp(self._id, other._id)
 
+    def __hash__(self):
+        return self._id
+
     @classmethod
     def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
         'generic class method for searching a specific collection'
