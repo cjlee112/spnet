@@ -7,6 +7,7 @@ import glob
 import sys
 import twitter
 import arxiv
+import gplus
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -145,9 +146,24 @@ class Server(object):
         cherrypy.session['person'] = p
         cherrypy.session['twitter_user'] = user
         cherrypy.session['twitter_api'] = api
-        self.twitter_auth = auth
+        self.twitter_auth = auth # just for hand testing
         return redirect('/')
     twitter_oauth.exposed = True
+
+    def gplus_login(self):
+        oauth = gplus.OAuth()
+        cherrypy.session['gplus_oauth'] = oauth
+        return redirect(oauth.login_url)
+    gplus_login.exposed = True
+
+    def oauth2callback(self, error=False, **kwargs):
+        if error:
+            return error
+        oauth = cherrypy.session['gplus_oauth']
+        oauth.complete_oauth(**kwargs)
+        self.gplus_oauth = oauth # just for hand testing
+        return redirect('/')
+    oauth2callback.exposed = True
 
     def index(self):
         'just reroute to our standard index view'
