@@ -1,8 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
+<title> {{- paper.title -}} </title>
+</head>
 
-<h1>
+<body>
+{% if hasattr(paper, 'arxiv') %}
+
+<div id="header">
+<h1><a href="/">SelectedPapers.net</a> &gt; <a href="http://arxiv.org">arXiv.org</a> &gt; <a href="http://arxiv.org/abs/ {{- paper.arxiv.id -}} "> {{- paper.arxiv.id -}} </a></h1>
+</div>
+
+<h1 class="title">
 {{ paper.title }}
 </h1>
+<div class="authors">
+{{ ', '.join(paper.arxiv.authors) }}
+</div>
 
+<h3>Abstract</h3>
+
+<blockquote class="abstract">
+{{ paper.summary }}
+</blockquote>
+
+
+<button
+  class="g-interactivepost"
+  data-contenturl="http://www.ucla.edu"
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="Check out this paper... #spnetwork  http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl="http://www.ucla.edu">
+  Comment on this paper.
+</button>
+
+{% else %}
 <h3>Authors</h3>
 
 {% for author in paper.authors %}
@@ -43,3 +78,16 @@ Enter your recommendation below:<br>
 <TEXTAREA NAME="text" COLS=50 ROWS=20></TEXTAREA>
 <INPUT TYPE="submit">
 </FORM>
+{% endif %}
+
+
+
+<script type="text/javascript">
+  (function() {
+   var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+   po.src = 'https://apis.google.com/js/client:plusone.js';
+   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+ })();
+</script>
+</body>
+</html>
