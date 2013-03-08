@@ -110,6 +110,7 @@ class Server(object):
     def __init__(self, dbconn, views):
         self.dbconn = dbconn
         self.views = views
+        self.gplus_keys = gplus.get_keys()
 
     def start(self):
         'start cherrypy server as background thread, retaining control of main thread'
@@ -151,7 +152,7 @@ class Server(object):
     twitter_oauth.exposed = True
 
     def gplus_login(self):
-        oauth = gplus.OAuth()
+        oauth = gplus.OAuth(keys=self.gplus_keys)
         cherrypy.session['gplus_oauth'] = oauth
         return redirect(oauth.login_url)
     gplus_login.exposed = True
@@ -185,7 +186,9 @@ class Server(object):
         d.update(kwargs)
         try:
             fetch_data(self.dbconn, d) # retrieve objects from DB
-            s = func(kwargs=d, hasattr=hasattr, **d) # run the requested view function
+            s = func(kwargs=d, hasattr=hasattr,
+                     gplusClientID=self.gplus_keys['client_ID'],
+                     **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500

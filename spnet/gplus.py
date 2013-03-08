@@ -4,16 +4,22 @@ import string
 import json
 import requests
 
+def get_keys(keyfile='../google/keys.json'):
+    with open(keyfile, 'r') as ifile:
+        keys = json.loads(ifile.read())
+    return keys
+
 class OAuth(object):
     def __init__(self, auth_url='https://accounts.google.com/o/oauth2/auth',
                  scope='https://www.googleapis.com/auth/userinfo.profile',
                  response_type='code', access_type='offline',
-                 keyfile='../google/keys.json', **kwargs):
+                 keys=None, **kwargs):
         self.auth_url = auth_url
         self.state = ''.join([random.choice(string.ascii_uppercase + string.digits)
                               for x in xrange(32)])
-        with open(keyfile, 'r') as ifile:
-            self.keys = json.loads(ifile.read())
+        if not keys:
+            keys = get_keys()
+        self.keys = keys
         d = dict(state=self.state, redirect_uri=self.keys['redirect_uri'],
                  client_id=self.keys['client_ID'], access_type=access_type,
                  response_type=response_type, scope=scope)
