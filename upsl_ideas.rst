@@ -116,53 +116,85 @@ The basic elements:
 Peer review and recommendation verbs
 ....................................
 
-* ``#recommend``: document worth reading for the specified audience. e.g.::
+General user actions
+++++++++++++++++++++
 
-    #spnetwork #rnaseq #recommend #pubmed12345
+* ``#comment``: this post comments on the paper
+* ``#question``: this post asks a question about the paper.
+* ``#agree``: you agree with the paper.  This will
+  typically be used as a lightweight "upvote / downvote" poll,
+  an easy way for people to declare themselves on one side or
+  another of an argument.
+* ``#disagree``: you disagree with the paper.
 
-* ``#mustread``: document essential for the specified audience. e.g.::
 
-    #spnetwork #compbio #mustread #arxiv12345
 
-* ``#submit``: invites the specified audience to read the document;
-  typically by its author.  e.g.::
+Peer review actions
++++++++++++++++++++
 
-    #spnetwork #compbio #submit #arxiv12345
+* ``#valid``: the paper's claims meet your field's standards of evidence,
+  in your judgment.
+* ``#uncertain``: the evidence for a claim is not strong enough
+* ``#unsupported``: no valid evidence for a claim
+* ``#wrong``: you're sure a claim is incorrect (provide your evidence!)
 
-* ``#comment``: this post comments on the specified publication.
-* ``#agree``: I agree with the specified publication.
-* ``#disagree``: I disagree with the specified publication.
-* ``#falsepositive``: the specified publication makes a claim
-  that appears to be invalid.
-* ``#falsenegative``: the specified publication misses an important
-  conclusion that appears to be valid.
-* ``#precedes``: an important claim of the specified publication
+* ``#precedes``: one of the paper's claims
   appears to have already been published by previous publication A.  e.g.::
 
     #spnetwork #pubmed12345 #precedes #arxiv12345
+* ``#assessing``: you intend to assess the paper's validity,
+  at least in part.
+* ``#assessingAll``: you can assess all aspects of the paper,
+  because you are expert in all aspects of the paper, i.e.
+  you have performed similar analyses using similar methods on
+  similar data.
+* ``#exit``: you intend no further consideration
+  of this paper (barring unforeseen new information).
 
-* ``#inappropriate``: the specified publication violates a
-  specific basic guideline of the forum.  e.g.::
+* ``#majorresult``: this statement applies to the paper's main claim(s)
+* ``#minorresult``: this statement applies to a minor point that
+  is not one of the paper's main claims.
 
-    #spnetwork #msg12345 #inappropriate #adhominemattack
 
-  (assuming that #adhominemattack designates a specific forum guideline).
+Recommendation
+++++++++++++++
 
-Adverbs
-.......
+* ``#recommend``: you consider the paper worth reading for
+  your work in the specified topic(s), e.g.::
 
-* ``#maybe``: to raise a possibility, without asserting high probability.
-* ``#probably``: greater than 50%.
-* ``#highconfidence``: greater than 1-epsilon (field-dependent)
-* ``#nodoubt``: absolutely certain.
-* ``#provisional``: statement is conditional on resolution of
-  one or more questions about the document.
-* ``#bad``: attaches blame to the statement, e.g.::
+    #spnetwork #rnaseq #recommend #pubmed12345
 
-    #spnetwork #pubmed12345 #precedes #arxiv12345 #bad
+* ``#mustread``: you consider the paper essential reading for
+  your work in the specified topic(s), e.g.::
 
-  suggests that the later authors have either misappropriated results from
-  the previous publication or mis-cited it.
+    #spnetwork #compbio #mustread #arxiv12345
+
+
+
+Annotation of the paper's relation to other work
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+* ``#propose``: paper proposes a hypothesis or model
+
+* ``#seealso``: other data relevant to this discussion
+* ``#support``: provides evidence for
+* ``#prove``: conclusive evidence for
+* ``#contradict``: provides evidence against
+* ``#disprove``: conclusive evidence against
+* ``#analyze``: analyzes or extends this hypothesis
+
+
+Author actions
+++++++++++++++
+
+* ``#newpaper``: invites the specified audience to read the paper;
+  typically by its author.  e.g.::
+
+    #spnetwork #compbio #newpaper #arxiv12345
+
+* ``#revision``: announces a new, revised version of the paper
+
+
 
 
 Phase 1: using SP Net tagging in existing social networks
@@ -316,4 +348,57 @@ Do a few fundamental operations well and simply.
   it works on top of the federated publication space).  If a user
   opts to subscribe "publicly" 
 
+
+Old Tag Ideas (deprecated)
+--------------------------
+
+* ``#share``: forwards paper to others.  Seems unnecessary; user can
+  just "retweet" the original (#newpaper) post, with or without comments.
+
+
+* ``#submit``: invites the specified audience to read the document;
+  typically by its author.  e.g.::
+
+
+* ``#falsepositive``: the specified publication makes a claim
+  that appears to be invalid.
+* ``#falsenegative``: the specified publication misses an important
+  conclusion that appears to be valid.
+
+Probably a bad idea to require two separate words for "criticism"
+and "level of confidence".  Instead better to use single words that
+convey both ideas:
+
+* ``#questionable``: the evidence is not strong enough
+* ``#groundless``: no valid evidence for this claim
+* ``#false``: you're sure it's incorrect
+
+* ``#inappropriate``: the specified publication violates a
+  specific basic guideline of the forum.  e.g.::
+
+    #spnetwork #msg12345 #inappropriate #adhominemattack
+
+  (assuming that #adhominemattack designates a specific forum guideline).
+
+* ``#iamauthor``: you are an author of the paper.
+* ``#correspondingauthor``: you are the paper's principal representative.
+* ``#isAuthor``: annotate an author
+* ``#isDOI``: annotate its DOI
+
+
+Adverbs
+.......
+
+* ``#maybe``: to raise a possibility, without asserting high probability.
+* ``#probably``: greater than 50%.
+* ``#highconfidence``: greater than 1-epsilon (field-dependent)
+* ``#nodoubt``: absolutely certain.
+* ``#provisional``: statement is conditional on resolution of
+  one or more questions about the document.
+* ``#bad``: attaches blame to the statement, e.g.::
+
+    #spnetwork #pubmed12345 #precedes #arxiv12345 #bad
+
+  suggests that the later authors have either misappropriated results from
+  the previous publication or mis-cited it.
 
