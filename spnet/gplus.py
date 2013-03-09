@@ -94,11 +94,19 @@ class OAuth(object):
 
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!
-    def request(self, uri, **params):
-        'perform API query using our access token'
-        r = requests.get(uri, params=params,
-                         headers=dict(Authorization='Bearer ' +
-                                      self.access_data['access_token']))
+    def request(self, uri, headers=None, **params):
+        'perform API query using our access token or API key'
+        if 'access_token' in getattr(self, 'access_data', ()):
+            try:
+                headers = headers.copy()
+            except AttributeError:
+                headers = {}
+            headers['Authorization'] = 'Bearer ' + \
+                                       self.access_data['access_token']
+        else: # use simple API key
+            params = params.copy()
+            params['key'] = self.keys['apikey']
+        r = requests.get(uri, params=params, headers=headers)
         return r.json()
 
     def request_iter(self, uri, **kwargs):
