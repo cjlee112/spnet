@@ -148,22 +148,22 @@ class Server(object):
         cherrypy.session['twitter_user'] = user
         cherrypy.session['twitter_api'] = api
         self.twitter_auth = auth # just for hand testing
-        return redirect('/')
+        return 'Logged in to twitter'
     twitter_oauth.exposed = True
 
     def gplus_login(self):
         oauth = gplus.OAuth(keys=self.gplus_keys)
         cherrypy.session['gplus_oauth'] = oauth
-        return redirect(oauth.login_url)
+        return redirect(oauth.get_authorize_url())
     gplus_login.exposed = True
 
     def oauth2callback(self, error=False, **kwargs):
         if error:
             return error
         oauth = cherrypy.session['gplus_oauth']
-        oauth.complete_oauth(**kwargs)
+        oauth.get_credentials(**kwargs)
         self.gplus_oauth = oauth # just for hand testing
-        return redirect('/')
+        return 'Logged in to Google+'
     oauth2callback.exposed = True
 
     def index(self):
