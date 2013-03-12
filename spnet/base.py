@@ -214,7 +214,9 @@ class EmbeddedDocument(EmbeddedDocBase):
                 Document.__init__(self, None, docData, docLinks,
                                   insertNew=False)
                 if parent is None:
-                    self._set_parent(self._insert_parent()._id)
+                    self._set_parent(self._insert_parent())
+                    subdocField = self._dbfield.split('.')[0]
+                    setattr(self.parent, subdocField, self)
                 self.insert()
         else:
             Document.__init__(self, fetchID, docData, docLinks, insertNew)
