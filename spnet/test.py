@@ -18,6 +18,10 @@ paper1 = core.Paper(docData=dict(title='boring article', year=2011,
 paper2 = core.Paper(docData=dict(title='great article', year=2012,
                                  authors=[fred._id,jojo._id], _id='2'))
 
+jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
+                                parent=jojo)
+jojoGplus.update(dict(etag='oldversion'))
+
 sig1 = core.SIG(docData=dict(name='math'))
 sig2 = core.SIG(docData=dict(name='physics'))
 
@@ -37,6 +41,10 @@ vote1 = core.IssueVote(docLinks=dict(person=jojo),
                        docData=dict(rating='crucial', status='open'),
                        parent=issue1)
 
+assert core.Person(jojo._id).email == [a1]
+jgp = core.GplusPersonData(1234)
+assert jgp.parent == jojo
+assert jgp.etag == 'oldversion'
 assert len(rec1.parent.authors) == 1
 assert rec1.parent.authors[0] == jojo
 assert len(rec2.parent.authors) == 2

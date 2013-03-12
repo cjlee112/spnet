@@ -36,7 +36,8 @@ class OAuth(object):
     def __init__(self, auth_uri=GOOGLE_AUTH_URI,
                  token_uri=GOOGLE_TOKEN_URI,
                  revoke_uri=GOOGLE_REVOKE_URI,
-                 scope='https://www.googleapis.com/auth/plus.me',
+                 scope='https://www.googleapis.com/auth/plus.login',
+                 requestvisibleactions='http://schemas.google.com/AddActivity',
                  response_type='code', access_type='offline', user_agent=None,
                  keys=None, **kwargs):
         self.auth_uri = auth_uri
@@ -50,7 +51,8 @@ class OAuth(object):
         self.keys = keys
         d = dict(state=self.state, redirect_uri=self.keys['redirect_uri'],
                  client_id=self.keys['client_ID'], access_type=access_type,
-                 response_type=response_type, scope=scope)
+                 response_type=response_type, scope=scope,
+                 requestvisibleactions=requestvisibleactions)
         d.update(kwargs)
         self.login_url = auth_uri + '?' + urllib.urlencode(d)
 

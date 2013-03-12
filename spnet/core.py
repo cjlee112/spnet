@@ -90,7 +90,7 @@ class Issue(Document):
 
     # custom attr constructors
     _attrHandler = dict(
-        votes=SaveAttr(IssueVote, insertNew=False),
+        votes=SaveAttrList(IssueVote, insertNew=False),
         )
 
 class SIG(Document):
@@ -104,6 +104,7 @@ class SIG(Document):
                                       noData=True)
 
 
+# current unused
 class SIGLink(ArrayDocument):
     _dbfield = 'sigs.sig' # dot.name for updating
     sig = LinkDescriptor('sig', fetch_sig)
@@ -114,6 +115,11 @@ class SIGLink(ArrayDocument):
             self._mergeLinks.append(other)
         except AttributeError:
             self._mergeLinks = [other]
+
+class GplusPersonData(EmbeddedDocument):
+    _dbfield = 'gplus.id'
+    parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
+
 
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
@@ -129,8 +135,9 @@ class Person(Document):
 
     # custom attr constructors
     _attrHandler = dict(
-        email=SaveAttr(EmailAddress, insertNew=False),
-        ## sigs=SaveAttr(SIGLink, postprocess=merge_sigs, insertNew=False),
+        email=SaveAttrList(EmailAddress, insertNew=False),
+        gplus=SaveAttr(GplusPersonData, insertNew=False),
+        ## sigs=SaveAttrList(SIGLink, postprocess=merge_sigs, insertNew=False),
         )
 
     def authenticate(self, password):
@@ -140,7 +147,6 @@ class Person(Document):
             return False
     def set_password(self, password):
         self.update(dict(password=sha1(password).hexdigest()))
-
 
 
 class Paper(Document):
@@ -157,7 +163,7 @@ class Paper(Document):
 
     # custom attr constructors
     _attrHandler = dict(
-        recommendations=SaveAttr(Recommendation, insertNew=False),
+        recommendations=SaveAttrList(Recommendation, insertNew=False),
         )
 
 
@@ -190,3 +196,11 @@ fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
 fetch_issues.klass = Issue
 
+##################################################################
+
+def get_or_create_person(d, subdoc, idField, nameField):
+    try:
+        p = Person.find_obj({subdoc + '.' + idField:d[idField]}).next()
+    except StopIteration:
+        p = Person(docData={'name':d[nameField], subdoc:d})
+    return p

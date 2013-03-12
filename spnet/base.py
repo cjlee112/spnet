@@ -3,7 +3,8 @@ from bson.errors import InvalidId
 
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
-    caches obj.ATTR link data as obj._ATTR_link'''
+    Typical usage: for a foreign key that accesses another collection.
+    Caches obj.ATTR link data as obj._ATTR_link'''
     def __init__(self, attr, fetcher, noData=False,
                  missingData=False, **kwargs):
         self.attr = attr
@@ -54,15 +55,30 @@ def convert_to_id(v):
 
 # base document classes
 
+# two different mechanisms for subobject references:
+#
+# LinkDescriptor: for foreign key; defers construction until getattr()
+# _attrHandler: for subdocuments; constructs them immediately on loading
+#               the parent document.
+
+
 class Document(object):
     'base class provides flexible method for storing dict as attr objects'
     useObjectId = True
     
-    def __init__(self, fetchID=None, docData=None, docLinks={},
+    def __init__(self, fetchID=None, docData={}, docLinks={},
                  insertNew=True):
+        '''data can be passed in two dicts: docData must use object IDs,
+        whereas docLinks expects objects (which it translates to
+        object IDs for you).
+
+        If fetchID provided, retrieves that doc, or raises KeyError.
+        Otherwise, the object is initialized from docData/docLinks,
+        and if insertNew, ALSO inserted into the database.'''
         if fetchID:
             d = self._get_doc(fetchID)
-            self.store_attrs(d)
+            d.update(docData)
+            self.store_data_links(d, docLinks)
         else:
             self.store_data_links(docData, docLinks)
             if insertNew:
@@ -167,18 +183,49 @@ class Document(object):
         for d in klass.find(queryDict, None, False, **kwargs):
             yield klass(docData=d, insertNew=False)
 
-class EmbeddedDocument(Document):
+
+class EmbeddedDocBase(Document):
+    def _set_parent(self, parent):
+        if hasattr(parent, 'coll'):
+            self._parent_link = parent._id # save its ID
+            self.__dict__['parent'] = parent # bypass LinkDescriptor mech
+        else:
+            self._parent_link = parent
+
+class EmbeddedDocument(EmbeddedDocBase):
     'stores a document inside another document in mongoDB'
+    def __init__(self, fetchID=None, docData={}, docLinks={},
+                 parent=None, insertNew=True):
+        if parent is not None:
+            self._set_parent(parent)
+        try:
+            Document.__init__(self, fetchID, docData, docLinks, insertNew)
+        except KeyError:
+            if insertNew == 'force':
+                Document.__init__(self, None, docData, docLinks, insertNew)
+            else:
+                raise
+    def _get_doc(self, fetchID):
+        'retrieve DB array record containing this document'
+        subdocField = self._dbfield.split('.')[0]
+        d = self.coll.find_one({self._dbfield: fetchID},
+                               {subdocField: 1, '_id':1})
+        if not d:
+            raise KeyError('no such record: _id=%s' % fetchID)
+        self._parent_link = d['_id']
+        return d[subdocField]
     def insert(self):
+        subdocField = self._dbfield.split('.')[0]
         self.coll.update({'_id': self._parent_link},
-                         {'$set': {self._dbfield: self._dbDocDict}})
+                         {'$set': {subdocField: self._dbDocDict}})
     def update(self, updateDict):
         'update the existing embedded doc fields in the parent document'
-        self._dbDocDict.update(updateDict)
+        subdocField = self._dbfield.split('.')[0]
         d = {}
         for k,v in updateDict.items():
-            d['.'.join((self._dbfield, k))] = v
+            d[subdocField + '.' + k] = v
         self.coll.update({'_id': self._parent_link}, {'$set': d})
+        self.store_attrs(updateDict)
     def __cmp__(self, other):
         return cmp((self._parent_link,self._dbfield),
                    (other._parent_link,other._dbfield))
@@ -200,15 +247,17 @@ def filter_array_docs(array, keyField, subID):
         elif v == subID: # regular field
             yield record
         
-class ArrayDocument(Document):
-    'stores a document inside an array in mongoDB'
-    def __init__(self, fetchID=None, docData=None, docLinks={},
+class ArrayDocument(EmbeddedDocBase):
+    '''stores a document inside an array in mongoDB.
+    Assumes we need to use a tuple of (parentID,subID) to
+    uniquely identify each document.  For example, we specify
+    a Recommendation by (paperID,authorID).
+    Subclasses MUST provide _dbfield attribute of the form
+    field.subfield, indicating how to search for fetchID in the parent
+    document.'''
+    def __init__(self, fetchID=None, docData={}, docLinks={},
                  parent=None, insertNew=True):
-        if hasattr(parent, 'coll'):
-            self._parent_link = parent._id # save its ID
-            self.__dict__['parent'] = parent # bypass LinkDescriptor mech
-        else:
-            self._parent_link = parent
+        self._set_parent(parent)
         Document.__init__(self, fetchID, docData, docLinks, insertNew)
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
@@ -325,6 +374,7 @@ class ArrayDocument(Document):
 
 
 class UniqueArrayDocument(ArrayDocument):
+    '''For array documents with unique ID values '''
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         arrayField, keyField = self._dbfield.split('.')
@@ -371,12 +421,22 @@ class FetchParent(FetchObj):
 
 
 class SaveAttr(object):
-    'unwrap list of dicts using specified klass'
+    'unwrap dict using specified klass'
     def __init__(self, klass, arg='parent', postprocess=None, **kwargs):
         self.klass = klass
         self.kwargs = kwargs
         self.arg = arg
         self.postprocess = postprocess
+    def __call__(self, obj, attr, data):
+        kwargs = self.kwargs.copy()
+        kwargs[self.arg] = obj
+        o = self.klass(docData=data, **kwargs)
+        if self.postprocess:
+            self.postprocess(obj, attr, o)
+        setattr(obj, attr, o)
+
+class SaveAttrList(SaveAttr):
+    'unwrap list of dicts using specified klass'
     def __call__(self, obj, attr, data):
         l = []
         for d in data:
