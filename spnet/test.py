@@ -79,6 +79,20 @@ assert p.posts[0].text == 'interesting paper!'
 assert core.Post(98765).author == fred
 assert core.Reply(7890).replyTo == post1
 assert core.Reply(7890).parent == paper1
+
+replyAgain = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
+                                 id=7890, replyTo=98765), parent=paper1,
+                        insertNew='findOrInsert')
+assert replyAgain == reply1
+assert core.Paper(paper1._id).replies == [reply1]
+
+reply2 = core.Reply(docData=dict(author=jojo._id, text='boring paper',
+                                 id=7891, replyTo=98765), parent=paper1,
+                        insertNew='findOrInsert')
+
+assert core.Paper(paper1._id).replies == [reply1, reply2]
+
+
 assert p.issues[0] == issue1
 assert len(p.issues[0].votes) == 1
 assert len(rec2.sigs) == 2

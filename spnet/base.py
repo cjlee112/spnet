@@ -199,12 +199,13 @@ class EmbeddedDocument(EmbeddedDocBase):
         if parent is not None:
             self._set_parent(parent)
         if insertNew == 'findOrInsert':
-            try:
+            try: # retrieve from database
                 Document.__init__(self, docData[self._dbfield.split('.')[-1]])
-            except KeyError:
+            except KeyError: # insert new record in database
                 Document.__init__(self, None, docData, docLinks,
                                   insertNew=False)
-                self._set_parent(self._insert_parent())
+                if parent is None:
+                    self._set_parent(self._insert_parent())
                 self.insert()
         else:
             Document.__init__(self, fetchID, docData, docLinks, insertNew)
@@ -261,6 +262,12 @@ class ArrayDocument(EmbeddedDocBase):
     def __init__(self, fetchID=None, docData={}, docLinks={},
                  parent=None, insertNew=True):
         self._set_parent(parent)
+        if insertNew == 'findOrInsert':
+            try: # retrieve from database
+                Document.__init__(self, docData[self._dbfield.split('.')[-1]])
+                return
+            except KeyError: # insert new record in database
+                fetchID = None
         Document.__init__(self, fetchID, docData, docLinks, insertNew)
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
