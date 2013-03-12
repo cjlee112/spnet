@@ -198,13 +198,16 @@ class EmbeddedDocument(EmbeddedDocBase):
                  parent=None, insertNew=True):
         if parent is not None:
             self._set_parent(parent)
-        try:
+        if insertNew == 'findOrInsert':
+            try:
+                Document.__init__(self, docData[self._dbfield.split('.')[-1]])
+            except KeyError:
+                Document.__init__(self, None, docData, docLinks,
+                                  insertNew=False)
+                self._set_parent(self._insert_parent())
+                self.insert()
+        else:
             Document.__init__(self, fetchID, docData, docLinks, insertNew)
-        except KeyError:
-            if insertNew == 'force':
-                Document.__init__(self, None, docData, docLinks, insertNew)
-            else:
-                raise
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         subdocField = self._dbfield.split('.')[0]

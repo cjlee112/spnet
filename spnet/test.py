@@ -25,6 +25,15 @@ jojoGplus.update(dict(etag='oldversion'))
 sig1 = core.SIG(docData=dict(name='math'))
 sig2 = core.SIG(docData=dict(name='physics'))
 
+gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
+                              insertNew='findOrInsert')
+
+assert gplus2 == jojoGplus
+
+gplus3 = core.GplusPersonData(docData=dict(id=5678, displayName='Fred Eiserling'),
+                              insertNew='findOrInsert')
+assert gplus3.parent.name == 'Fred Eiserling'
+
 rec1 = core.Recommendation(docData=dict(author=fred._id,
                                         text='I like this paper'),
                            parent=paper1)

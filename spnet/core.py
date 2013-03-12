@@ -119,6 +119,9 @@ class SIGLink(ArrayDocument):
 class GplusPersonData(EmbeddedDocument):
     _dbfield = 'gplus.id'
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
+    def _insert_parent(self):
+        'create Person document in db for this gplus.id'
+        return Person(docData=dict(name=self.displayName))
 
 
 class Person(Document):
