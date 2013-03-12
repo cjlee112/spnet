@@ -1,6 +1,6 @@
 import feedparser
 import twitter
-import core
+#import core
 from time import mktime
 from datetime import datetime
 import urllib
@@ -15,6 +15,8 @@ def lookup_papers(id_list, **kwargs):
         url = arxivApiUrl + '&'.join(['%s=%s' % t for t in d.items()])
         f = feedparser.parse(url)
         for e in f.entries:
+            l = e['id'].split('/')
+            e['id'] = l[4].split('v')[0] # replace URL by arxivID
             yield e
 
 def search_arxiv(search_query, block_size=25):

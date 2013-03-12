@@ -1,5 +1,7 @@
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from time import mktime, struct_time
+from datetime import datetime
 
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
@@ -52,6 +54,13 @@ def convert_to_id(v):
         return v._id
     except AttributeError:
         return v
+
+def convert_times(d):
+    'convert times to format that pymongo can serialize'
+    for k,v in d.items():
+        if isinstance(v, struct_time):
+            d[k] = datetime.fromtimestamp(mktime(v))
+            
 
 # base document classes
 
@@ -205,7 +214,7 @@ class EmbeddedDocument(EmbeddedDocBase):
                 Document.__init__(self, None, docData, docLinks,
                                   insertNew=False)
                 if parent is None:
-                    self._set_parent(self._insert_parent())
+                    self._set_parent(self._insert_parent()._id)
                 self.insert()
         else:
             Document.__init__(self, fetchID, docData, docLinks, insertNew)
@@ -220,6 +229,7 @@ class EmbeddedDocument(EmbeddedDocBase):
         return d[subdocField]
     def insert(self):
         subdocField = self._dbfield.split('.')[0]
+        convert_times(self._dbDocDict)
         self.coll.update({'_id': self._parent_link},
                          {'$set': {subdocField: self._dbDocDict}})
     def update(self, updateDict):

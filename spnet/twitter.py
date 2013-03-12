@@ -1,6 +1,6 @@
 import tweepy
 import urllib2
-import core
+#import core
 
 ###############################################################
 # OAuth functions

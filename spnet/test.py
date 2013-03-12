@@ -1,4 +1,4 @@
-import core, connect
+import core, connect, arxiv
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -13,10 +13,14 @@ a2 = core.EmailAddress(docData=dict(address='fred@dotzler.com',
                                     authenticated=False), parent=fred)
 a3 = core.EmailAddress(docData=dict(address='fred@gmail.com',
                                     note='personal account'), parent=fred)
-paper1 = core.Paper(docData=dict(title='boring article', year=2011,
-                                 authors=[jojo._id], _id='1'))
-paper2 = core.Paper(docData=dict(title='great article', year=2012,
-                                 authors=[fred._id,jojo._id], _id='2'))
+l = list(arxiv.lookup_papers(('1302.4871', '1205.6541')))
+paper1 = core.ArxivPaperData(docData=l[0], insertNew='findOrInsert').parent
+paper1.update(dict(authors=[jojo._id]))
+paper2 = core.ArxivPaperData(docData=l[1], insertNew='findOrInsert').parent
+paper2.update(dict(authors=[fred._id, jojo._id]))
+
+assert paper1.arxiv.id == '1302.4871'
+assert paper2.arxiv.id == '1205.6541'
 
 jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
                                 parent=jojo)

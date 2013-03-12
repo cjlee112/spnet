@@ -167,6 +167,15 @@ class Person(Document):
     def set_password(self, password):
         self.update(dict(password=sha1(password).hexdigest()))
 
+class ArxivPaperData(EmbeddedDocument):
+    'store arxiv data for a paper as subdocument of Paper'
+    _dbfield = 'arxiv.id'
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    def _insert_parent(self):
+        'create Paper document in db for this arxiv.id'
+        return Paper(docData=dict(title=self.title, authorNames=self.authors,
+                                  summary=self.summary))
+
 
 class Paper(Document):
     '''interface to a specific paper '''
@@ -185,6 +194,7 @@ class Paper(Document):
         recommendations=SaveAttrList(Recommendation, insertNew=False),
         posts=SaveAttrList(Post, insertNew=False),
         replies=SaveAttrList(Reply, insertNew=False),
+        arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         )
 
 
