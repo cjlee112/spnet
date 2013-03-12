@@ -47,18 +47,14 @@ def recent_tweets(query='http://arxiv.org'):
             
     
 def get_paper(arxivID):
+    import core
     try:
-        p = core.Paper.find_obj({'arxiv.id':arxivID}).next()
+        return core.Paper.find_obj({'arxiv.id':arxivID}).next()
     except StopIteration: # no matching record
         try:
             a = lookup_papers((arxivID,)).next()
         except StopIteration: # no matching record
             raise KeyError('arxiv ID %s not found in arXiv!' % arxivID)
-        dt = datetime.fromtimestamp(mktime(a['published_parsed']))
-        d = dict(authors=[au['name'] for au in a['authors']],
-                 published=dt,
-                 tags=[t['term'] for t in a['tags']], id=arxivID,
-                 author=a['author'])
-        p = core.Paper(docData=dict(title=a['title'], summary=a['summary'],
-                                    arxiv=d))
-    return p
+        a = core.ArxivPaperData(docData=l[0], insertNew='findOrInsert')
+        return a.parent
+

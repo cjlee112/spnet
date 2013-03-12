@@ -173,7 +173,8 @@ class ArxivPaperData(EmbeddedDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self):
         'create Paper document in db for this arxiv.id'
-        return Paper(docData=dict(title=self.title, authorNames=self.authors,
+        authorNames = [d['name'] for d in self.authors]
+        return Paper(docData=dict(title=self.title, authorNames=authorNames,
                                   summary=self.summary))
 
 

@@ -16,7 +16,7 @@
 {{ paper.title }}
 </h1>
 <div class="authors">
-{{ ', '.join(paper.arxiv.authors) }}
+{{ ', '.join(paper.authorNames) }}
 </div>
 
 <h3>Abstract</h3>
@@ -26,16 +26,20 @@
 </blockquote>
 
 
+<a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Dpaper%26arxivID%3D {{- paper.arxiv.id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+"/></a>
+
 <button
   class="g-interactivepost"
-  data-contenturl="http://www.ucla.edu"
+  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="Check out this paper... #spnetwork  http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-prefilltext="Check out this paper... #spnetwork  #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
   data-calltoactionlabel="VIEW"
   data-calltoactionurl="http://www.ucla.edu">
   Comment on this paper.
 </button>
+
 
 {% else %}
 <h3>Authors</h3>
@@ -79,8 +83,6 @@ Enter your recommendation below:<br>
 <INPUT TYPE="submit">
 </FORM>
 {% endif %}
-
-
 
 <script type="text/javascript">
   (function() {
