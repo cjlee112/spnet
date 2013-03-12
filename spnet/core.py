@@ -40,6 +40,7 @@ def merge_sigs(person, attr, sigLinks):
 # forward declarations to avoid circular ref problem
 fetch_paper = FetchObj(None)
 fetch_person = FetchObj(None)
+fetch_post = FetchObj(None)
 fetch_sig = FetchObj(None)
 fetch_sigs = FetchList(None)
 fetch_people = FetchList(None)
@@ -73,6 +74,20 @@ class Recommendation(ArrayDocument):
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     _dbfield = 'recommendations.author' # dot.name for updating
+
+class Post(UniqueArrayDocument):
+    _dbfield = 'posts.id' # dot.name for updating
+    # attrs that will only be fetched if accessed by getattr
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    author = LinkDescriptor('author', fetch_person)
+
+class Reply(UniqueArrayDocument):
+    _dbfield = 'replies.id' # dot.name for updating
+    # attrs that will only be fetched if accessed by getattr
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    author = LinkDescriptor('author', fetch_person)
+    replyTo = LinkDescriptor('replyTo', fetch_post)
+
 
 
 class IssueVote(ArrayDocument):
@@ -117,6 +132,7 @@ class SIGLink(ArrayDocument):
             self._mergeLinks = [other]
 
 class GplusPersonData(EmbeddedDocument):
+    'store Google+ data for a user as subdocument of Person'
     _dbfield = 'gplus.id'
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
     def _insert_parent(self):
@@ -167,6 +183,8 @@ class Paper(Document):
     # custom attr constructors
     _attrHandler = dict(
         recommendations=SaveAttrList(Recommendation, insertNew=False),
+        posts=SaveAttrList(Post, insertNew=False),
+        replies=SaveAttrList(Reply, insertNew=False),
         )
 
 
@@ -185,6 +203,7 @@ class Tag(Document):
 # connect forward declarations to their target classes
 fetch_paper.klass = Paper
 fetch_parent_issue.klass = Issue
+fetch_post.klass = Post
 fetch_sig.klass = SIG
 fetch_sigs.klass = SIG
 fetch_person.klass = Person

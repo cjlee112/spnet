@@ -41,6 +41,11 @@ rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
                                         sigs=[sig1._id, sig2._id]),
                            parent=paper2._id)
 
+post1 = core.Post(docData=dict(author=fred._id, text='interesting paper!',
+                               id=98765), parent=paper1)
+reply1 = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
+                                 id=7890, replyTo=98765), parent=paper1)
+
 issue1 = core.Issue(docLinks=dict(paper=paper1),
                     docData=dict(title='The claims are garbage',
                                  category='validity', author=jojo._id,
@@ -68,6 +73,12 @@ assert len(paper2.authors[0].email) == 2
 assert issue1.author == jojo
 p = core.Paper(paper1._id)
 assert len(p.issues) == 1
+assert len(p.posts) == 1
+assert p.posts == [post1]
+assert p.posts[0].text == 'interesting paper!'
+assert core.Post(98765).author == fred
+assert core.Reply(7890).replyTo == post1
+assert core.Reply(7890).parent == paper1
 assert p.issues[0] == issue1
 assert len(p.issues[0].votes) == 1
 assert len(rec2.sigs) == 2
