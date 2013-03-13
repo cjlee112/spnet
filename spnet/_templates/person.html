@@ -1,10 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
+<title> {{- person.name -}} </title>
+</head>
 
-<h1>Papers by
+<body>
+
+<h1 class="title">
 {{ person.name }}
 </h1>
 
+{% if hasattr(person, 'gplus') %}
+<a href=" {{- person.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
+<img src=" {{- person.gplus['image']['url'] -}} ">Subscribe</a>
+{% endif %}
+
+
+<h3>Papers</h3>
 {% for paper in person.papers %}
 <li><A HREF="/view?view=paper&paper={{- paper._id -}}">
 {{ paper.title }}
 </A></li>
 {% endfor %}
+
+
+{% if person.posts %}
+<h3>Discussion</h3>
+
+{% for post in person.posts %}
+<li>
+{{ post.text }}
+{% if hasattr(post, 'url') %}
+<a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+{% endif %}
+{% for reply in post.get_replies() %}
+<li><A HREF="/view?view=person&person={{- reply.author._id -}}">
+{{ reply.author.name }}
+</A> replies:
+{{ reply.text }}
+</li>
+{% endfor %}
+</li>
+{% endfor %}
+{% endif %}
+
+
+</body>
+</html>
