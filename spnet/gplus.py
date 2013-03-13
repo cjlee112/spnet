@@ -11,7 +11,6 @@ from oauth2client.client import OAuth2Credentials, _extract_id_token
 #from oauth2client import GOOGLE_TOKEN_URI
 import httplib2
 from apiclient.discovery import build
-import core
 
 
 # Question: what's worse than an F+ ?
@@ -87,12 +86,16 @@ class OAuth(object):
 
     def get_person(self):
         'get Person record (or create one) for authenticated user'
+        import core
         http = httplib2.Http()
-        http = self.credentials.authorize(http)
-        service = build('plus', 'v1', http=http)
+        self.http = http = self.credentials.authorize(http)
+        self.service = service = build('plus', 'v1', http=http)
         person = service.people().get(userId='me').execute(http=http)
-        return core.get_or_create_person(person, 'gplus', 'id',
-                                         'displayName')
+        gpd = core.GplusPersonData(docData=person, insertNew='findOrInsert')
+        p = gpd.parent
+        if 'refresh_token' in self.access_data:
+            p.update(dict(gplusAccess=self.access_data))
+        return p
 
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!
@@ -120,3 +123,30 @@ class OAuth(object):
                 yield item
             params['pageToken'] = results['nextPageToken'] # get next page
             results = self.request(uri, **params)
+
+    def search_activities(self, uri='https://www.googleapis.com/plus/v1/activities', **kwargs):
+        'like activities().search() only it WORKS'
+        return self.request_iter(uri, **kwargs)
+
+    def get_person_info(self, userID):
+        'short cut to people().get(), does authentication for you'
+        return self.request('https://www.googleapis.com/plus/v1/people/'
+                            + str(userID))
+
+    def get_person_posts(self, userID):
+        'short cut to activities().list(), does authentication for you'
+        return self.request_iter('https://www.googleapis.com/plus/v1/people/'
+                                 + str(userID) + '/activities/public')
+
+    def api_iter(self, resourceName='activities', verb='list', **kwargs):
+        'use Google apiclient to iterate over results from request'
+        rsrc = getattr(self.service, resourceName)()
+        request = getattr(rsrc, verb)(**kwargs)
+        while request is not None:
+            doc = request.execute(http=self.http)
+            for item in results['items']:
+                yield item
+            request = getattr(rsrc, verb + '_next')(request, doc)
+
+publicAccess = OAuth() # gives API key based access (search public data)
+
