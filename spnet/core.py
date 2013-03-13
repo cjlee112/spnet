@@ -170,6 +170,10 @@ class Person(Document):
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
     _dbfield = 'arxiv.id'
+    def _query_external(self, arxivID):
+        'obtain arxiv data from arxiv.org'
+        import arxiv
+        return arxiv.lookup_papers((arxivID,)).next()
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self):
         'create Paper document in db for this arxiv.id'

@@ -46,15 +46,3 @@ def recent_tweets(query='http://arxiv.org'):
             yield arxivID, tweet
             
     
-def get_paper(arxivID):
-    import core
-    try:
-        return core.Paper.find_obj({'arxiv.id':arxivID}).next()
-    except StopIteration: # no matching record
-        try:
-            d = lookup_papers((arxivID,)).next()
-        except StopIteration: # no matching record
-            raise KeyError('arxiv ID %s not found in arXiv!' % arxivID)
-        a = core.ArxivPaperData(docData=d, insertNew='findOrInsert')
-        return a.parent
-

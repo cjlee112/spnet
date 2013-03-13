@@ -1,4 +1,4 @@
-import core, connect, arxiv
+import core, connect
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -14,14 +14,9 @@ a2 = core.EmailAddress(docData=dict(address='fred@dotzler.com',
 a3 = core.EmailAddress(docData=dict(address='fred@gmail.com',
                                     note='personal account'), parent=fred)
 
-def get_one_arxiv(arxivID):
-    return arxiv.lookup_papers((arxivID,)).next()
-
-paper1 = core.ArxivPaperData('1302.4871', insertNew='findOrInsert',
-                             fetchFunc=get_one_arxiv).parent
+paper1 = core.ArxivPaperData('1302.4871', insertNew='findOrInsert').parent
 paper1.update(dict(authors=[jojo._id]))
-paper2 = core.ArxivPaperData('1205.6541', insertNew='findOrInsert',
-                             fetchFunc=get_one_arxiv).parent
+paper2 = core.ArxivPaperData('1205.6541', insertNew='findOrInsert').parent
 paper2.update(dict(authors=[fred._id, jojo._id]))
 
 assert paper1.arxiv.id == '1302.4871'

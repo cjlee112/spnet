@@ -204,15 +204,17 @@ class EmbeddedDocBase(Document):
 class EmbeddedDocument(EmbeddedDocBase):
     'stores a document inside another document in mongoDB'
     def __init__(self, fetchID=None, docData={}, docLinks={},
-                 parent=None, insertNew=True, fetchFunc=None):
+                 parent=None, insertNew=True):
         if parent is not None:
             self._set_parent(parent)
         if insertNew == 'findOrInsert':
+            if not fetchID:
+                fetchID = docData[self._dbfield.split('.')[-1]]
             try: # retrieve from database
-                Document.__init__(self, docData[self._dbfield.split('.')[-1]])
+                Document.__init__(self, fetchID)
             except KeyError: # insert new record in database
-                if not docData: # get data from fetch function
-                    docData = fetchFunc(fetchID)
+                if not docData: # get data from external query
+                    docData = self._query_external(fetchID)
                 Document.__init__(self, None, docData, docLinks,
                                   insertNew=False)
                 if parent is None:

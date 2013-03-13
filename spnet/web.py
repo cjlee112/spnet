@@ -6,7 +6,6 @@ import os
 import glob
 import sys
 import twitter
-import arxiv
 import gplus
 
 def redirect(path='/', body=None, delay=0):
@@ -75,7 +74,8 @@ def fetch_data(dbconn, d):
         d['paper'] = core.Paper(paperID)
     try:
         arxivID = d['arxivID']
-        d['paper'] = arxiv.get_paper(arxivID)
+        d['paper'] = core.ArxivPaperData(arxivID,
+                                         insertNew='findOrInsert').parent
     except KeyError:
         pass
     try: # get requested person
