@@ -5,6 +5,8 @@ dbconn = connect.init_connection()
 dbconn._conn.drop_database('spnet')
 dbconn._conn.drop_database('paperDB')
 
+lorem = '''Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'''
+
 jojo = core.Person(docData=dict(name='jojo', age=37))
 a1 = core.EmailAddress(docData=dict(address='jojo@nowhere.edu', current=True),
                        parent=jojo)
@@ -26,8 +28,8 @@ jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye')
                                 parent=jojo)
 jojoGplus.update(dict(etag='oldversion'))
 
-sig1 = core.SIG(docData=dict(name='math'))
-sig2 = core.SIG(docData=dict(name='physics'))
+sig1 = core.SIG(docData=dict(name='#cosmology'))
+sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel'))
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
                               insertNew='findOrInsert')
@@ -39,7 +41,8 @@ gplus3 = core.GplusPersonData(docData=dict(id=5678, displayName='Fred Eiserling'
 assert gplus3.parent.name == 'Fred Eiserling'
 
 rec1 = core.Recommendation(docData=dict(author=fred._id,
-                                        text='I like this paper'),
+                                        title='Why You Need to Read This Important Extension of the CDM Model',
+                                        text=lorem),
                            parent=paper1)
 rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
                                         sigs=[sig1._id, sig2._id]),
@@ -107,6 +110,7 @@ assert sig1.recommendations == [rec2]
 rec1.array_append('sigs', sig2)
 
 assert len(sig2.recommendations) == 2
+assert core.Recommendation((rec1.parent._id, rec1._get_id())).sigs == [sig2]
 
 rec2.update(dict(text='simply dreadful!', score=27))
 rec3 = core.Recommendation((paper2._id, jojo._id))

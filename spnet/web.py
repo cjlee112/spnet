@@ -186,7 +186,7 @@ class Server(object):
         d.update(kwargs)
         try:
             fetch_data(self.dbconn, d) # retrieve objects from DB
-            s = func(kwargs=d, hasattr=hasattr,
+            s = func(kwargs=d, hasattr=hasattr, enumerate=enumerate,
                      gplusClientID=self.gplus_keys['client_ID'],
                      **d) # run the requested view function
         except Exception, e:

@@ -29,17 +29,6 @@
 <a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Dpaper%26arxivID%3D {{- paper.arxiv.id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+"/></a>
 
-<button
-  class="g-interactivepost"
-  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="Check out this paper... #spnetwork  #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://www.ucla.edu">
-  Comment on this paper.
-</button>
-
 <h3>SIG Topics</h3>
 
 {% for sig in paper.sigs %}
@@ -52,13 +41,23 @@
 {% if paper.recommendations %}
 <h3>Recommendations</h3>
 
-{% for rec in paper.recommendations %}
-<li><A HREF="/view?view=person&person={{- rec.author._id -}}">
+<dl>
+{% for i,rec in enumerate(paper.recommendations) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="/view?view=person&person={{- rec.author._id -}}">
 {{ rec.author.name }}
-</A> says:
-{{ rec.text }}
-</li>
+</A>: <B>{{ rec.title }}</B> 
+</dt>
+<dd>
+<span class="list-identifier">Recommended for:
+{% for sig in rec.sigs %}
+<A HREF="/view?view=sig&sig={{- sig._id -}}"> {{ sig.name }} </A>
 {% endfor %}
+</span>
+<div class="list-comments">{{ rec.text }}</div>
+</dd>
+{% endfor %}
+</dl>
 {% endif %}
 
 
@@ -80,6 +79,28 @@
 </li>
 {% endfor %}
 {% endif %}
+
+<button
+  class="g-interactivepost"
+  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl="http://www.ucla.edu">
+  Comment on this paper
+</button>
+
+<button
+  class="g-interactivepost"
+  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl="http://www.ucla.edu">
+  Ask a question
+</button>
 
 
 {% else %}
