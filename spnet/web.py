@@ -7,6 +7,7 @@ import glob
 import sys
 import twitter
 import gplus
+from bson.objectid import ObjectId
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -98,11 +99,12 @@ def fetch_data(dbconn, d):
         d['sig'] = core.SIG(sig)
     try: # get requested recommendation
         recPaper = d['recPaper']
-        recAuthor = ObjectId(d['recAuthor'])
+        recAuthor = d['recAuthor']
     except KeyError:
         pass
     else:
-        d['rec'] = core.Recommendation((recPaper, recAuthor))
+        d['rec'] = core.Recommendation((ObjectId(recPaper),
+                                        ObjectId(recAuthor)))
         del d['recPaper']
         del d['recAuthor']
 

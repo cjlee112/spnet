@@ -43,7 +43,9 @@
 
 <dl>
 {% for i,rec in enumerate(paper.recommendations) %}
-<dt>[ {{- i + 1 -}} ]
+<dt>[ 
+<A HREF="/view?view=rec&recAuthor={{- rec.author._id -}} &recPaper={{- rec.parent._id -}}">
+{{- i + 1 -}} </A> ]
 <A HREF="/view?view=person&person={{- rec.author._id -}}">
 {{ rec.author.name }}
 </A>: <B>{{ rec.title }}</B> 
@@ -55,6 +57,8 @@
 {% endfor %}
 </span>
 <div class="list-comments">{{ rec.text }}</div>
+<a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Drec%26recPaper%3D {{- paper._id -}} %26recAuthor%3D {{- rec.author._id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 </dd>
 {% endfor %}
 </dl>
