@@ -82,23 +82,23 @@
 
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
+  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
   data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://www.ucla.edu">
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}">
   Comment on this paper
 </button>
 
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/arxiv/ {{- paper.arxiv.id -}}"
+  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
   data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://www.ucla.edu">
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}">
   Ask a question
 </button>
 
