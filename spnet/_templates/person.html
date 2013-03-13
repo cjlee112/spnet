@@ -28,9 +28,14 @@
 {% if person.posts %}
 <h3>Discussion</h3>
 
-{% for post in person.posts %}
-<li>
-{{ post.text }}
+<dl>
+{% for i,post in enumerate(person.posts) %}
+<dt>[ {{- i + 1 -}} ] Comment on
+<A HREF="/view?view=paper&paper={{- post.parent._id -}}">
+{{ post.parent.title }}
+</a></dt>
+<dd>
+<div class="list-comments">{{ post.text }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -42,8 +47,10 @@
 {{ reply.text }}
 </li>
 {% endfor %}
-</li>
+</div>
+</dd>
 {% endfor %}
+</dl>
 {% endif %}
 
 

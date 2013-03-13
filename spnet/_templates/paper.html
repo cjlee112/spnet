@@ -64,11 +64,15 @@
 {% if paper.posts %}
 <h3>Discussion</h3>
 
-{% for post in paper.posts %}
-<li><A HREF="/view?view=person&person={{- post.author._id -}}">
+<dl>
+{% for i,post in enumerate(paper.posts) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="/view?view=person&person={{- post.author._id -}}">
 {{ post.author.name }}
-</A> says:
-{{ post.text }}
+</A>
+</dt>
+<dd>
+<div class="list-comments">{{ post.text }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -80,8 +84,10 @@
 {{ reply.text }}
 </li>
 {% endfor %}
-</li>
+</div>
+</dd>
 {% endfor %}
+</dl>
 {% endif %}
 
 <button
