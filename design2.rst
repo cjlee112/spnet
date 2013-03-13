@@ -107,6 +107,13 @@ Sources
 Schema Decisions
 ----------------
 
+* the database takes all responsibility for atomicity and
+  synchronization.  We do *not* want to burden the web server code 
+  with any of that responsibility.  Therefore, web server code
+  must always query the database; caching objects on the
+  server would expose it to all the update and synchronization
+  burdens.
+
 * paper comments should be stored on the paper; external source
   document should be stored separately (e.g. tweet).
 * comments can "reply-to" another comment, to enable threaded
@@ -149,9 +156,30 @@ Schema Decisions
   each ranked by interest, showing a maximum number with
   link to view more.
 
+* need to extract comments for a given #spnetwork post.
+
+* possible benefit of using paper hashtag: in principle you could just
+  search for all posts with that hashtag, not just those also
+  labeled #spnetwork??
+
+* keep Recommendations separate from Posts and Comments.
+  Each will be an array stored within a Paper document.
+  Posts and Comments have unique IDs, so use UniqueArrayDocument.
+ 
+* How to handle variants (e.g. gplus user, twitter user etc.)?
+  Keep a subdocument representing that extra data, within the
+  main document.  E.g. Person.gplus.  Don't really want to use
+  a class interface, because one person can be belong to many
+  variants...  Should I use EmbeddedDocument interface??
+  Probably.  It provides the insert() and update() methods.
 
 Minimal milestones
 ------------------
+
+* prototype 1: work solely with Google+, just use the Google+
+  interface to look at paper stream?  Benefit of the spn interface?
+  Inserts the tags for you...
+
 
 
 prototype 1
@@ -161,9 +189,85 @@ prototype 1
 * G+ login presumably at home page, then show papers they've
   discussed.
 * view a paper
+
+  * show a choice of tags ranked by relevance for the user to
+    declare their interest, or let user add his own tag.
+  * show spnetwork posts (and comments) on paper page
+
 * enter an spnetwork message.  Presumably it just sends you to
-  G+ with link back to paper page.
-* get #spnetwork comments from G+
-* show spnetwork comments on paper page
+  G+ with link back to paper page.  Key question: does it insert
+  a lot of hashtags for you?
+
+  * default: #spnetwork, #arxiv_1234_5678
+  * URL link to the paper's homepage.
+  * Add a share button that records the event, redirect user
+    to G+ share URL.
+
+* get #spnetwork posts (and comments) from G+: if they're retrieved
+  in order from newest to oldest, presumably you can stop as soon as
+  you hit a post already stored in spn database. No.  The only
+  way to see if someone edited or added comments would be to
+  look at etag of every post.  Yuck.  These kind of annoyances
+  suggest we need an async mechanism...
+
+  * query all posts for a given time duration, and check them against
+    their etag.  Need to see if etag or other fields reflect comment.
+    Yes!  The etag changes and the doc['object']['replies']['totalItems']
+    count changes.  So you requery that document if etag changed... get
+    the new comments.
 
 
+deprecated
+..........
+
+* stamp outgoing messages with a thread ID, e.g. #spnthread12345 ?
+  For the moment ignore this.  Assume that we're going to 
+
+Google+ puzzles
+---------------
+
+* no mechanism for app to add post or comment directly, instead you
+  can prefill a post form for the user (which they can change).
+  Commenting is just plain impossible; your only option is to
+  send the user out to the G+ page for the post.
+* posts and comment search restricted to PUBLIC posts only.
+  Frankly, in that case, why bother with OAuth sign-in?  API key
+  (or even just a public Google search!) will find the same
+  posts and comments!
+* dilemma: which of the following interface flows is least awful?
+
+  * user clicks button on paper homepage, (google sign-in), gets
+    G+ share dialog, addresses it and / or revises it.  Then
+    spn must search G+ activities in order to see the actual
+    message the user sent (which could be quite different from
+    what spn pre-filled for them).  Note that if the user doesn't
+    post it *publicly*, the SPN won't see it at all!
+  * user fills out form on paper homepage, SPN records it, puts
+    up another button for passing this on to G+, user clicks it,
+    gets G+ share dialog, addresses it...
+  * for simple "share", user clicks a link, spn records the event,
+    redirects user to SHARE url with link back to this paper homepage.
+    User addresses it as usual, sends it.  At least this way the 
+    spn site can record the event.  Note this would NOT include
+    #spnetwork tags in the share message.  That seems OK.
+    https://plus.google.com/share?url=
+  * Probably the ideal solution would be to reverse-engineer the G+
+    javascript for interactive sharing.  Then we could 
+    figure out how to do it directly, either in javascript
+    or server-side.
+
+    * tried that, no joy.
+    * hmm: the obvious method of using JS to set the values doesn't
+      succeed in changing what G+ shows as prefilltext. Grr.
+    * I found the GET request it uses, but using that directly looks
+      non-trivial.  In general, hacking their plusone.js looks 
+      unpleasant -- nothing obvious works.  They process the
+      button on load, so using JS to modify the DOM attributes
+      doesn't affect the request.  Any little glitch in the
+      GET vars seems to make their share dialog just hang forever. 
+
+* app *can* post Moments but not to specific addresses.  So it's useless
+  as a "share" mechanism!  (you want to share to specific people).
+
+
+Makes twitter look really great!
