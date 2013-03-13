@@ -65,8 +65,31 @@
 {% endif %}
 
 
-{% if paper.posts %}
-<h3>Discussion</h3>
+<h3>Discussion
+<button
+  class="g-interactivepost"
+  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  title="Click to post a comment on this paper on Google+">
+  Comment on this paper
+</button>
+
+<button
+  class="g-interactivepost"
+  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  title="Click to post a question about this paper on Google+">
+  Ask a question
+</button>
+</h3>
 
 <dl>
 {% for i,post in enumerate(paper.posts) %}
@@ -92,31 +115,6 @@
 </dd>
 {% endfor %}
 </dl>
-{% endif %}
-
-<button
-  class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
-  title="Click to post a comment on this paper on Google+">
-  Comment on this paper
-</button>
-
-<button
-  class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
-  title="Click to post a question about this paper on Google+">
-  Ask a question
-</button>
 
 
 {% else %}
