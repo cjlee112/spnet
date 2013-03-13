@@ -88,6 +88,7 @@ assert list(p.posts[0].get_replies()) == [reply1]
 assert core.Post(98765).author == fred
 assert core.Reply(7890).replyTo == post1
 assert core.Reply(7890).parent == paper1
+assert core.Person(fred._id).posts == [post1]
 
 replyAgain = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
                                  id=7890, replyTo=98765), parent=paper1,

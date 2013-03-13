@@ -57,6 +57,8 @@ fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
+fetch_person_posts = FetchQuery(None, lambda author:
+                            {'posts.author':author._id})
 
 # main object classes
 
@@ -160,6 +162,7 @@ class Person(Document):
                                    missingData=())
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
+    posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
 
     # custom attr constructors
     _attrHandler = dict(
@@ -268,6 +271,7 @@ fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
 fetch_issues.klass = Issue
+fetch_person_posts.klass = Post
 
 ##################################################################
 
