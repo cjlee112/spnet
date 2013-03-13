@@ -119,6 +119,7 @@ Peer review and recommendation verbs
 General user actions
 ++++++++++++++++++++
 
+* ``#share``: you are simply forwarding someone a link to the paper.
 * ``#comment``: this post comments on the paper
 * ``#question``: this post asks a question about the paper.
 * ``#agree``: you agree with the paper.  This will
