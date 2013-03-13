@@ -27,7 +27,7 @@
 
 
 <a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Dpaper%26arxivID%3D {{- paper.arxiv.id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
-<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+"/></a>
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
 
 <h3>SIG Topics</h3>
 
@@ -69,6 +69,10 @@
 {{ post.author.name }}
 </A> says:
 {{ post.text }}
+{% if hasattr(post, 'url') %}
+<a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+{% endif %}
 {% for reply in post.get_replies() %}
 <li><A HREF="/view?view=person&person={{- reply.author._id -}}">
 {{ reply.author.name }}
@@ -87,7 +91,8 @@
   data-cookiepolicy="single_host_origin"
   data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}">
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  title="Click to post a comment on this paper on Google+">
   Comment on this paper
 </button>
 
@@ -98,7 +103,8 @@
   data-cookiepolicy="single_host_origin"
   data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}">
+  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  title="Click to post a question about this paper on Google+">
   Ask a question
 </button>
 
