@@ -1,4 +1,5 @@
 import core, connect
+import gplus
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -161,3 +162,7 @@ rec3 = core.Recommendation(docData=dict(author=fred._id, text='big_deal',
 
 assert core.SIG(sig1._id).recommendations == [rec2]
 assert len(core.SIG(sig2._id).recommendations) == 3
+
+it = gplus.publicAccess.get_person_posts('112634568601116338347')
+testPosts = list(core.find_or_insert_posts(it))
+assert len(testPosts) > 0

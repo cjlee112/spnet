@@ -163,6 +163,7 @@ class Server(object):
         oauth = cherrypy.session['gplus_oauth']
         oauth.get_credentials(**kwargs)
         self.gplus_oauth = oauth # just for hand testing
+        cherrypy.session['person'] = oauth.get_person()
         return 'Logged in to Google+'
     oauth2callback.exposed = True
 
