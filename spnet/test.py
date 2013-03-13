@@ -13,10 +13,15 @@ a2 = core.EmailAddress(docData=dict(address='fred@dotzler.com',
                                     authenticated=False), parent=fred)
 a3 = core.EmailAddress(docData=dict(address='fred@gmail.com',
                                     note='personal account'), parent=fred)
-l = list(arxiv.lookup_papers(('1302.4871', '1205.6541')))
-paper1 = core.ArxivPaperData(docData=l[0], insertNew='findOrInsert').parent
+
+def get_one_arxiv(arxivID):
+    return arxiv.lookup_papers((arxivID,)).next()
+
+paper1 = core.ArxivPaperData('1302.4871', insertNew='findOrInsert',
+                             fetchFunc=get_one_arxiv).parent
 paper1.update(dict(authors=[jojo._id]))
-paper2 = core.ArxivPaperData(docData=l[1], insertNew='findOrInsert').parent
+paper2 = core.ArxivPaperData('1205.6541', insertNew='findOrInsert',
+                             fetchFunc=get_one_arxiv).parent
 paper2.update(dict(authors=[fred._id, jojo._id]))
 
 assert paper1.arxiv.id == '1302.4871'

@@ -52,9 +52,9 @@ def get_paper(arxivID):
         return core.Paper.find_obj({'arxiv.id':arxivID}).next()
     except StopIteration: # no matching record
         try:
-            a = lookup_papers((arxivID,)).next()
+            d = lookup_papers((arxivID,)).next()
         except StopIteration: # no matching record
             raise KeyError('arxiv ID %s not found in arXiv!' % arxivID)
-        a = core.ArxivPaperData(docData=l[0], insertNew='findOrInsert')
+        a = core.ArxivPaperData(docData=d, insertNew='findOrInsert')
         return a.parent
 
