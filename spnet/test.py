@@ -95,7 +95,7 @@ reply2 = core.Reply(docData=dict(author=jojo._id, text='boring paper',
                         insertNew='findOrInsert')
 
 assert core.Paper(paper1._id).replies == [reply1, reply2]
-
+assert core.Paper(str(paper1._id)) == paper1, 'auto ID conversion failed'
 
 assert p.issues[0] == issue1
 assert len(p.issues[0].votes) == 1

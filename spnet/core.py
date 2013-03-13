@@ -184,8 +184,6 @@ class ArxivPaperData(EmbeddedDocument):
 
 class Paper(Document):
     '''interface to a specific paper '''
-    useObjectId = False # input data will supply _id
-
     # attrs that will only be fetched if accessed by user
     authors = LinkDescriptor('authors', fetch_people)
     references = LinkDescriptor('references', fetch_papers,
