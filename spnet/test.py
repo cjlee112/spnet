@@ -47,7 +47,7 @@ rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
 
 post1 = core.Post(docData=dict(author=fred._id, text='interesting paper!',
                                id=98765), parent=paper1)
-reply1 = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
+reply1 = core.Reply(docData=dict(author=jojo._id, text='I disagree with Fred.',
                                  id=7890, replyTo=98765), parent=paper1)
 
 issue1 = core.Issue(docLinks=dict(paper=paper1),
@@ -80,6 +80,7 @@ assert len(p.issues) == 1
 assert len(p.posts) == 1
 assert p.posts == [post1]
 assert p.posts[0].text == 'interesting paper!'
+assert list(p.posts[0].get_replies()) == [reply1]
 assert core.Post(98765).author == fred
 assert core.Reply(7890).replyTo == post1
 assert core.Reply(7890).parent == paper1
@@ -90,7 +91,7 @@ replyAgain = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
 assert replyAgain == reply1
 assert core.Paper(paper1._id).replies == [reply1]
 
-reply2 = core.Reply(docData=dict(author=jojo._id, text='boring paper',
+reply2 = core.Reply(docData=dict(author=jojo._id, text='Deadly boring paper',
                                  id=7891, replyTo=98765), parent=paper1,
                         insertNew='findOrInsert')
 

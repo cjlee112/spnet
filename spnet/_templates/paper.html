@@ -49,6 +49,7 @@
 </li>
 {% endfor %}
 
+{% if paper.recommendations %}
 <h3>Recommendations</h3>
 
 {% for rec in paper.recommendations %}
@@ -58,6 +59,27 @@
 {{ rec.text }}
 </li>
 {% endfor %}
+{% endif %}
+
+
+{% if paper.posts %}
+<h3>Discussion</h3>
+
+{% for post in paper.posts %}
+<li><A HREF="/view?view=person&person={{- post.author._id -}}">
+{{ post.author.name }}
+</A> says:
+{{ post.text }}
+{% for reply in post.get_replies() %}
+<li><A HREF="/view?view=person&person={{- reply.author._id -}}">
+{{ reply.author.name }}
+</A> replies:
+{{ reply.text }}
+</li>
+{% endfor %}
+</li>
+{% endfor %}
+{% endif %}
 
 
 {% else %}

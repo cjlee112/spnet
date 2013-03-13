@@ -80,6 +80,10 @@ class Post(UniqueArrayDocument):
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
+    def get_replies(self):
+        for r in self.parent.replies:
+            if r.replyTo == self:
+                yield r
 
 class Reply(UniqueArrayDocument):
     _dbfield = 'replies.id' # dot.name for updating
