@@ -40,16 +40,6 @@
   Comment on this paper.
 </button>
 
-
-{% else %}
-<h3>Authors</h3>
-
-{% for author in paper.authors %}
-<li><A HREF="/view?view=person&person={{- author._id -}}">
-{{ author.name }}
-</A></li>
-{% endfor %}
-
 <h3>SIG Topics</h3>
 
 {% for sig in paper.sigs %}
@@ -58,11 +48,6 @@
 </A>
 </li>
 {% endfor %}
-
-<h3>Abstract</h3>
-
-{{ paper.abstract }}
-
 
 <h3>Recommendations</h3>
 
@@ -73,6 +58,22 @@
 {{ rec.text }}
 </li>
 {% endfor %}
+
+
+{% else %}
+<h3>Authors</h3>
+
+{% for author in paper.authors %}
+<li><A HREF="/view?view=person&person={{- author._id -}}">
+{{ author.name }}
+</A></li>
+{% endfor %}
+
+
+<h3>Abstract</h3>
+
+{{ paper.abstract }}
+
 
 <h3>Recommend This</h3>
 <FORM ACTION="/view" METHOD="POST">
