@@ -1,5 +1,6 @@
 from base import *
 from hashlib import sha1
+import re
 
 
 
@@ -139,6 +140,10 @@ class GplusPersonData(EmbeddedDocument):
     'store Google+ data for a user as subdocument of Person'
     _dbfield = 'gplus.id'
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
+    def _query_external(self, userID):
+        'obtain user info from Google+ API server'
+        import gplus
+        return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self):
         'create Person document in db for this gplus.id'
         return Person(docData=dict(name=self.displayName))
@@ -203,6 +208,35 @@ class Paper(Document):
         replies=SaveAttrList(Reply, insertNew=False),
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         )
+
+def get_paper_from_hashtag(t):
+    'search text for first paper hashtag and return paper object for that ID'
+    m = re.search('#arxiv_([0-9_]+)', t)
+    if m:
+        arxivID = str('.'.join(m.group(1).split('_')))
+        return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
+    raise ValueError('no paper hashtag found in text')
+
+def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
+                         get_user=lambda x:x['actor']['id']):
+    'generate each post that has a paper hashtag, adding to DB if needed'
+    for d in posts:
+        try:
+            post = Post(d['id'])
+            yield post
+        except KeyError:
+            pass
+        content = get_content(d)
+        try:
+            paper = get_paper_from_hashtag(content)
+        except ValueError:
+            continue
+        userID = get_user(d)
+        author = GplusPersonData(userID, insertNew='findOrInsert').parent
+        d['author'] = author._id
+        d['text'] =  content
+        post = Post(docData=d, parent=paper)
+        yield post
 
 
 class Tag(Document):
