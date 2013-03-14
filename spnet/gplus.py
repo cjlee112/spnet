@@ -146,6 +146,19 @@ class OAuth(object):
         return self.request_iter('https://www.googleapis.com/plus/v1/activities/'
                                  + str(postID) + '/comments')
 
+    def find_or_insert_posts(self, posts,
+                             get_content=lambda x:x['object']['content'],
+                             get_user=lambda x:x['actor']['id'],
+                             get_replycount=lambda x:
+                             x['object']['replies']['totalItems']):
+        'save google+ posts to core.find_or_insert_posts()'
+        import core
+        return core.find_or_insert_posts(posts, self.get_post_comments,
+                                         lambda x:core.GplusPersonData(x,
+                               insertNew='findOrInsert').parent,
+                                         get_content, get_user,
+                                         get_replycount)
+
     def api_iter(self, resourceName='activities', verb='list', **kwargs):
         'use Google apiclient to iterate over results from request'
         rsrc = getattr(self.service, resourceName)()

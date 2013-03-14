@@ -241,13 +241,8 @@ def get_paper_from_hashtag(t):
         return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
     raise ValueError('no paper hashtag found in text')
 
-def find_or_insert_posts(posts, get_post_comments,
-                         find_or_insert_person=lambda x:GplusPersonData(x,
-                               insertNew='findOrInsert').parent,
-                         get_content=lambda x:x['object']['content'],
-                         get_user=lambda x:x['actor']['id'],
-                         get_replycount=lambda x:
-                         x['object']['replies']['totalItems']):
+def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
+                         get_content, get_user, get_replycount):
     'generate each post that has a paper hashtag, adding to DB if needed'
     for d in posts:
         content = get_content(d)
