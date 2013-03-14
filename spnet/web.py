@@ -121,6 +121,10 @@ class Server(object):
     def serve_forever(self):
         cherrypy.quickstart(self, '/', 'cp.conf')
 
+    def reload_views(self):
+        'reload view templates from disk'
+        self.views = get_views()
+
     def login(self, email, password):
         'check password and create session if authenticated'
         try:
@@ -203,15 +207,18 @@ class Server(object):
         pass
 
 
-def init_data():
-    print 'loading templates...'
+def get_views():
     templateDict, env = load_templates()
     templateVars, templateViews = load_template_vars()
-    views = init_template_views(templateDict, templateVars, templateViews)
+    return init_template_views(templateDict, templateVars, templateViews)
+
+def init_data():
+    views = get_views()
     dbconn = connect.init_connection()
     return dbconn, views
 
 if __name__ == '__main__':
+    print 'loading templates...'
     dbconn, views = init_data()
     s = Server(dbconn, views)
     print 'starting server...'
