@@ -242,7 +242,8 @@ def get_paper_from_hashtag(t):
     raise ValueError('no paper hashtag found in text')
 
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
-                         get_content, get_user, get_replycount):
+                         get_content, get_user, get_replycount,
+                         process_post=None, process_reply=None):
     'generate each post that has a paper hashtag, adding to DB if needed'
     for d in posts:
         post = None
@@ -266,6 +267,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             author = find_or_insert_person(userID)
             d['author'] = author._id
             d['text'] =  content
+            if process_post:
+                process_post(d)
             if isRec: # see if rec already in DB
                 try:
                     post = Recommendation((paper._id, author._id))
@@ -279,6 +282,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):
+                if process_reply:
+                    process_reply(c)
                 try:
                     r = Reply(c['id'])
                     if getattr(r, 'etag', None) != c.get('etag', ''):

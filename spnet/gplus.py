@@ -158,7 +158,8 @@ class OAuth(object):
                                          lambda x:core.GplusPersonData(x,
                                insertNew='findOrInsert').parent,
                                          get_content, get_user,
-                                         get_replycount)
+                                         get_replycount, convert_timestamps,
+                                         convert_timestamps)
 
     def api_iter(self, resourceName='activities', verb='list', **kwargs):
         'use Google apiclient to iterate over results from request'
@@ -176,6 +177,15 @@ class OAuth(object):
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
 
+    #def load_recent_spnetwork(self):
+
+def convert_timestamps(d, fields=('published', 'updated')):
+    'convert G+ timestamp string fields to datetime objects'
+    for f in fields:
+        try:
+            d[f] = dateutil.parser.parse(d[f])
+        except KeyError:
+            pass
 
 
 publicAccess = OAuth() # gives API key based access (search public data)
