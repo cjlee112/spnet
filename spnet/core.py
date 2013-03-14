@@ -241,12 +241,14 @@ def get_paper_from_hashtag(t):
         return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
     raise ValueError('no paper hashtag found in text')
 
-def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
+def find_or_insert_posts(posts, get_post_comments,
+                         find_or_insert_person=lambda x:GplusPersonData(x,
+                               insertNew='findOrInsert').parent,
+                         get_content=lambda x:x['object']['content'],
                          get_user=lambda x:x['actor']['id'],
                          get_replycount=lambda x:
                          x['object']['replies']['totalItems']):
     'generate each post that has a paper hashtag, adding to DB if needed'
-    import gplus
     for d in posts:
         content = get_content(d)
         isRec = content.find('#recommend') >= 0 or \
@@ -262,7 +264,7 @@ def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
         except ValueError:
             continue
         userID = get_user(d)
-        author = GplusPersonData(userID, insertNew='findOrInsert').parent
+        author = find_or_insert_person(userID)
         if isRec: # see if rec already in DB
             try:
                 post = Recommendation((paper._id, author._id))
@@ -276,9 +278,9 @@ def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
         else:
             post = Post(docData=d, parent=paper)
         if get_replycount(d) > 0:
-            for c in gplus.publicAccess.get_post_comments(d['id']):
+            for c in get_post_comments(d['id']):
                 userID = get_user(c)
-                author = GplusPersonData(userID, insertNew='findOrInsert').parent
+                author = find_or_insert_person(userID)
                 c['author'] = author._id
                 c['text'] =  get_content(c)
                 c['replyTo'] = d['id']
