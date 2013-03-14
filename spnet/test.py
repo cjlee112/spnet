@@ -64,6 +64,7 @@ vote1 = core.IssueVote(docLinks=dict(person=jojo),
                        parent=issue1)
 
 assert core.Person(jojo._id).email == [a1]
+assert core.Person(jojo._id).replies == [reply1]
 jgp = core.GplusPersonData(1234)
 assert jgp.parent == jojo
 assert jgp.etag == 'oldversion'

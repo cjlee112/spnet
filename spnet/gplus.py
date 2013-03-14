@@ -121,7 +121,10 @@ class OAuth(object):
         while results['items']:
             for item in results['items']:
                 yield item
-            params['pageToken'] = results['nextPageToken'] # get next page
+            try:
+                params['pageToken'] = results['nextPageToken'] # get next page
+            except KeyError:
+                break
             results = self.request(uri, **params)
 
     def search_activities(self, uri='https://www.googleapis.com/plus/v1/activities', **kwargs):
@@ -137,6 +140,11 @@ class OAuth(object):
         'short cut to activities().list(), does authentication for you'
         return self.request_iter('https://www.googleapis.com/plus/v1/people/'
                                  + str(userID) + '/activities/public')
+
+    def get_post_comments(self, postID):
+        'short cut to comments().list(), does authentication for you'
+        return self.request_iter('https://www.googleapis.com/plus/v1/activities/'
+                                 + str(postID) + '/comments')
 
     def api_iter(self, resourceName='activities', verb='list', **kwargs):
         'use Google apiclient to iterate over results from request'

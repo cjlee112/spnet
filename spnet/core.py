@@ -59,6 +59,8 @@ fetch_sig_recs = FetchQuery(None, lambda sig:
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
 fetch_person_posts = FetchQuery(None, lambda author:
                             {'posts.author':author._id})
+fetch_person_replies = FetchQuery(None, lambda author:
+                            {'replies.author':author._id})
 
 # main object classes
 
@@ -163,6 +165,7 @@ class Person(Document):
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
     posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
+    replies = LinkDescriptor('replies', fetch_person_replies, noData=True)
 
     # custom attr constructors
     _attrHandler = dict(
@@ -221,8 +224,11 @@ def get_paper_from_hashtag(t):
     raise ValueError('no paper hashtag found in text')
 
 def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
-                         get_user=lambda x:x['actor']['id']):
+                         get_user=lambda x:x['actor']['id'],
+                         get_replycount=lambda x:
+                         x['object']['replies']['totalItems']):
     'generate each post that has a paper hashtag, adding to DB if needed'
+    import gplus
     for d in posts:
         try:
             post = Post(d['id'])
@@ -239,6 +245,14 @@ def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
         d['author'] = author._id
         d['text'] =  content
         post = Post(docData=d, parent=paper)
+        if get_replycount(d) > 0:
+            for c in gplus.publicAccess.get_post_comments(d['id']):
+                userID = get_user(c)
+                author = GplusPersonData(userID, insertNew='findOrInsert').parent
+                c['author'] = author._id
+                c['text'] =  get_content(c)
+                c['replyTo'] = d['id']
+                r = Reply(docData=c, parent=paper)
         yield post
 
 
@@ -272,6 +286,7 @@ fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
 fetch_issues.klass = Issue
 fetch_person_posts.klass = Post
+fetch_person_replies.klass = Reply
 
 ##################################################################
 
