@@ -274,6 +274,11 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             post = Post(docData=d, parent=paper)
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):
+                try:
+                    r = Reply(c['id'])
+                    continue # already stored in DB, no need to save
+                except KeyError:
+                    pass
                 userID = get_user(c)
                 author = find_or_insert_person(userID)
                 c['author'] = author._id
