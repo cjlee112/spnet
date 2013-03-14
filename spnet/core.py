@@ -245,37 +245,47 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount):
     'generate each post that has a paper hashtag, adding to DB if needed'
     for d in posts:
+        post = None
         content = get_content(d)
         isRec = content.find('#recommend') >= 0 or \
                 content.find('#mustread') >= 0
         if not isRec:
             try:
                 post = Post(d['id'])
-                yield post
+                if getattr(post, 'etag', None) == d.get('etag', ''):
+                    yield post
+                    continue # matches DB record, so nothing to do
             except KeyError:
                 pass
-        try:
-            paper = get_paper_from_hashtag(content)
-        except ValueError:
-            continue
-        userID = get_user(d)
-        author = find_or_insert_person(userID)
-        if isRec: # see if rec already in DB
+        if post is None: # extract data for saving post to DB
             try:
-                post = Recommendation((paper._id, author._id))
-                yield post
-            except KeyError:
-                pass
-        d['author'] = author._id
-        d['text'] =  content
-        if isRec:
-            post = Recommendation(docData=d, parent=paper)
-        else:
-            post = Post(docData=d, parent=paper)
+                paper = get_paper_from_hashtag(content)
+            except ValueError:
+                continue # no link to a paper, so nothing to save.
+            userID = get_user(d)
+            author = find_or_insert_person(userID)
+            d['author'] = author._id
+            d['text'] =  content
+            if isRec: # see if rec already in DB
+                try:
+                    post = Recommendation((paper._id, author._id))
+                    if getattr(post, 'etag', None) == d.get('etag', ''):
+                        yield post
+                        continue # matches DB record, so nothing to do
+                except KeyError: # need to save new record to DB
+                    post = Recommendation(docData=d, parent=paper)
+            else:
+                post = Post(docData=d, parent=paper)
+        yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):
                 try:
                     r = Reply(c['id'])
+                    if getattr(r, 'etag', None) != c.get('etag', ''):
+                        # update DB record with latest data
+                        r.update(dict(etag=c.get('etag', ''),
+                                      text=get_content(c),
+                                      updated=c.get('updated', '')))
                     continue # already stored in DB, no need to save
                 except KeyError:
                     pass
@@ -284,8 +294,7 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 c['author'] = author._id
                 c['text'] =  get_content(c)
                 c['replyTo'] = d['id']
-                r = Reply(docData=c, parent=paper)
-        yield post
+                r = Reply(docData=c, parent=post._parent_link)
 
 
 class Tag(Document):

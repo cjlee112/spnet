@@ -169,6 +169,14 @@ it = gplus.publicAccess.get_person_posts('112634568601116338347')
 testPosts = list(gplus.publicAccess.find_or_insert_posts(it))
 assert len(testPosts) > 0
 
+nposts = len(core.Paper(paper1._id).posts)
+nreplies = len(core.Paper(paper1._id).replies)
+it = gplus.publicAccess.get_person_posts('112634568601116338347')
+testPosts2 = list(gplus.publicAccess.find_or_insert_posts(it))
+assert testPosts == testPosts2
+assert nposts == len(core.Paper(paper1._id).posts)
+assert nreplies == len(core.Paper(paper1._id).replies)
+
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, have you stopped taking your medications?'),
                       parent=paper2._id)
