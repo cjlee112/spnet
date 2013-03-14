@@ -159,7 +159,7 @@ a4.array_del('numbers', 17)
 assert core.EmailAddress(a4.address).numbers == [6]
 
 rec3 = core.Recommendation(docData=dict(author=fred._id, text='big_deal',
-                                        sigs=[sig2._id]),
+                                        sigs=[sig2._id], id=3456),
                            parent=paper2._id)
 
 assert core.SIG(sig1._id).recommendations == [rec2]
@@ -168,3 +168,10 @@ assert len(core.SIG(sig2._id).recommendations) == 3
 it = gplus.publicAccess.get_person_posts('112634568601116338347')
 testPosts = list(core.find_or_insert_posts(it))
 assert len(testPosts) > 0
+
+recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
+                      text='Fred, have you stopped taking your medications?'),
+                      parent=paper2._id)
+
+assert recReply.replyTo == rec3
+assert list(recReply.replyTo.get_replies()) == [recReply]

@@ -79,6 +79,14 @@ class Recommendation(ArrayDocument):
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     _dbfield = 'recommendations.author' # dot.name for updating
+    def get_replies(self):
+        try:
+            recID = self.id
+        except AttributeError:
+            return
+        for r in self.parent.replies:
+            if r._dbDocDict['replyTo'] == recID:
+                yield r
 
 class Post(UniqueArrayDocument):
     _dbfield = 'posts.id' # dot.name for updating
@@ -90,12 +98,22 @@ class Post(UniqueArrayDocument):
             if r.replyTo == self:
                 yield r
 
+def fetch_post_or_rec(obj, fetchID):
+    try:
+        return fetch_post(obj, fetchID)
+    except KeyError:
+        for rec in obj.parent.recommendations:
+            if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
+                return rec
+    raise KeyError('No post or rec found with id=' + str(fetchID))
+
+
 class Reply(UniqueArrayDocument):
     _dbfield = 'replies.id' # dot.name for updating
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
-    replyTo = LinkDescriptor('replyTo', fetch_post)
+    replyTo = LinkDescriptor('replyTo', fetch_post_or_rec)
 
 
 
@@ -230,21 +248,33 @@ def find_or_insert_posts(posts, get_content=lambda x:x['object']['content'],
     'generate each post that has a paper hashtag, adding to DB if needed'
     import gplus
     for d in posts:
-        try:
-            post = Post(d['id'])
-            yield post
-        except KeyError:
-            pass
         content = get_content(d)
+        isRec = content.find('#recommend') >= 0 or \
+                content.find('#mustread') >= 0
+        if not isRec:
+            try:
+                post = Post(d['id'])
+                yield post
+            except KeyError:
+                pass
         try:
             paper = get_paper_from_hashtag(content)
         except ValueError:
             continue
         userID = get_user(d)
         author = GplusPersonData(userID, insertNew='findOrInsert').parent
+        if isRec: # see if rec already in DB
+            try:
+                post = Recommendation((paper._id, author._id))
+                yield post
+            except KeyError:
+                pass
         d['author'] = author._id
         d['text'] =  content
-        post = Post(docData=d, parent=paper)
+        if isRec:
+            post = Recommendation(docData=d, parent=paper)
+        else:
+            post = Post(docData=d, parent=paper)
         if get_replycount(d) > 0:
             for c in gplus.publicAccess.get_post_comments(d['id']):
                 userID = get_user(c)
