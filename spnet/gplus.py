@@ -4,6 +4,7 @@ import string
 import json
 import requests
 from datetime import datetime, timedelta
+import dateutil.parser
 from oauth2client.client import OAuth2Credentials, _extract_id_token
 # supposed to work but doesn't... maybe in a newer version?
 #from oauth2client import GOOGLE_AUTH_URI
@@ -161,13 +162,21 @@ class OAuth(object):
 
     def api_iter(self, resourceName='activities', verb='list', **kwargs):
         'use Google apiclient to iterate over results from request'
-        rsrc = getattr(self.service, resourceName)()
+        try:
+            service = self.service
+            http = self.http
+        except AttributeError:
+            service = build('plus', 'v1', developerKey=self.keys['apikey'])
+            http = None
+        rsrc = getattr(service, resourceName)()
         request = getattr(rsrc, verb)(**kwargs)
         while request is not None:
-            doc = request.execute(http=self.http)
-            for item in results['items']:
+            doc = request.execute(http=http)
+            for item in doc['items']:
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
+
+
 
 publicAccess = OAuth() # gives API key based access (search public data)
 
