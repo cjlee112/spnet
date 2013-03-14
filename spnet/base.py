@@ -255,7 +255,7 @@ def find_one_array_doc(array, keyField, subID):
     for record in array:
         if record[keyField] == subID:
             return record
-    raise ValueError('no matching ArrayDocument!')
+    raise KeyError('no matching ArrayDocument!')
         
 def filter_array_docs(array, keyField, subID):
     'find records in the array with keyField matching subID'
