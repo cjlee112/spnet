@@ -8,6 +8,7 @@ import sys
 import twitter
 import gplus
 from bson.objectid import ObjectId
+import urllib
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -77,6 +78,12 @@ def fetch_data(dbconn, d):
         arxivID = d['arxivID']
         d['paper'] = core.ArxivPaperData(arxivID,
                                          insertNew='findOrInsert').parent
+    except KeyError:
+        pass
+    try:
+        pubmedID = d['pubmedID']
+        d['paper'] = core.PubmedPaperData(pubmedID,
+                                          insertNew='findOrInsert').parent
     except KeyError:
         pass
     try: # get requested person
@@ -195,6 +202,7 @@ class Server(object):
             fetch_data(self.dbconn, d) # retrieve objects from DB
             s = func(kwargs=d, hasattr=hasattr, enumerate=enumerate,
                      gplusClientID=self.gplus_keys['client_ID'],
+                     urlencode=urllib.urlencode,
                      **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
