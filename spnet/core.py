@@ -213,6 +213,14 @@ class ArxivPaperData(EmbeddedDocument):
         authorNames = [d['name'] for d in self.authors]
         return Paper(docData=dict(title=self.title, authorNames=authorNames,
                                   summary=self.summary))
+    def get_spnet_url(self):
+        return 'http://selectedpapers.net/view?view=paper&arxivID=' + self.id
+    def get_source_url(self):
+        return 'http://arxiv.org/abs/' + self.id
+    def get_downloader_url(self):
+        return 'http://arxiv.org/pdf/%s.pdf' % self.id
+    def get_hashtag(self):
+        return '#arxiv_' + self.id.replace('.', '_')
 
 class PubmedPaperData(EmbeddedDocument):
     'store pubmed data for a paper as subdocument of Paper'
@@ -227,6 +235,14 @@ class PubmedPaperData(EmbeddedDocument):
         return Paper(docData=dict(title=self.title,
                                   authorNames=self.authorNames,
                                   summary=self.summary))
+    def get_spnet_url(self):
+        return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
+    def get_source_url(self):
+        return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
+    def get_downloader_url(self):
+        return 'http://dx.doi.org/' + self.doi
+    def get_hashtag(self):
+        return '#pubmed_' + str(self.id)
 
 
 class Paper(Document):
@@ -247,6 +263,16 @@ class Paper(Document):
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         pubmed=SaveAttr(PubmedPaperData, insertNew=False),
         )
+    def get_value(self, stem='spnet_url', bases=('arxiv', 'pubmed')):
+        'get specified kind of value by dispatching to specific paper type'
+        for b in bases:
+            try:
+                o = getattr(self, b)
+            except AttributeError:
+                pass
+            else:
+                return getattr(o, 'get_' + stem)()
+        return getattr(self, 'get_value_' + stem)()
 
 def get_paper_from_hashtag(t):
     'search text for first paper hashtag and return paper object for that ID'
