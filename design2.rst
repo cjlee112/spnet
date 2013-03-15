@@ -269,5 +269,15 @@ Google+ puzzles
 * app *can* post Moments but not to specific addresses.  So it's useless
   as a "share" mechanism!  (you want to share to specific people).
 
+* grr, post hashtags don't seem to get indexed by Google+ right
+  away.  If you post with #spnetwork, then view your own post
+  and click on the #spnetwork hashtag, it takes you to a search
+  page... which claims there are no posts with that hashtag!
+  Even if you use a known hashtag like #numbertheory... your
+  post will not show up in the search results, at least not right
+  away.  Grr.  You are stuck having to list all the posts from
+  that user. OK, now #spnetwork search worked.  Took about an hour
+  for it to show up in search results.
+
 
 Makes twitter look really great!
