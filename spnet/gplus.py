@@ -177,7 +177,13 @@ class OAuth(object):
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
 
-    #def load_recent_spnetwork(self):
+    def load_recent_spnetwork(self, maxDays=10):
+        'scan recent G+ posts for updates, and save updates to DB'
+        now = datetime.datetime.now()
+        posts = self.search_activities(query='#spnetwork', orderBy='recent')
+        for p in self.find_or_insert_posts(posts):
+            if (now - p.updated).days > maxDays:
+                break
 
 def convert_timestamps(d, fields=('published', 'updated')):
     'convert G+ timestamp string fields to datetime objects'
