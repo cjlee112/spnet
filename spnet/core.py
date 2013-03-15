@@ -214,6 +214,20 @@ class ArxivPaperData(EmbeddedDocument):
         return Paper(docData=dict(title=self.title, authorNames=authorNames,
                                   summary=self.summary))
 
+class PubmedPaperData(EmbeddedDocument):
+    'store pubmed data for a paper as subdocument of Paper'
+    _dbfield = 'pubmed.id'
+    def _query_external(self, pubmedID):
+        'obtain pubmed doc data from NCBI'
+        import pubmed
+        return pubmed.get_pubmed_dict(str(pubmedID))
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    def _insert_parent(self):
+        'create Paper document in db for this arxiv.id'
+        return Paper(docData=dict(title=self.title,
+                                  authorNames=self.authorNames,
+                                  summary=self.summary))
+
 
 class Paper(Document):
     '''interface to a specific paper '''
@@ -231,6 +245,7 @@ class Paper(Document):
         posts=SaveAttrList(Post, insertNew=False),
         replies=SaveAttrList(Reply, insertNew=False),
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
+        pubmed=SaveAttr(PubmedPaperData, insertNew=False),
         )
 
 def get_paper_from_hashtag(t):

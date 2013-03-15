@@ -1,5 +1,7 @@
 import core, connect
 import gplus
+import pubmed
+import json
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -183,3 +185,14 @@ recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
 
 assert recReply.replyTo == rec3
 assert list(recReply.replyTo.get_replies()) == [recReply]
+
+pubmedDict = pubmed.get_pubmed_dict('23482246')
+with open('../pubmed/test1.json') as ifile:
+    correctDict = json.loads(ifile.read())
+assert pubmedDict == correctDict
+
+paper3 = core.PubmedPaperData('23482246', insertNew='findOrInsert').parent
+paper3.update(dict(authors=[fred._id]))
+
+assert paper3.pubmed.id == '23482246'
+assert paper3.title == correctDict['title']
