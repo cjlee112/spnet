@@ -6,10 +6,15 @@
 </head>
 
 <body>
-{% if hasattr(paper, 'arxiv') %}
 
 <div id="header">
-<h1><a href="/">SelectedPapers.net</a> &gt; <a href="http://arxiv.org">arXiv.org</a> &gt; <a href="http://arxiv.org/abs/ {{- paper.arxiv.id -}} "> {{- paper.arxiv.id -}} </a></h1>
+<h1><a href="/">SelectedPapers.net</a> &gt; 
+{% if hasattr(paper, 'arxiv') %}
+<a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id -}} </a>
+{% elif hasattr(paper, 'pubmed') %}
+<a href="http://www.ncbi.nlm.nih.gov/pubmed">Pubmed</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.pubmed.id -}} </a>
+{% endif %}
+</h1>
 </div>
 
 <h1 class="title">
@@ -20,9 +25,9 @@
 </div>
 
 <h3>Abstract
-<a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Dpaper%26arxivID%3D {{- paper.arxiv.id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=paper.get_value())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
-<a href="http://arxiv.org/pdf/ {{- paper.arxiv.id -}} .pdf" title="View this paper in PDF format"><img src="/images/pdf.jpg"/></a>
+<a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format"><img src="/images/pdf.jpg"/></a>
 </h3>
 
 <blockquote class="abstract">
@@ -42,24 +47,24 @@
 <h3>Recommendations
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to recommend this paper on Google+">
   Write recommendation
 </button>
 
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to recommend this paper as MUST-READ for your area of research">
   Recommend as Must-Read
 </button>
@@ -74,7 +79,7 @@
 <A HREF="/view?view=person&person={{- rec.author._id -}}">
 {{ rec.author.name }}
 </A>: <B>{{ rec.title }}</B> 
-<a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Drec%26recPaper%3D {{- paper._id -}} %26recAuthor%3D {{- rec.author._id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<a href="https://plus.google.com/share? {{- urlencode(dict(url='http://selectedpapers.net/view?' + urlencode(dict(view='rec', recPaper=paper._id, recAuthor=rec.author._id)))) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 {% if hasattr(rec, 'url') %}
 <a href=" {{- rec.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
@@ -105,24 +110,24 @@
 <h3>Discussion
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="Check out this paper... #spnetwork  #comment #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-prefilltext="Check out this paper... #spnetwork  #comment {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to post a comment on this paper on Google+">
   Comment on this paper
 </button>
 
 <button
   class="g-interactivepost"
-  data-contenturl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question #arxiv_ {{- paper.arxiv.id.replace('.', '_') }} http://localhost:8000/view?view=paper&arxivID= {{- paper.arxiv.id -}}"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl="http://arxiv.org/abs/ {{- paper.arxiv.id -}}"
+  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to post a question about this paper on Google+">
   Ask a question
 </button>
@@ -154,30 +159,6 @@
 </dl>
 
 
-{% else %}
-<h3>Authors</h3>
-
-{% for author in paper.authors %}
-<li><A HREF="/view?view=person&person={{- author._id -}}">
-{{ author.name }}
-</A></li>
-{% endfor %}
-
-
-<h3>Abstract</h3>
-
-{{ paper.abstract }}
-
-
-<h3>Recommend This</h3>
-<FORM ACTION="/view" METHOD="POST">
-<INPUT TYPE="hidden" NAME="view" VALUE="new_rec">
-<INPUT TYPE="hidden" NAME="paper" VALUE="{{- paper._id -}}">
-Enter your recommendation below:<br>
-<TEXTAREA NAME="text" COLS=50 ROWS=20></TEXTAREA>
-<INPUT TYPE="submit">
-</FORM>
-{% endif %}
 
 <script type="text/javascript">
   (function() {
