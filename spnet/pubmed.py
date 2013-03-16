@@ -1,22 +1,37 @@
 from lxml import etree
 import requests
 
-def pubmed_dict_from_xml(xml, fields=dict(title='ArticleTitle',
-                                          summary='AbstractText',
-                                          id='PMID',
-                                          year='ArticleDate.Year',
-                                          journal='ISOAbbreviation',
-                                          ISSN='ISSN',
-                                          affiliation='Affiliation')):
-    'extract fields + authorNames + DOI from xml, return as dict'
+def dict_from_xml(xml, **kwargs):
     root = etree.XML(xml)
     d = {}
-    for k,v in fields.items():
+    for k,v in kwargs.items():
+        if v is None:
+            continue
+        if v[0] == '!': # required field
+            required = True
+            v = v[1:]
+        else:
+            required = False
         f = v.split('.')
         o = root.find('.//' + f[0]) # search for top field
         for subfield in f[1:]: # contains subfield
+            if o is None:
+                break
             o = o.find(subfield)
-        d[k] = o.text
+        if o is not None:
+            d[k] = o.text
+        elif required:
+            raise KeyError('required field not found: ' + v)
+    return d, root
+
+def pubmed_dict_from_xml(xml, title='ArticleTitle',
+                         summary='AbstractText', id='PMID',
+                         year='ArticleDate.Year', journal='ISOAbbreviation',
+                         ISSN='ISSN', affiliation='Affiliation', **kwargs):
+    'extract fields + authorNames + DOI from xml, return as dict'
+    d, root = dict_from_xml(xml, title=title, summary=summary, id=id,
+                            year=year, journal=journal, ISSN=ISSN,
+                            affiliation=affiliation, **kwargs)
     authorNames = [] # extract list of author names
     for o in root.findall('.//Author'):
         authorNames.append(o.find('ForeName').text + ' ' +
@@ -27,16 +42,42 @@ def pubmed_dict_from_xml(xml, fields=dict(title='ArticleTitle',
             d['doi'] = o.text
     return d
 
-def query_pubmed_id(pubmedID,
-               uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
-                    tool='example', email='leec@chem.ucla.edu',
-                    retmode='xml'):
-    params = dict(id=pubmedID, db='pubmed', tool=tool, email=email,
-                  retmode=retmode)
+def query_pubmed(uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
+                    tool='example', email='leec@chem.ucla.edu', db='pubmed',
+                    retmode='xml', **kwargs):
+    d = kwargs.copy()
+    if tool:
+        d['tool'] = tool
+    if email:
+        d['email'] = tool
+    params = dict(db=db, retmode=retmode, **d)
     r = requests.get(uri, params=params)
-    return r.text
+    return r.content
+
+def search_pubmed(term, uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi',
+                  **kwargs):
+    return query_pubmed(uri, term=term, **kwargs)
+    
+
+def query_pubmed_id(pubmedID, **kwargs):
+    return query_pubmed(id=pubmedID, **kwargs)
 
 def get_pubmed_dict(pubmedID):
     'get paper data for specified pubmed ID, from NCBI eutils API'
     xml = query_pubmed_id(pubmedID)
     return pubmed_dict_from_xml(xml)
+
+def get_training_abstracts(terms=('cancer', 'transcription', 'evolution',
+                                  'physics', 'statistics', 'review'),
+                           **kwargs):
+    'generate a training set of 20 abstracts per search term'
+    for t in terms:
+        xml = search_pubmed(t, usehistory='y', tool=None, email=None,
+                            **kwargs)
+        d, root = dict_from_xml(xml, WebEnv='!WebEnv', query_key='!QueryKey')
+        xml = query_pubmed(retstart='0', retmax='20', tool=None, email=None,
+                           **d)
+        root = etree.XML(xml)
+        for o in root.findall('.//AbstractText'):
+            yield o.text
+

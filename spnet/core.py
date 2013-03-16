@@ -245,6 +245,60 @@ class PubmedPaperData(EmbeddedDocument):
         return '#pubmed_' + str(self.id)
 
 
+class DoiPaperData(EmbeddedDocument):
+    'store DOI data for a paper as subdocument of Paper'
+    _dbfield = 'doi.id'
+    def __init__(self, fetchID=None, docData={}, docLinks={},
+                 parent=None, insertNew=True, shortDOI=None):
+        import doi
+        if fetchID is None and shortDOI: # get DOI
+            d = self.coll.find_one({'doi.shortDOI':shortDOI}, {'doi':1})
+            if d: # found it in our DB
+                insertNew = False 
+                docData = d['doi']
+                self._parent_link = d['_id']
+            else: # have to query shortdoi.org for DOI
+                fetchID = doi.map_to_doi(shortDOI)
+                self._shortDOI = shortDOI # cache this temporarily
+        EmbeddedDocument.__init__(self, fetchID, docData=docData,
+                                  docLinks=docLinks, parent=parent,
+                                  insertNew=insertNew)
+    def _query_external(self, fetchID):
+        'obtain doc data from crossref / NCBI'
+        import doi
+        doiDict, pubmedDict = doi.get_pubmed_and_doi(fetchID)
+        doiDict['id'] = fetchID
+        if pubmedDict:
+            self._pubmedDict = pubmedDict
+            try: # use abstract from pubmed if available
+                doiDict['summary'] = pubmedDict['summary']
+            except KeyError:
+                pass
+        try:
+            doiDict['shortDOI'] = self._shortDOI # use cached value
+        except AttributeError: # retrieve from shortdoi.org
+            doiDict['shortDOI'] = doi.map_to_shortdoi(fetchID)
+        return doiDict
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    def _insert_parent(self):
+        'create Paper document in db for this arxiv.id'
+        d = dict(title=self.title, authorNames=self.authorNames,
+                 summary=self.summary)
+        try:
+            d['pubmed'] = self._pubmedDict
+        except AttributeError:
+            pass
+        return Paper(docData=d)
+    def get_spnet_url(self):
+        return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
+    def get_source_url(self):
+        return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
+    def get_downloader_url(self):
+        return 'http://dx.doi.org/' + self.doi
+    def get_hashtag(self):
+        return '#pubmed_' + str(self.id)
+
+
 class Paper(Document):
     '''interface to a specific paper '''
     # attrs that will only be fetched if accessed by user

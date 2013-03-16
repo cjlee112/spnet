@@ -2,6 +2,7 @@ import core, connect
 import gplus
 import pubmed
 import json
+import doi
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -196,3 +197,15 @@ paper3.update(dict(authors=[fred._id]))
 
 assert paper3.pubmed.id == '23482246'
 assert paper3.title == correctDict['title']
+
+s = 'aabbe'
+t = doi.map_to_doi(s)
+assert t == '10.1002/(SICI)1097-0258(19980815/30)17:15/16<1661::AID-SIM968>3.0.CO;2-2'
+assert s == doi.map_to_shortdoi(t)
+
+paper4 = core.DoiPaperData(t, insertNew='findOrInsert').parent
+paper4.update(dict(authors=[fred._id]))
+assert paper4.doi.id == t
+assert paper4.doi.shortDOI == s
+paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
+assert paper4 == paper5
