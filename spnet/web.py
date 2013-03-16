@@ -219,7 +219,7 @@ class Server(object):
             s = func(kwargs=d, hasattr=hasattr, enumerate=enumerate,
                      gplusClientID=self.gplus_keys['client_ID'],
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     **d) # run the requested view function
+                     getattr=getattr, **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500
