@@ -211,8 +211,7 @@ class ArxivPaperData(EmbeddedDocument):
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
         authorNames = [ad['name'] for ad in d['authors']]
-        return Paper(docData=dict(title=d['title'], authorNames=authorNames,
-                                  summary=d['summary']))
+        return Paper(docData=dict(title=d['title'], authorNames=authorNames))
     def get_spnet_url(self):
         return 'http://selectedpapers.net/view?view=paper&arxivID=' + self.id
     def get_source_url(self):
@@ -221,6 +220,8 @@ class ArxivPaperData(EmbeddedDocument):
         return 'http://arxiv.org/pdf/%s.pdf' % self.id
     def get_hashtag(self):
         return '#arxiv_' + self.id.replace('.', '_')
+    def get_abstract(self):
+        return self.summary
 
 class PubmedPaperData(EmbeddedDocument):
     'store pubmed data for a paper as subdocument of Paper'
@@ -233,8 +234,7 @@ class PubmedPaperData(EmbeddedDocument):
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
         return Paper(docData=dict(title=d['title'],
-                                  authorNames=d['authorNames'],
-                                  summary=d['summary']))
+                                  authorNames=d['authorNames']))
     def get_spnet_url(self):
         return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
     def get_source_url(self):
@@ -243,6 +243,8 @@ class PubmedPaperData(EmbeddedDocument):
         return 'http://dx.doi.org/' + self.doi
     def get_hashtag(self):
         return '#pubmed_' + str(self.id)
+    def get_abstract(self):
+        return self.summary
 
 
 class DoiPaperData(EmbeddedDocument):
@@ -280,8 +282,7 @@ class DoiPaperData(EmbeddedDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        d = dict(title=d['title'], authorNames=d['authorNames'],
-                 summary=d['summary'])
+        d = dict(title=d['title'], authorNames=d['authorNames'])
         try:
             d['pubmed'] = self._pubmedDict
         except AttributeError:
@@ -300,6 +301,8 @@ class DoiPaperData(EmbeddedDocument):
         return 'http://dx.doi.org/' + self.id
     def get_hashtag(self):
         return '#shortdoi_' + str(self.shortDOI)
+    def get_abstract(self):
+        return self.summary
 
 
 class Paper(Document):
@@ -320,7 +323,7 @@ class Paper(Document):
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         pubmed=SaveAttr(PubmedPaperData, insertNew=False),
         )
-    def get_value(self, stem='spnet_url', bases=('arxiv', 'pubmed')):
+    def get_value(self, stem='spnet_url', bases=('arxiv', 'pubmed', 'doi')):
         'get specified kind of value by dispatching to specific paper type'
         for b in bases:
             try:
