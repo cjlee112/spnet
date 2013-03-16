@@ -113,23 +113,11 @@
   data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="Check out this paper... #spnetwork  #comment {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
-  title="Click to post a comment on this paper on Google+">
-  Comment on this paper
-</button>
-
-<button
-  class="g-interactivepost"
-  data-contenturl=" {{- paper.get_value('source_url') -}} "
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="[YOUR QUESTION HERE] #spnetwork  #question {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
-  title="Click to post a question about this paper on Google+">
-  Ask a question
+  title="Click to post a question or comment about this paper on Google+">
+  Discuss this paper
 </button>
 </h3>
 
