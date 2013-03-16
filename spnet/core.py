@@ -154,6 +154,15 @@ class SIG(Document):
     recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
                                       noData=True)
     interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
+    def get_interests(self):
+        'return dict of paper:[people]'
+        d = {}
+        for interest in self.interests:
+            try:
+                d[interest.parent].append(interest.author)
+            except KeyError:
+                d[interest.parent] = [interest.author]
+        return d
 
 
 # current unused
@@ -348,7 +357,7 @@ class Paper(Document):
     def get_interests(self):
         'return dict of SIG:[people]'
         d = {}
-        for interest in self.interests:
+        for interest in getattr(self, 'interests', ()):
             for sig in interest.sigs:
                 try:
                     d[sig].append(interest.author)
