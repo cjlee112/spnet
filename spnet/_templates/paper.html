@@ -37,6 +37,12 @@
 
 <h3>SIG Topics</h3>
 
+{% for sig, people in paper.get_interests().items() %}
+<A HREF="/view?view=sig&sig={{- sig._id -}}">
+{{ sig.name }}
+</A> ( {{- list_people(people) -}} )
+{% endfor %}
+<BR>
 {% for sig in paper.sigs %}
 <li><A HREF="/view?view=sig&sig={{- sig._id -}}">
 {{ sig.name }}
