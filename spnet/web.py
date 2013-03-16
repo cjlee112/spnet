@@ -86,6 +86,12 @@ def fetch_data(dbconn, d):
                                           insertNew='findOrInsert').parent
     except KeyError:
         pass
+    try:
+        shortDOI = d['shortDOI']
+        d['paper'] = core.DoiPaperData(shortDOI=shortDOI,
+                                       insertNew='findOrInsert').parent
+    except KeyError:
+        pass
     try: # get requested person
         personID = d['person']
     except KeyError:
