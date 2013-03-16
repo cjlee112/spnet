@@ -145,10 +145,13 @@ class Document(object):
         self.coll.update({'_id': self._id}, {'$pull': {attr: v}})
 
     def __cmp__(self, other):
-        return cmp(self._id, other._id)
+        try:
+            return cmp(self._id, other._id)
+        except AttributeError:
+            return False
 
     def __hash__(self):
-        return self._id
+        return hash(self._id)
 
     @classmethod
     def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
@@ -231,8 +234,13 @@ class EmbeddedDocument(EmbeddedDocBase):
         self._dbDocDict.update(updateDict)
         self.set_attrs(updateDict)
     def __cmp__(self, other):
-        return cmp((self._parent_link,self._dbfield),
-                   (other._parent_link,other._dbfield))
+        try:
+            return cmp((self._parent_link,self._dbfield),
+                       (other._parent_link,other._dbfield))
+        except AttributeError:
+            return False
+    def __hash__(self):
+        return hash((self._parent_link,self._dbfield))
 
 def find_one_array_doc(array, keyField, subID):
     'find record in the array with keyField matching subID'
@@ -340,6 +348,8 @@ class ArrayDocument(EmbeddedDocBase):
                        (other._parent_link, other._get_id()))
         except AttributeError:
             return False
+    def __hash__(self):
+        return hash((self._parent_link, self._get_id()))
 
     @classmethod
     def _id_only(klass, d, d2, keyField):
@@ -396,7 +406,17 @@ class UniqueArrayDocument(ArrayDocument):
     def _id_only(klass, d, d2, keyField):
         return d2[keyField]
 
-
+class AutoIdArrayDocument(UniqueArrayDocument):
+    'makes a unique ID automatically for you'
+    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
+        keyField = self._dbfield.split('.')[1]
+        if fetchID is None and keyField not in docData: # create an ID
+            docData[keyField] = ObjectId() # use pymongo's ID generator
+        elif fetchID and not isinstance(fetchID, ObjectId):
+            fetchID = ObjectId(fetchID)
+        super(AutoIdArrayDocument, self).__init__(fetchID, docData, parent,
+                                                  insertNew)
+            
 
 # generic retrieval classes
 
