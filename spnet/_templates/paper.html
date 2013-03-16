@@ -13,6 +13,9 @@
 <a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id -}} </a>
 {% elif hasattr(paper, 'pubmed') %}
 <a href="http://www.ncbi.nlm.nih.gov/pubmed">Pubmed</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.pubmed.id -}} </a>
+{% elif hasattr(paper, 'doi') %}
+<a href="http://www.crossref.org/guestquery/">DOI</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.doi.shortDOI -}} </a>
+(<A href="http://shortdoi.org/">short DOI</A>)
 {% endif %}
 </h1>
 </div>
