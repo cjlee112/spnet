@@ -252,7 +252,10 @@ def find_one_array_doc(array, keyField, subID):
 def filter_array_docs(array, keyField, subID):
     'find records in the array with keyField matching subID'
     for record in array:
-        v = record[keyField]
+        try:
+            v = record[keyField]
+        except KeyError:
+            continue # lacks this field, so no match
         if isinstance(v, list): # handle array fields specially
             if subID in v:
                 yield record
