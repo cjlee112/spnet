@@ -1,6 +1,6 @@
 
 from dbconn import DBConnection
-from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData
+from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData, PaperInterest
 
 connectDict = {
     Paper:'spnet.paper',
@@ -16,6 +16,7 @@ connectDict = {
     ArxivPaperData:'spnet.paper',
     PubmedPaperData:'spnet.paper',
     DoiPaperData:'spnet.paper',
+    PaperInterest:'spnet.paper',
     }
 
 

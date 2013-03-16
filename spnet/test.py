@@ -3,6 +3,7 @@ import gplus
 import pubmed
 import json
 import doi
+from bson import ObjectId
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -28,12 +29,19 @@ paper2.update(dict(authors=[fred._id, jojo._id]))
 assert paper1.arxiv.id == '1302.4871'
 assert paper2.arxiv.id == '1205.6541'
 
-jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
+jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye', image={'url':'http://www.nobelprize.org/nobel_prizes/physics/laureates/1921/einstein.jpg'}),
                                 parent=jojo)
 jojoGplus.update(dict(etag='oldversion'))
 
 sig1 = core.SIG(docData=dict(name='#cosmology'))
 sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel'))
+
+int1 = core.PaperInterest(docData=dict(author=jojo._id, sigs=[sig1._id]),
+                          parent=paper1)
+assert core.Paper(paper1._id).interests == [int1]
+assert core.Person(jojo._id).interests == [int1]
+assert core.SIG(sig1._id).interests == [int1]
+
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
                               insertNew='findOrInsert')

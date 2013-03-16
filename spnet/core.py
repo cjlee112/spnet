@@ -56,11 +56,15 @@ fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
+fetch_sig_interests = FetchQuery(None, lambda sig:
+                                 {'interests.sigs':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
 fetch_person_posts = FetchQuery(None, lambda author:
                             {'posts.author':author._id})
 fetch_person_replies = FetchQuery(None, lambda author:
                             {'replies.author':author._id})
+fetch_person_interests = FetchQuery(None, lambda author:
+                            {'interests.author':author._id})
 
 # main object classes
 
@@ -115,7 +119,12 @@ class Reply(UniqueArrayDocument):
     author = LinkDescriptor('author', fetch_person)
     replyTo = LinkDescriptor('replyTo', fetch_post_or_rec)
 
-
+class PaperInterest(ArrayDocument):
+    _dbfield = 'interests.author' # dot.name for updating
+    # attrs that will only be fetched if accessed by getattr
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    author = LinkDescriptor('author', fetch_person)
+    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
 class IssueVote(ArrayDocument):
     _dbfield = 'votes.person' # dot.name for updating
@@ -144,6 +153,7 @@ class SIG(Document):
     papers = LinkDescriptor('papers', fetch_sig_papers, noData=True)
     recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
                                       noData=True)
+    interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
 
 
 # current unused
@@ -184,6 +194,7 @@ class Person(Document):
                                  noData=True)
     posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
     replies = LinkDescriptor('replies', fetch_person_replies, noData=True)
+    interests = LinkDescriptor('interests', fetch_person_interests, noData=True)
 
     # custom attr constructors
     _attrHandler = dict(
@@ -320,6 +331,7 @@ class Paper(Document):
         recommendations=SaveAttrList(Recommendation, insertNew=False),
         posts=SaveAttrList(Post, insertNew=False),
         replies=SaveAttrList(Reply, insertNew=False),
+        interests=SaveAttrList(PaperInterest, insertNew=False),
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         pubmed=SaveAttr(PubmedPaperData, insertNew=False),
         )
@@ -333,6 +345,17 @@ class Paper(Document):
             else:
                 return getattr(o, 'get_' + stem)()
         return getattr(self, 'get_value_' + stem)()
+    def get_interests(self):
+        'return dict of SIG:[people]'
+        d = {}
+        for interest in self.interests:
+            for sig in interest.sigs:
+                try:
+                    d[sig].append(interest.author)
+                except KeyError:
+                    d[sig] = [interest.author]
+        return d
+                
 
 def get_paper_from_hashtag(t):
     'search text for first paper hashtag and return paper object for that ID'
@@ -431,9 +454,11 @@ fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
+fetch_sig_interests.klass = PaperInterest
 fetch_issues.klass = Issue
 fetch_person_posts.klass = Post
 fetch_person_replies.klass = Reply
+fetch_person_interests.klass = PaperInterest
 
 ##################################################################
 
