@@ -121,6 +121,16 @@ def fetch_data(dbconn, d):
         del d['recPaper']
         del d['recAuthor']
 
+def people_link_list(people, maxNames=2):
+    l = []
+    for p in people[:maxNames]:
+        l.append('<A HREF="/view?view=person&person=%s">%s</A>'
+                 % (p._id, p.name))
+    s = ','.join(l)
+    if len(people) > maxNames:
+        s += ' and %d others' (len(people) - maxNames)
+    return s
+
 class Server(object):
     def __init__(self, dbconn, views):
         self.dbconn = dbconn
@@ -208,7 +218,7 @@ class Server(object):
             fetch_data(self.dbconn, d) # retrieve objects from DB
             s = func(kwargs=d, hasattr=hasattr, enumerate=enumerate,
                      gplusClientID=self.gplus_keys['client_ID'],
-                     urlencode=urllib.urlencode,
+                     urlencode=urllib.urlencode, list_people=people_link_list,
                      **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
