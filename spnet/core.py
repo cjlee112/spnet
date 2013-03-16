@@ -166,9 +166,9 @@ class GplusPersonData(EmbeddedDocument):
         'obtain user info from Google+ API server'
         import gplus
         return gplus.publicAccess.get_person_info(userID)
-    def _insert_parent(self):
+    def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
-        return Person(docData=dict(name=self.displayName))
+        return Person(docData=dict(name=d['displayName']))
 
 
 class Person(Document):
@@ -208,11 +208,11 @@ class ArxivPaperData(EmbeddedDocument):
         import arxiv
         return arxiv.lookup_papers((arxivID,)).next()
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
-    def _insert_parent(self):
+    def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        authorNames = [d['name'] for d in self.authors]
-        return Paper(docData=dict(title=self.title, authorNames=authorNames,
-                                  summary=self.summary))
+        authorNames = [ad['name'] for ad in d['authors']]
+        return Paper(docData=dict(title=d['title'], authorNames=authorNames,
+                                  summary=d['summary']))
     def get_spnet_url(self):
         return 'http://selectedpapers.net/view?view=paper&arxivID=' + self.id
     def get_source_url(self):
@@ -230,11 +230,11 @@ class PubmedPaperData(EmbeddedDocument):
         import pubmed
         return pubmed.get_pubmed_dict(str(pubmedID))
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
-    def _insert_parent(self):
+    def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        return Paper(docData=dict(title=self.title,
-                                  authorNames=self.authorNames,
-                                  summary=self.summary))
+        return Paper(docData=dict(title=d['title'],
+                                  authorNames=d['authorNames'],
+                                  summary=d['summary']))
     def get_spnet_url(self):
         return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
     def get_source_url(self):
@@ -248,8 +248,8 @@ class PubmedPaperData(EmbeddedDocument):
 class DoiPaperData(EmbeddedDocument):
     'store DOI data for a paper as subdocument of Paper'
     _dbfield = 'doi.id'
-    def __init__(self, fetchID=None, docData={}, docLinks={},
-                 parent=None, insertNew=True, shortDOI=None):
+    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True,
+                 shortDOI=None):
         import doi
         if fetchID is None and shortDOI: # get DOI
             d = self.coll.find_one({'doi.shortDOI':shortDOI}, {'doi':1})
@@ -260,9 +260,7 @@ class DoiPaperData(EmbeddedDocument):
             else: # have to query shortdoi.org for DOI
                 fetchID = doi.map_to_doi(shortDOI)
                 self._shortDOI = shortDOI # cache this temporarily
-        EmbeddedDocument.__init__(self, fetchID, docData=docData,
-                                  docLinks=docLinks, parent=parent,
-                                  insertNew=insertNew)
+        EmbeddedDocument.__init__(self, fetchID, docData, parent, insertNew)
     def _query_external(self, fetchID):
         'obtain doc data from crossref / NCBI'
         import doi
@@ -280,23 +278,28 @@ class DoiPaperData(EmbeddedDocument):
             doiDict['shortDOI'] = doi.map_to_shortdoi(fetchID)
         return doiDict
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
-    def _insert_parent(self):
+    def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        d = dict(title=self.title, authorNames=self.authorNames,
-                 summary=self.summary)
+        d = dict(title=d['title'], authorNames=d['authorNames'],
+                 summary=d['summary'])
         try:
             d['pubmed'] = self._pubmedDict
         except AttributeError:
             pass
         return Paper(docData=d)
     def get_spnet_url(self):
-        return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
+        return 'http://selectedpapers.net/view?view=paper&shortDOI=' + \
+               self.shortDOI
     def get_source_url(self):
-        return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
+        try:
+            return 'http://www.ncbi.nlm.nih.gov/pubmed/' + \
+                   str(self.parent.pubmed.id)
+        except AttributeError:
+            return self.get_downloader_url()
     def get_downloader_url(self):
-        return 'http://dx.doi.org/' + self.doi
+        return 'http://dx.doi.org/' + self.id
     def get_hashtag(self):
-        return '#pubmed_' + str(self.id)
+        return '#shortdoi_' + str(self.shortDOI)
 
 
 class Paper(Document):

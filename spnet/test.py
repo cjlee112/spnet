@@ -57,13 +57,12 @@ post1 = core.Post(docData=dict(author=fred._id, text='interesting paper!',
 reply1 = core.Reply(docData=dict(author=jojo._id, text='I disagree with Fred.',
                                  id=7890, replyTo=98765), parent=paper1)
 
-issue1 = core.Issue(docLinks=dict(paper=paper1),
-                    docData=dict(title='The claims are garbage',
+issue1 = core.Issue(docData=dict(paper=paper1, title='The claims are garbage',
                                  category='validity', author=jojo._id,
                                  description='there is a major flaw in the first step of your proof'))
 
-vote1 = core.IssueVote(docLinks=dict(person=jojo),
-                       docData=dict(rating='crucial', status='open'),
+vote1 = core.IssueVote(docData=dict(person=jojo, rating='crucial',
+                                    status='open'),
                        parent=issue1)
 
 assert core.Person(jojo._id).email == [a1]
@@ -209,3 +208,7 @@ assert paper4.doi.id == t
 assert paper4.doi.shortDOI == s
 paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
 assert paper4 == paper5
+
+spnetPaper = core.DoiPaperData('10.3389/fncom.2012.00001',
+                               insertNew='findOrInsert').parent
+assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'

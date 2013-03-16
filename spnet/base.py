@@ -35,6 +35,9 @@ class LinkDescriptor(object):
         return target
     def __set__(self, obj, data):
         'cache some link data for fetching later'
+        if isinstance(data, Document):
+            obj.__dict__[self.attr] = data # bypass LinkDescriptor mechanism
+            data = data._id # get its ID
         setattr(obj, '_' + self.attr + '_link', data)
 
 def _get_object_id(fetchID):
@@ -75,35 +78,24 @@ class Document(object):
     'base class provides flexible method for storing dict as attr objects'
     useObjectId = True
     
-    def __init__(self, fetchID=None, docData={}, docLinks={},
-                 insertNew=True):
-        '''data can be passed in two dicts: docData must use object IDs,
-        whereas docLinks expects objects (which it translates to
-        object IDs for you).
+    def __init__(self, fetchID=None, docData={}, insertNew=True):
+        '''data can be passed in either as object IDs or as objects
 
         If fetchID provided, retrieves that doc, or raises KeyError.
-        Otherwise, the object is initialized from docData/docLinks,
+        Otherwise, the object is initialized from docData,
         and if insertNew, ALSO inserted into the database.'''
         if fetchID:
-            d = self._get_doc(fetchID)
-            d.update(docData)
-            self.store_data_links(d, docLinks)
-        else:
-            self.store_data_links(docData, docLinks)
-            if insertNew:
-                try:
-                    func = self._new_fields # custom initializer
-                except AttributeError:
-                    pass
-                else:
-                    d = func() # get dict from initializer
-                    if d:
-                        self.store_attrs(d)
-                for attr in getattr(self, '_requiredFields', ()):
-                    if attr not in self._dbDocDict:
-                        raise ValueError('missing required field %s'
-                                         % attr)
-                self.insert()
+            docData = self._get_doc(fetchID)
+        elif insertNew:
+            self.check_required_fields(docData)
+            self.insert(docData) # save to database
+        self._dbDocDict = docData
+        self.set_attrs(docData) # expose as object attributes
+
+    def check_required_fields(self, docData):
+        for attr in getattr(self, '_requiredFields', ()):
+            if attr not in docData:
+                raise ValueError('missing required field %s' % attr)
 
     def _get_doc(self, fetchID):
         'get doc dict from DB'
@@ -115,43 +107,28 @@ class Document(object):
                            % (self.__class__.__name__, fetchID))
         return d
 
-    def store_data_links(self, docData, docLinks):
-        'store IDs and objects properly'
-        self.store_attrs(docData)
-        for k,v in docLinks.items():
-            self._dbDocDict[k] = v._id
-            self.__dict__[k] = v # bypass LinkDescriptor mechanism
-            
-    def store_attrs(self, d):
-        'store as both dict for saving to DB, and processed attributes'
-        try: # keep a copy
-            self._dbDocDict.update(d)
-        except AttributeError:
-            self._dbDocDict = d.copy()
+    def set_attrs(self, d):
+        'set attributes based on specified dict of items'
         attrHandler = getattr(self, '_attrHandler', {})
         l = []
         for attr, v in d.items():
             try:
-                saveFunc = attrHandler[attr]
+                l.append((attrHandler[attr], attr, v))
             except KeyError:
                 setattr(self, attr, v)
-            else:
-                l.append((saveFunc, attr, v))
         for saveFunc, attr, v in l: # run saveFuncs after regular attrs
             saveFunc(self, attr, v)
 
-    def insert(self, saveDict=None):
+    def insert(self, d):
         'insert into DB'
-        d = self._dbDocDict
-        if saveDict:
-            d = d.copy()
-            d.update(saveDict)
-        self._id = self.coll.insert(d)
+        self._id = self.coll.insert(convert_obj_to_id(d))
+        self._dbDocDict = d
 
     def update(self, updateDict):
         'update the specified fields in the DB'
         self.coll.update({'_id': self._id}, {'$set': updateDict})
-        self.store_attrs(updateDict)
+        self._dbDocDict.update(updateDict)
+        self.set_attrs(updateDict)
         
     def delete(self):
         'delete this record from the DB'
@@ -192,6 +169,13 @@ class Document(object):
         for d in klass.find(queryDict, None, False, **kwargs):
             yield klass(docData=d, insertNew=False)
 
+def convert_obj_to_id(d):
+    'replace Document objects by their IDs'
+    d = d.copy()
+    for k,v in d.items():
+        if isinstance(v, Document):
+            d[k] = v._id
+    return d
 
 class EmbeddedDocBase(Document):
     def _set_parent(self, parent):
@@ -203,8 +187,7 @@ class EmbeddedDocBase(Document):
 
 class EmbeddedDocument(EmbeddedDocBase):
     'stores a document inside another document in mongoDB'
-    def __init__(self, fetchID=None, docData={}, docLinks={},
-                 parent=None, insertNew=True):
+    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
         if parent is not None:
             self._set_parent(parent)
         if insertNew == 'findOrInsert':
@@ -215,15 +198,14 @@ class EmbeddedDocument(EmbeddedDocBase):
             except KeyError: # insert new record in database
                 if not docData: # get data from external query
                     docData = self._query_external(fetchID)
-                Document.__init__(self, None, docData, docLinks,
-                                  insertNew=False)
                 if parent is None:
-                    self._set_parent(self._insert_parent())
+                    self._set_parent(self._insert_parent(docData))
                     subdocField = self._dbfield.split('.')[0]
                     setattr(self.parent, subdocField, self)
-                self.insert()
+                self.insert(docData) # save to database
+                self.set_attrs(docData) # expose as object attributes
         else:
-            Document.__init__(self, fetchID, docData, docLinks, insertNew)
+            Document.__init__(self, fetchID, docData, insertNew)
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         subdocField = self._dbfield.split('.')[0]
@@ -233,11 +215,12 @@ class EmbeddedDocument(EmbeddedDocBase):
             raise KeyError('no such record: _id=%s' % fetchID)
         self._parent_link = d['_id']
         return d[subdocField]
-    def insert(self):
+    def insert(self, d):
         subdocField = self._dbfield.split('.')[0]
-        convert_times(self._dbDocDict)
+        convert_times(d)
         self.coll.update({'_id': self._parent_link},
-                         {'$set': {subdocField: self._dbDocDict}})
+                         {'$set': {subdocField: convert_obj_to_id(d)}})
+        self._dbDocDict = d
     def update(self, updateDict):
         'update the existing embedded doc fields in the parent document'
         subdocField = self._dbfield.split('.')[0]
@@ -245,7 +228,8 @@ class EmbeddedDocument(EmbeddedDocBase):
         for k,v in updateDict.items():
             d[subdocField + '.' + k] = v
         self.coll.update({'_id': self._parent_link}, {'$set': d})
-        self.store_attrs(updateDict)
+        self._dbDocDict.update(updateDict)
+        self.set_attrs(updateDict)
     def __cmp__(self, other):
         return cmp((self._parent_link,self._dbfield),
                    (other._parent_link,other._dbfield))
@@ -275,8 +259,7 @@ class ArrayDocument(EmbeddedDocBase):
     Subclasses MUST provide _dbfield attribute of the form
     field.subfield, indicating how to search for fetchID in the parent
     document.'''
-    def __init__(self, fetchID=None, docData={}, docLinks={},
-                 parent=None, insertNew=True):
+    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
         self._set_parent(parent)
         if insertNew == 'findOrInsert':
             try: # retrieve from database
@@ -284,7 +267,7 @@ class ArrayDocument(EmbeddedDocBase):
                 return
             except KeyError: # insert new record in database
                 fetchID = None
-        Document.__init__(self, fetchID, docData, docLinks, insertNew)
+        Document.__init__(self, fetchID, docData, insertNew)
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         self._parent_link,subID = fetchID
@@ -299,17 +282,14 @@ class ArrayDocument(EmbeddedDocBase):
         'return subID for this array record'
         keyField = self._dbfield.split('.')[1]
         return self._dbDocDict[keyField]
-    def insert(self, saveDict=None):
+    def insert(self, d):
         'append to the target array in the parent document'
+        self._dbDocDict = d
         arrayField = self._dbfield.split('.')[0]
-        d = self._dbDocDict
-        if saveDict:
-            d = d.copy()
-            d.update(saveDict)
-        self.coll.update({'_id': self._parent_link}, {'$push': {arrayField: d}})
+        self.coll.update({'_id': self._parent_link},
+                         {'$push': {arrayField: convert_obj_to_id(d)}})
     def update(self, updateDict):
         'update the existing record in the array in the parent document'
-        self._dbDocDict.update(updateDict)
         arrayField = self._dbfield.split('.')[0]
         d = {}
         for k,v in updateDict.items():
@@ -317,6 +297,8 @@ class ArrayDocument(EmbeddedDocBase):
         subID = self._get_id()
         self.coll.update({'_id': self._parent_link, self._dbfield: subID},
                          {'$set': d})
+        self._dbDocDict.update(updateDict)
+        self.set_attrs(updateDict)
 
     def delete(self):
         'delete this record from the array in the parent document'
