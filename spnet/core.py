@@ -125,6 +125,17 @@ class PaperInterest(ArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
+    def add_sig(self, sigID):
+        sigs = set(self._dbDocDict.get('sigs', ()))
+        sigs.add(sigID)
+        self.update(dict(sigs=list(sigs)))
+    def remove_sig(self, sigID):
+        sigs = set(self._dbDocDict.get('sigs', ()))
+        sigs.remove(sigID)
+        if sigs:
+            self.update(dict(sigs=list(sigs)))
+        else: # PaperInterest empty, so remove completely
+            self.delete()
 
 class IssueVote(ArrayDocument):
     _dbfield = 'votes.person' # dot.name for updating

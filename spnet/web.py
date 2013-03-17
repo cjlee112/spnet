@@ -219,7 +219,9 @@ class Server(object):
             s = func(kwargs=d, hasattr=hasattr, enumerate=enumerate,
                      gplusClientID=self.gplus_keys['client_ID'],
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, **d) # run the requested view function
+                     getattr=getattr,
+                     user=cherrypy.session.get('person', None),
+                     **d) # run the requested view function
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500
@@ -227,8 +229,31 @@ class Server(object):
         return s
     view.exposed = True
 
-    def get_json(self, **kwargs):
-        pass
+    def toggle_interest(self, **kwargs):
+        fetch_data(self.dbconn, kwargs)
+        paper, sig, state = kwargs['paper'], kwargs['sig'], int(kwargs['state'])
+        try:
+            user = cherrypy.session['person']
+        except KeyError:
+            cherrypy.response.status = 401
+            return 'you must be logged in!'
+        found = False
+        for interest in getattr(paper, 'interests', ()):
+            if interest._dbDocDict['author'] == user._id:
+                found = True
+                break
+        if not found: # need to create new PaperInterest, for this user
+            if not state:
+                return 'already off'
+            docData = dict(author=user._id, sigs=[sig._id])
+            interest = core.PaperInterest(docData=docData, parent=paper)
+            return 'added interest'
+        if state:
+            interest.add_sig(sig._id)
+        else:
+            interest.remove_sig(sig._id)
+        return 'updated interest'
+    toggle_interest.exposed = True
 
 
 def get_views():
