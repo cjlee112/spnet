@@ -3,6 +3,27 @@
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
 <title> {{- paper.title -}} </title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+</script>
+<script>
+function toggle_interest(o)
+{
+  if (o.value == "1")
+  {
+    o.value="0";
+  }
+  else
+  {
+    o.value="1"
+  }
+  $.post("/toggle_interest",
+  {
+    sig:o.name,
+    paper:"{{- paper._id -}}",
+    state:o.value
+  });
+}
+</script>
 </head>
 
 <body>
@@ -38,20 +59,24 @@
 </blockquote>
 
 
-<h3>SIG Topics</h3>
-
+<h3>Tagged as Interesting by People in the Following Topics</h3>
 {% for sig, people in paper.get_interests().items() %}
+{% if user %}
+<input type="checkbox" name="{{- sig._id -}}"
+onclick="toggle_interest(this)"
+{% if user in people %}
+value="1" CHECKED
+{% else %}
+value="0"
+{% endif %}
+/>
+{% endif %}
 <A HREF="/view?view=sig&sig={{- sig._id -}}">
 {{ sig.name }}
 </A> ( {{- list_people(people) -}} )
 {% endfor %}
+(Click a checkbox to tag paper as interesting for your work in that area)
 <BR>
-{% for sig in paper.sigs %}
-<li><A HREF="/view?view=sig&sig={{- sig._id -}}">
-{{ sig.name }}
-</A>
-</li>
-{% endfor %}
 
 <h3>Recommendations
 <button
