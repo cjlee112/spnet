@@ -129,13 +129,16 @@ class PaperInterest(ArrayDocument):
         sigs = set(self._dbDocDict.get('sigs', ()))
         sigs.add(sigID)
         self.update(dict(sigs=list(sigs)))
+        return self
     def remove_sig(self, sigID):
         sigs = set(self._dbDocDict.get('sigs', ()))
         sigs.remove(sigID)
         if sigs:
             self.update(dict(sigs=list(sigs)))
+            return self
         else: # PaperInterest empty, so remove completely
             self.delete()
+            return None
 
 class IssueVote(ArrayDocument):
     _dbfield = 'votes.person' # dot.name for updating
