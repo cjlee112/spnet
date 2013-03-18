@@ -3,6 +3,14 @@ from bson.errors import InvalidId
 from time import mktime, struct_time
 from datetime import datetime
 
+
+class IdString(str):
+    def __cmp__(self, other):
+        if isinstance(other, ObjectId):
+            return cmp(ObjectId(self), other)
+        else:
+            return cmp(self, other)
+
 class LinkDescriptor(object):
     '''property that fetches data only when accessed.
     Typical usage: for a foreign key that accesses another collection.

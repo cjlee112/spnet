@@ -1,6 +1,7 @@
 import cherrypy
 import glob
 import os.path
+from base import IdString
 
 def request_tuple():
     accept = cherrypy.request.headers['Accept']
@@ -32,12 +33,12 @@ class Collection(object):
 
     def default(self, docID=None, *args, **kwargs):
         'process all requests for this collection'
-        try: # purely for testing / debugging
-            method, mimeType = kwargs['requestTuple']
-            del kwargs['requestTuple']
-        except KeyError:
+        try:
             method, mimeType = request_tuple()
+        except KeyError: # purely for testing / debugging
+            method, mimeType = ('GET', 'html')
         if docID: # a specific document from this collection
+            docID = IdString(docID) # implements proper cmp() vs. ObjectId
             if not args: # perform the request
                 return self._request(method, mimeType, docID, **kwargs)
             else: # pass request on to subcollection
@@ -78,7 +79,8 @@ class Collection(object):
             o = action(*args, **kwargs)
         except KeyError:
             cherrypy.response.status = 404
-            return '%s not in %s' % (docID, self.name)
+            return 'Not found: %s: args=%s, kwargs=%s' \
+                   % (self.name, str(args), str(kwargs))
         return view(o, **kwargs)
 
     def _GET(self, docID, parents={}, **kwargs):
