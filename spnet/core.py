@@ -247,7 +247,7 @@ class ArxivPaperData(EmbeddedDocument):
         authorNames = [ad['name'] for ad in d['authors']]
         return Paper(docData=dict(title=d['title'], authorNames=authorNames))
     def get_spnet_url(self):
-        return 'http://selectedpapers.net/view?view=paper&arxivID=' + self.id
+        return 'http://selectedpapers.net/arxivID/' + self.id
     def get_source_url(self):
         return 'http://arxiv.org/abs/' + self.id
     def get_downloader_url(self):
@@ -270,7 +270,7 @@ class PubmedPaperData(EmbeddedDocument):
         return Paper(docData=dict(title=d['title'],
                                   authorNames=d['authorNames']))
     def get_spnet_url(self):
-        return 'http://selectedpapers.net/view?view=paper&pubmedID=' + self.id
+        return 'http://selectedpapers.net/pubmed/' + self.id
     def get_source_url(self):
         return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
     def get_downloader_url(self):
@@ -323,7 +323,7 @@ class DoiPaperData(EmbeddedDocument):
             pass
         return Paper(docData=d)
     def get_spnet_url(self):
-        return 'http://selectedpapers.net/view?view=paper&shortDOI=' + \
+        return 'http://selectedpapers.net/shortDOI/' + \
                self.shortDOI
     def get_source_url(self):
         try:
