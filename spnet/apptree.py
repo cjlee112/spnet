@@ -51,9 +51,9 @@ def get_collections(templateDir='_templates'):
                                     templateEnv, templateDir,
                                     gplusClientID=gplusClientID)
 
-    recs = rest.Collection('recommendation', core.Recommendation,
-                           templateEnv, templateDir,
-                           gplusClientID=gplusClientID)
+    recs = ArrayDocCollection('rec', core.Recommendation,
+                              templateEnv, templateDir,
+                              gplusClientID=gplusClientID)
     papers.recs = recs # bind as subcollection
 
     likes = InterestCollection('like', core.PaperInterest, templateEnv,
