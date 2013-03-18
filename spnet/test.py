@@ -4,6 +4,7 @@ import pubmed
 import json
 import doi
 from bson import ObjectId
+import apptree
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -41,6 +42,32 @@ int1 = core.PaperInterest(docData=dict(author=jojo._id, sigs=[sig1._id]),
 assert core.Paper(paper1._id).interests == [int1]
 assert core.Person(jojo._id).interests == [int1]
 assert core.SIG(sig1._id).interests == [int1]
+
+intAgain = core.PaperInterest((paper1._id, jojo._id))
+assert intAgain == int1
+try:
+    intAgain.remove_sig(sig2._id)
+except KeyError:
+    pass
+else:
+    raise AssertionError('failed to catch bad remove_sig()')
+assert intAgain.remove_sig(sig1._id) is None
+assert core.Paper(paper1._id).interests == []
+
+# test creation via POST
+int2 = apptree.likes._POST(fred._id, sig2._id, '1',
+                           parents=dict(paper=paper2))
+assert int2.parent == paper2
+assert int2.author == fred
+assert int2.sigs == [sig2]
+assert core.Paper(paper2._id).interests == [int2]
+assert core.Person(fred._id).interests == [int2]
+assert core.SIG(sig2._id).interests == [int2]
+# test removal via POST
+assert apptree.likes._POST(fred._id, sig2._id, '0',
+                           parents=dict(paper=core.Paper(paper2._id))) is None
+assert core.Paper(paper2._id).interests == []
+
 
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
@@ -216,6 +243,7 @@ assert paper4.doi.id == t
 assert paper4.doi.shortDOI == s
 paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
 assert paper4 == paper5
+assert apptree.doiPapers._GET(s) == paper4
 
 spnetPaper = core.DoiPaperData('10.3389/fncom.2012.00001',
                                insertNew='findOrInsert').parent
