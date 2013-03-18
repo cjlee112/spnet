@@ -3,11 +3,6 @@ import core
 import view
 import gplus
 
-gplusClientID = gplus.get_keys()['client_ID']
-
-templateDir = '_templates'
-templateEnv = view.get_template_env(templateDir)
-
 class ArrayDocCollection(rest.Collection):
     def _GET(self, docID, parents):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
@@ -38,33 +33,46 @@ class DoiCollection(rest.Collection):
         return self.klass(shortDOI=shortDOI, insertNew='findOrInsert').parent
 
     
-        
-# access using our object ID
-papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
-                         gplusClientID=gplusClientID)
-# using arxivID
-arxivPapers = ParentCollection('paper', core.ArxivPaperData, templateEnv,
+def get_collections(templateDir='_templates'):
+    gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
+    templateEnv = view.get_template_env(templateDir)
+
+    # access Papers using our object ID
+    papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
+                             gplusClientID=gplusClientID)
+    # using arxivID
+    arxivPapers = ParentCollection('paper', core.ArxivPaperData, templateEnv,
+                                   templateDir, gplusClientID=gplusClientID)
+    # using shortDOI
+    doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
+                              templateDir, gplusClientID=gplusClientID)
+    # using pubmedID
+    pubmedPapers = ParentCollection('paper', core.PubmedPaperData,
+                                    templateEnv, templateDir,
+                                    gplusClientID=gplusClientID)
+
+    recs = rest.Collection('recommendation', core.Recommendation,
+                           templateEnv, templateDir,
+                           gplusClientID=gplusClientID)
+    papers.recs = recs # bind as subcollection
+
+    likes = InterestCollection('like', core.PaperInterest, templateEnv,
                                templateDir, gplusClientID=gplusClientID)
-# using shortDOI
-doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
-                          templateDir, gplusClientID=gplusClientID)
-# using pubmedID
-pubmedPapers = ParentCollection('paper', core.PubmedPaperData, templateEnv,
-                                templateDir, gplusClientID=gplusClientID)
+    papers.likes = likes # bind as subcollection
 
-recs = rest.Collection('recommendation', core.Recommendation,
-                       templateEnv, templateDir, gplusClientID=gplusClientID)
-papers.recs = recs
+    people = rest.Collection('person', core.Person, templateEnv, templateDir,
+                             gplusClientID=gplusClientID)
+    topics = rest.Collection('topic', core.Person, templateEnv, templateDir,
+                             gplusClientID=gplusClientID)
 
-likes = InterestCollection('like', core.PaperInterest, templateEnv,
-                           templateDir, gplusClientID=gplusClientID)
-papers.likes = likes
+    # load homepage template
+    homePage = view.TemplateView(templateEnv.get_template('index.html'))
 
-people = rest.Collection('person', core.Person, templateEnv, templateDir,
-                         gplusClientID=gplusClientID)
-topics = rest.Collection('topic', core.Person, templateEnv, templateDir,
-                         gplusClientID=gplusClientID)
-
-# what collections to bind on the server root
-rootCollections = dict(papers=papers, arxiv=arxivPapers, shortDOI=doiPapers,
-                       pubmed=pubmedPapers, people=people, topics=topics)
+    # what collections to bind on the server root
+    return dict(papers=papers,
+                arxiv=arxivPapers,
+                shortDOI=doiPapers,
+                pubmed=pubmedPapers,
+                people=people,
+                topics=topics,
+                index=homePage)

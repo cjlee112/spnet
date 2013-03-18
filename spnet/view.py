@@ -21,15 +21,17 @@ def get_template_env(dirpath):
     return Environment(loader=loader)
 
 class TemplateView(object):
-    def __init__(self, template, name, **kwargs):
+    exposed = True
+    def __init__(self, template, name=None, **kwargs):
         self.template = template
         self.kwargs = kwargs
         self.name = name
 
-    def __call__(self, doc, **kwargs):
+    def __call__(self, doc=None, **kwargs):
         f = self.template.render
         kwargs.update(self.kwargs)
-        kwargs[self.name] = doc
+        if doc is not None:
+            kwargs[self.name] = doc
         try:
             return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                      urlencode=urllib.urlencode, list_people=people_link_list,
