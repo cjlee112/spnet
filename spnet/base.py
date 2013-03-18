@@ -392,6 +392,14 @@ class ArrayDocument(EmbeddedDocBase):
                                       False, True, **kwargs):
             yield klass(docData=d, parent=parentID, insertNew=False)
 
+    @classmethod
+    def find_obj_in_parent(klass, parent, subID):
+        'search parent document for specified ArrayDocument'
+        arrayField = klass._dbfield.split('.')[0]
+        for o in getattr(parent, arrayField, ()):
+            if o._get_id() == subID:
+                return o
+        raise KeyError('%s not found in %s' % (subID, klass._dbfield))
 
 
 class UniqueArrayDocument(ArrayDocument):
