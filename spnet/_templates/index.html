@@ -1,12 +1,48 @@
-<h3>Login</h3>
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
+<title>SelectedPapers.net</title>
+</head>
+
+<body>
+
+<div id="header">
+<h1><a href="/">SelectedPapers.net</a> &gt; 
+{% if user %}
+Welcome,
+<a href="/view?view=person&person= {{- user._id -}} "> {{- user.name -}} </a>
+{% else %}
 <A HREF="/twitter_login"><IMG SRC="/images/sign-in-with-twitter-gray.png"></A>
 <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
+{% endif %}
+</h1>
+</div>
+
+{% if user %}
+<h3>Papers You Tagged as Interesting</h3>
+
+<dl>
+{% for i,interest in enumerate(user.interests) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="/view?view=paper&paper={{- interest.parent._id -}}">
+{{ interest.parent.title }}
+</A>
+</dt>
+{% endfor %}
+</dl>
+
+
+{% else %}
+<h3>Login</h3>
 <BR>
 <FORM ACTION="/login" METHOD="GET">
 your email:<INPUT TYPE="text" NAME="email" SIZE=30><BR>
 password:<INPUT TYPE="password" NAME="password" SIZE=30><BR>
 <INPUT TYPE="submit">
 </FORM>
+{% endif %}
+
 
 <h3>Search</h3>
 <FORM ACTION="/view" METHOD="GET">
@@ -26,3 +62,5 @@ for <INPUT TYPE="text" NAME="query" SIZE=30>
 <INPUT TYPE="submit">
 </FORM>
 
+</body>
+</html>
