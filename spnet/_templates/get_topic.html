@@ -2,28 +2,28 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
-<title> {{- sig.name -}} </title>
+<title> {{- topic.name -}} </title>
 </head>
 
 <body>
 
 <div id="header">
 <h1>
-<a href="/">SelectedPapers.net</a> &gt; Topic Group &gt; {{ sig.name }}
+<a href="/">SelectedPapers.net</a> &gt; Topic Group &gt; {{ topic.name }}
 </h1>
 </div>
 
-{% if sig.recommendations %}
+{% if topic.recommendations %}
 <h3>Recommendations</h3>
 <dl>
-{% for i,rec in enumerate(sig.recommendations) %}
+{% for i,rec in enumerate(topic.recommendations) %}
 <dt>[ 
-<A HREF="/view?view=rec&recAuthor={{- rec.author._id -}} &recPaper={{- rec.parent._id -}}">
+<A HREF="{{- rec.get_local_url() -}}">
 {{- i + 1 -}} </A> ]
-<A HREF="/view?view=person&person={{- rec.author._id -}}">
+<A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
 </A>: <B>{{ rec.title }}</B> 
-<a href="https://plus.google.com/share? {{- urlencode(dict(url='http://selectedpapers.net/view?' + urlencode(dict(view='rec', recPaper=rec.parent._id, recAuthor=rec.author._id)))) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 {% if hasattr(rec, 'url') %}
 <a href=" {{- rec.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
@@ -32,13 +32,13 @@
 </dt>
 <dd>
 <span class="list-identifier">Recommended:
-<A HREF="/view?view=paper&paper={{- rec.parent._id -}}"> 
+<A HREF="{{- rec.parent.get_value('local_url') -}}"> 
 {{ rec.parent.title }} </A>
 </span>
 <div class="list-comments">
 {{ rec.text }}
 {% for reply in rec.get_replies() %}
-<li><A HREF="/view?view=person&person={{- reply.author._id -}}">
+<li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies:
 {{ reply.text }}
@@ -53,13 +53,17 @@
 <h3>Papers</h3>
 
 <dl>
-{% for i,(paper,people) in enumerate(sig.get_interests().items()) %}
+{% for i,(paper,people) in enumerate(topic.get_interests().items()) %}
 <dt>[ {{- i + 1 -}} ]:
-<A HREF="/view?view=paper&paper={{- paper._id -}}">
+<A HREF="{{- paper.get_value('local_url') -}}">
 {{ paper.title }}
 </A> ( {{- list_people(people) -}} )
 </dt>
 {% endfor %}
 </dl>
+
+
+</body>
+</html>
 
 
