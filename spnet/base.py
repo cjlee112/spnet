@@ -394,7 +394,10 @@ class ArrayDocument(EmbeddedDocBase):
             if queryFields[0] == arrayField:
                 filters.append((queryFields[1], v))
         for d in klass.coll.find(queryDict, fields, **kwargs):
-            array = d[arrayField]
+            try:
+                array = d[arrayField]
+            except KeyError:
+                continue # not present in this record, so skip
             for k,v in filters: # apply filters consecutively
                 array = list(filter_array_docs(array, k, v))
             for d2 in array: # return the filtered results appropriately
