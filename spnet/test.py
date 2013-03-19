@@ -222,6 +222,12 @@ assert testPosts == testPosts2
 assert nposts == len(core.Paper(paper1._id).posts)
 assert nreplies == len(core.Paper(paper1._id).replies)
 
+gpd = core.GplusPersonData('112634568601116338347')
+assert gpd.displayName == 'Meenakshi Roy'
+gps = gpd.subscriptions
+assert gps.gplusPerson == gpd
+
+
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, have you stopped taking your medications?'),
                       parent=paper2._id)

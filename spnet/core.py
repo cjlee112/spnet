@@ -65,6 +65,8 @@ fetch_person_replies = FetchQuery(None, lambda author:
                             {'replies.author':author._id})
 fetch_person_interests = FetchQuery(None, lambda author:
                             {'interests.author':author._id})
+fetch_gplus_by_id = FetchObjByAttr(None, '_id')
+fetch_gplus_subs = FetchObjByAttr(None, 'id')
 
 # main object classes
 
@@ -204,14 +206,29 @@ class GplusPersonData(EmbeddedDocument):
     'store Google+ data for a user as subdocument of Person'
     _dbfield = 'gplus.id'
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
+    subscriptions = LinkDescriptor('subscriptions', fetch_gplus_subs,
+                                   noData=True)
     def _query_external(self, userID):
         'obtain user info from Google+ API server'
         import gplus
         return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
+        subs = GplusSubscriptions(docData=dict(_id=d['id']))
+        self.__dict__['subscriptions'] =  subs # bypass LinkDescriptor
         return Person(docData=dict(name=d['displayName']))
 
+
+class GplusSubscriptions(Document):
+    'for a gplus member, store his array of gplus subscriptions (his circles)'
+    useObjectId = False # input data will supply _id
+    gplusPerson = LinkDescriptor('gplusPerson', fetch_gplus_by_id,
+                                 noData=True)
+    def update_subscriptions(self, doc, subs):
+        if getattr(self, 'etag', None) != doc['etag']:
+            self.update(dict(subs=list(subs), etag=doc['etag'],
+                             totalItems=doc['totalItems'])) # save to db
+            return True # subscriptions changed
 
 def get_interests_sorted(d):
     'get topics sorted from most-used to least-used'
@@ -507,6 +524,8 @@ fetch_issues.klass = Issue
 fetch_person_posts.klass = Post
 fetch_person_replies.klass = Reply
 fetch_person_interests.klass = PaperInterest
+fetch_gplus_by_id.klass = GplusPersonData
+fetch_gplus_subs.klass = GplusSubscriptions
 
 ##################################################################
 
