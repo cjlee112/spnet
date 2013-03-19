@@ -28,6 +28,12 @@ class InterestCollection(ArrayDocCollection):
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
         return self.klass(docID, insertNew='findOrInsert').parent
+class ArxivCollection(ParentCollection):
+    def _search(self, arxivID):
+        return core.ArxivPaperData(arxivID,
+                                   insertNew='findOrInsert').parent
+    def search_html(self, paper, **kwargs):
+        return view.redirect(paper.get_value('local_url'))
 class DoiCollection(rest.Collection):
     def _GET(self, shortDOI, parents=None):
         return self.klass(shortDOI=shortDOI, insertNew='findOrInsert').parent
@@ -41,7 +47,7 @@ def get_collections(templateDir='_templates'):
     papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
     # using arxivID
-    arxivPapers = ParentCollection('paper', core.ArxivPaperData, templateEnv,
+    arxivPapers = ArxivCollection('paper', core.ArxivPaperData, templateEnv,
                                    templateDir, gplusClientID=gplusClientID)
     # using shortDOI
     doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
