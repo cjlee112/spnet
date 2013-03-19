@@ -62,7 +62,7 @@ def get_collections(templateDir='_templates'):
 
     people = rest.Collection('person', core.Person, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
-    topics = rest.Collection('topic', core.Person, templateEnv, templateDir,
+    topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 
     # load homepage template
