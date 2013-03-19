@@ -7,6 +7,16 @@
 
 <body>
 
+<div id="header">
+<h1><a href="/">SelectedPapers.net</a> &gt; People &gt; 
+{% if hasattr(person, 'gplus') %}
+<a href=" {{- person.gplus['url'] -}} "> {{- person.name -}} </a>
+{% else %}
+{{ person.name }}
+{% endif %}
+</h1>
+</div>
+
 <h1 class="title">
 {{ person.name }}
 </h1>
