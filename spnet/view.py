@@ -2,6 +2,16 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 import urllib
 
+def redirect(path='/', body=None, delay=0):
+    'redirect browser, if desired after showing a message'
+    s = '<HTML><HEAD>\n'
+    s += '<meta http-equiv="Refresh" content="%d; url=%s">\n' % (delay, path)
+    s += '</HEAD>\n'
+    if body:
+        s += '<BODY>%s</BODY>\n' % body
+    s += '</HTML>\n'
+    return s
+
 def people_link_list(people, maxNames=2):
     l = []
     for p in people[:maxNames]:
@@ -35,7 +45,7 @@ class TemplateView(object):
         try:
             return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, 
+                     getattr=getattr, str=str,
                      user=cherrypy.session.get('person', None),
                      **kwargs) # apply template
         except Exception, e:

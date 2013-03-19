@@ -4,16 +4,7 @@ import core, connect
 import twitter
 import gplus
 import apptree
-
-def redirect(path='/', body=None, delay=0):
-    'redirect browser, if desired after showing a message'
-    s = '<HTML><HEAD>\n'
-    s += '<meta http-equiv="Refresh" content="%d; url=%s">\n' % (delay, path)
-    s += '</HEAD>\n'
-    if body:
-        s += '<BODY>%s</BODY>\n' % body
-    s += '</HTML>\n'
-    return s
+import view
 
 class Server(object):
     def __init__(self, dbconn=None, colls=None):
@@ -49,13 +40,13 @@ class Server(object):
             cherrypy.session['person'] = p
         else:
             return 'bad password'
-        return redirect('/view?view=person&person=' + str(p._id))
+        return view.redirect('/view?view=person&person=' + str(p._id))
     login.exposed = True
 
     def twitter_login(self):
         redirect_url, tokens = twitter.start_oauth('http://localhost:8000/twitter_oauth')
         cherrypy.session['twitter_request_token'] = tokens
-        return redirect(redirect_url)
+        return view.redirect(redirect_url)
     twitter_login.exposed = True
 
     def twitter_oauth(self, oauth_token, oauth_verifier):
@@ -72,7 +63,7 @@ class Server(object):
     def gplus_login(self):
         oauth = gplus.OAuth(keys=self.gplus_keys)
         cherrypy.session['gplus_oauth'] = oauth
-        return redirect(oauth.get_authorize_url())
+        return view.redirect(oauth.get_authorize_url())
     gplus_login.exposed = True
 
     def oauth2callback(self, error=False, **kwargs):
@@ -82,7 +73,7 @@ class Server(object):
         oauth.get_credentials(**kwargs)
         self.gplus_oauth = oauth # just for hand testing
         cherrypy.session['person'] = oauth.get_person()
-        return redirect('/')
+        return view.redirect('/')
     oauth2callback.exposed = True
 
 
