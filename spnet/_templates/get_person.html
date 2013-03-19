@@ -17,12 +17,17 @@
 {% endif %}
 
 
+{% if person.posts %}
 <h3>Papers</h3>
-{% for paper in person.papers %}
-<li><A HREF="/view?view=paper&paper={{- paper._id -}}">
+<dl>
+{% for i,paper in enumerate(person.papers) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="{{- paper.get_value('local_url') -}}">
 {{ paper.title }}
-</A></li>
+</A></dt>
 {% endfor %}
+</dl>
+{% endif %}
 
 
 {% if person.posts %}
@@ -31,7 +36,7 @@
 <dl>
 {% for i,post in enumerate(person.posts) %}
 <dt>[ {{- i + 1 -}} ] Comment on
-<A HREF="/view?view=paper&paper={{- post.parent._id -}}">
+<A HREF="{{- post.parent.get_value('local_url') -}}">
 {{ post.parent.title }}
 </a></dt>
 <dd>
@@ -41,7 +46,7 @@
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
 {% for reply in post.get_replies() %}
-<li><A HREF="/view?view=person&person={{- reply.author._id -}}">
+<li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies:
 {{ reply.text }}
