@@ -5,8 +5,20 @@
 <title> {{- paper.title -}} </title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
 </script>
-<script>
-function toggle_interest(o, userID)
+
+<script type="text/javascript">
+function setInterest(topicID, state, userID)
+{
+  $.post("/papers/ {{- paper._id -}} /likes/" + userID,
+  {
+    topic:topicID,
+    state:state
+  }, function(data,status){
+    alert("Data: " + data + "\nStatus: " + status);
+  });
+}
+
+function toggleInterest(o, userID)
 {
   if (o.value == "1")
   {
@@ -16,11 +28,7 @@ function toggle_interest(o, userID)
   {
     o.value="1"
   }
-  $.post("/papers/ {{- paper._id -}} /likes/" + userID,
-  {
-    sig:o.name,
-    state:o.value
-  });
+  setInterest(o.name, o.value, userID);
 }
 </script>
 </head>
@@ -59,10 +67,14 @@ function toggle_interest(o, userID)
 
 
 <h3>Tagged as Interesting by People in the Following Topics</h3>
-{% for topic, people in paper.get_interests().items() %}
+{% if user %}
+(Click a checkbox to tag paper as interesting for your work in that area)
+<BR>
+{% endif %}
+{% for topic, people in paper.get_interests(sorted=True) %}
 {% if user %}
 <input type="checkbox" name="{{- topic._id -}}"
-onclick="toggle_interest(this, ' {{- user._id -}} ')"
+onclick="toggleInterest(this, ' {{- user._id -}} ')"
 {% if user in people %}
 value="1" CHECKED
 {% else %}
@@ -75,7 +87,16 @@ value="0"
 </A> ( {{- list_people(people) -}} )
 {% endfor %}
 {% if user %}
-(Click a checkbox to tag paper as interesting for your work in that area)
+<BR>Add a topic:
+<select onchange="setInterest(this.value, '1', ' {{- user._id -}} ')" name="chooseTopic">
+<option value=""></option>
+{% for topic,papers in user.get_interests(sorted=True) %}
+<option value=" {{- topic._id -}} "> {{- topic.name -}} </option>
+{% endfor %}
+</select>
+or enter a new tag here:
+<INPUT TYPE="text" id="addNewTopic" NAME="topic" SIZE=15/>
+<button onclick="setInterest($('#addNewTopic').val(), '1', ' {{- user._id -}} ')">Save</button>
 {% endif %}
 <BR>
 
