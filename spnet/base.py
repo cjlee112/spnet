@@ -161,6 +161,19 @@ class Document(object):
     def __hash__(self):
         return hash(self._id)
 
+    def get_value(self, stem='spnet_url'):
+        'get specified kind of value by dispatching to specific paper type'
+        for b in getattr(self, '_get_value_attrs', ()):
+            try:
+                o = getattr(self, b)
+            except AttributeError:
+                pass
+            else:
+                return getattr(o, 'get_' + stem)()
+        return getattr(self, 'get_' + stem)()
+    def get_spnet_url(self):
+        return self._spnet_url_base + self.get_local_url()
+
     @classmethod
     def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
         'generic class method for searching a specific collection'

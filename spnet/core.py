@@ -91,6 +91,9 @@ class Recommendation(ArrayDocument):
         for r in self.parent.replies:
             if r._dbDocDict['replyTo'] == recID:
                 yield r
+    def get_local_url(self):
+        return '/papers/' + str(self._parent_link) + '/recs/' + \
+               str(self._dbDocDict['author'])
 
 class Post(UniqueArrayDocument):
     _dbfield = 'posts.id' # dot.name for updating
@@ -139,6 +142,9 @@ class PaperInterest(ArrayDocument):
         else: # PaperInterest empty, so remove completely
             self.delete()
             return None
+    def get_local_url(self):
+        return '/papers/' + str(self._parent_link) + '/likes/' + \
+               str(self._dbDocDict['author'])
 
 class IssueVote(ArrayDocument):
     _dbfield = 'votes.person' # dot.name for updating
@@ -177,6 +183,8 @@ class SIG(Document):
             except KeyError:
                 d[interest.parent] = [interest.author]
         return d
+    def get_local_url(self):
+        return '/topics/' + str(self._id)
 
 
 # current unused
@@ -233,6 +241,8 @@ class Person(Document):
             return False
     def set_password(self, password):
         self.update(dict(password=sha1(password).hexdigest()))
+    def get_local_url(self):
+        return '/people/' + str(self._id)
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
@@ -246,8 +256,8 @@ class ArxivPaperData(EmbeddedDocument):
         'create Paper document in db for this arxiv.id'
         authorNames = [ad['name'] for ad in d['authors']]
         return Paper(docData=dict(title=d['title'], authorNames=authorNames))
-    def get_spnet_url(self):
-        return 'http://selectedpapers.net/arxivID/' + self.id
+    def get_local_url(self):
+        return '/arxiv/' + self.id
     def get_source_url(self):
         return 'http://arxiv.org/abs/' + self.id
     def get_downloader_url(self):
@@ -269,8 +279,8 @@ class PubmedPaperData(EmbeddedDocument):
         'create Paper document in db for this arxiv.id'
         return Paper(docData=dict(title=d['title'],
                                   authorNames=d['authorNames']))
-    def get_spnet_url(self):
-        return 'http://selectedpapers.net/pubmed/' + self.id
+    def get_local_url(self):
+        return '/pubmed/' + self.id
     def get_source_url(self):
         return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
     def get_downloader_url(self):
@@ -322,9 +332,8 @@ class DoiPaperData(EmbeddedDocument):
         except AttributeError:
             pass
         return Paper(docData=d)
-    def get_spnet_url(self):
-        return 'http://selectedpapers.net/shortDOI/' + \
-               self.shortDOI
+    def get_local_url(self):
+        return '/shortDOI/' + self.shortDOI
     def get_source_url(self):
         try:
             return 'http://www.ncbi.nlm.nih.gov/pubmed/' + \
@@ -358,16 +367,7 @@ class Paper(Document):
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         pubmed=SaveAttr(PubmedPaperData, insertNew=False),
         )
-    def get_value(self, stem='spnet_url', bases=('arxiv', 'pubmed', 'doi')):
-        'get specified kind of value by dispatching to specific paper type'
-        for b in bases:
-            try:
-                o = getattr(self, b)
-            except AttributeError:
-                pass
-            else:
-                return getattr(o, 'get_' + stem)()
-        return getattr(self, 'get_value_' + stem)()
+    _get_value_attrs = ('arxiv', 'pubmed', 'doi')
     def get_interests(self):
         'return dict of SIG:[people]'
         d = {}
