@@ -15,8 +15,7 @@ def redirect(path='/', body=None, delay=0):
 def people_link_list(people, maxNames=2):
     l = []
     for p in people[:maxNames]:
-        l.append('<A HREF="/view?view=person&person=%s">%s</A>'
-                 % (p._id, p.name))
+        l.append('<A HREF="%s">%s</A>' % (p.get_local_url(), p.name))
     s = ','.join(l)
     if len(people) > maxNames:
         s += ' and %d others' (len(people) - maxNames)
