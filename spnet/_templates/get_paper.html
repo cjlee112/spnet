@@ -36,7 +36,7 @@ function toggleInterest(o, userID)
 <body>
 
 <div id="header">
-<h1><a href="/">SelectedPapers.net</a> &gt; 
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
 {% if hasattr(paper, 'arxiv') %}
 <a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id -}} </a>
 {% elif hasattr(paper, 'pubmed') %}
