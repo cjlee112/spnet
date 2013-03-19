@@ -57,7 +57,7 @@ fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
 fetch_sig_interests = FetchQuery(None, lambda sig:
-                                 {'interests.sigs':sig._id})
+                                 {'interests.topics':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
 fetch_person_posts = FetchQuery(None, lambda author:
                             {'posts.author':author._id})
@@ -127,17 +127,17 @@ class PaperInterest(ArrayDocument):
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
-    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
-    def add_sig(self, sigID):
-        sigs = set(self._dbDocDict.get('sigs', ()))
-        sigs.add(sigID)
-        self.update(dict(sigs=list(sigs)))
+    topics = LinkDescriptor('topics', fetch_sigs, missingData=())
+    def add_topic(self, topic):
+        topics = set(self._dbDocDict.get('topics', ()))
+        topics.add(topic)
+        self.update(dict(topics=list(topics)))
         return self
-    def remove_sig(self, sigID):
-        sigs = set(self._dbDocDict.get('sigs', ()))
-        sigs.remove(sigID)
-        if sigs:
-            self.update(dict(sigs=list(sigs)))
+    def remove_topic(self, topic):
+        topics = set(self._dbDocDict.get('topics', ()))
+        topics.remove(topic)
+        if topics:
+            self.update(dict(topics=list(topics)))
             return self
         else: # PaperInterest empty, so remove completely
             self.delete()
@@ -166,6 +166,7 @@ class Issue(Document):
 
 class SIG(Document):
     '''interface for a Specific Interest Group'''
+    useObjectId = False # input data will supply _id
     _requiredFields = ('name',)
 
     # attrs that will only be fetched if accessed by user

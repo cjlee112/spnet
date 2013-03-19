@@ -11,6 +11,8 @@ dbconn = connect.init_connection()
 dbconn._conn.drop_database('spnet')
 dbconn._conn.drop_database('paperDB')
 
+rootColl = apptree.get_collections()
+
 lorem = '''Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'''
 
 jojo = core.Person(docData=dict(name='jojo', age=37))
@@ -34,10 +36,10 @@ jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye',
                                 parent=jojo)
 jojoGplus.update(dict(etag='oldversion'))
 
-sig1 = core.SIG(docData=dict(name='#cosmology'))
-sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel'))
+sig1 = core.SIG(docData=dict(name='#cosmology', _id='cosmology'))
+sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel', _id='lambdaCDMmodel'))
 
-int1 = core.PaperInterest(docData=dict(author=jojo._id, sigs=[sig1._id]),
+int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
                           parent=paper1)
 assert core.Paper(paper1._id).interests == [int1]
 assert core.Person(jojo._id).interests == [int1]
@@ -46,25 +48,26 @@ assert core.SIG(sig1._id).interests == [int1]
 intAgain = core.PaperInterest((paper1._id, jojo._id))
 assert intAgain == int1
 try:
-    intAgain.remove_sig(sig2._id)
+    intAgain.remove_topic(sig2._id)
 except KeyError:
     pass
 else:
-    raise AssertionError('failed to catch bad remove_sig()')
-assert intAgain.remove_sig(sig1._id) is None
+    raise AssertionError('failed to catch bad remove_topic()')
+assert intAgain.remove_topic(sig1._id) is None
 assert core.Paper(paper1._id).interests == []
 
 # test creation via POST
-int2 = apptree.likes._POST(fred._id, sig2._id, '1',
-                           parents=dict(paper=paper2))
+paperLikes = rootColl['papers'].likes
+int2 = paperLikes._POST(fred._id, sig2._id, '1',
+                        parents=dict(paper=paper2))
 assert int2.parent == paper2
 assert int2.author == fred
-assert int2.sigs == [sig2]
+assert int2.topics == [sig2]
 assert core.Paper(paper2._id).interests == [int2]
 assert core.Person(fred._id).interests == [int2]
 assert core.SIG(sig2._id).interests == [int2]
 # test removal via POST
-assert apptree.likes._POST(fred._id, sig2._id, '0',
+assert paperLikes._POST(fred._id, sig2._id, '0',
                            parents=dict(paper=core.Paper(paper2._id))) is None
 assert core.Paper(paper2._id).interests == []
 
@@ -243,7 +246,7 @@ assert paper4.doi.id == t
 assert paper4.doi.shortDOI == s
 paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
 assert paper4 == paper5
-assert apptree.doiPapers._GET(s) == paper4
+assert rootColl['shortDOI']._GET(s) == paper4
 
 spnetPaper = core.DoiPaperData('10.3389/fncom.2012.00001',
                                insertNew='findOrInsert').parent

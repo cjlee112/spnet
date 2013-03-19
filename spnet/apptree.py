@@ -8,22 +8,22 @@ class ArrayDocCollection(rest.Collection):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
 
 class InterestCollection(ArrayDocCollection):
-    def _POST(self, personID, sigID, state, parents):
-        'add or remove SIG from PaperInterest depending on state'
+    def _POST(self, personID, topic, state, parents):
+        'add or remove topic from PaperInterest depending on state'
         state = int(state)
         try:
             interest = self._GET(personID, parents)
         except KeyError:
             if state:
-                docData = dict(author=personID, sigs=[sigID])
+                docData = dict(author=personID, topics=[topic])
                 return core.PaperInterest(docData=docData,
                                           parent=parents['paper'])
             else: # trying to rm something that doesn't exist
                 raise
         if state:
-            return interest.add_sig(sigID)
+            return interest.add_topic(topic)
         else:
-            return interest.remove_sig(sigID)
+            return interest.remove_topic(topic)
 
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
