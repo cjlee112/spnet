@@ -73,6 +73,9 @@ assert paperLikes._POST(fred._id, sig2._id, '0',
                            parents=dict(paper=core.Paper(paper2._id))) is None
 assert core.Paper(paper2._id).interests == []
 
+int3 = paperLikes._POST(fred._id, '#silicene', '1',
+                        parents=dict(paper=paper2))
+assert core.SIG('silicene').interests == [int3]
 
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
