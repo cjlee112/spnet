@@ -129,6 +129,10 @@ class Document(object):
 
     def insert(self, d):
         'insert into DB'
+        try: # if class defines _idField, store it as mongodb _id
+            d['_id'] = d[self._idField]
+        except AttributeError:
+            pass
         self._id = self.coll.insert(convert_obj_to_id(d))
         self._dbDocDict = d
 
@@ -482,6 +486,12 @@ class FetchParent(FetchObj):
     def __call__(self, obj):
         return self.klass(obj._parent_link, **self.kwargs)
 
+class FetchObjByAttr(FetchObj):
+    def __init__(self, klass, attr, **kwargs):
+        self.attr = attr
+        FetchObj.__init__(self, klass, **kwargs)
+    def __call__(self, obj):
+        return self.klass(getattr(obj, self.attr), **self.kwargs)
 
 class SaveAttr(object):
     'unwrap dict using specified klass'
