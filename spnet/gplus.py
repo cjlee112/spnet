@@ -98,6 +98,14 @@ class OAuth(object):
             p.update(dict(gplusAccess=self.access_data))
         return p
 
+    def update_subscriptions(self, gplusPersonData):
+        'retrieve circles data and save to db'
+        gplusSub = gplusPersonData.subscriptions
+        it = self.api_iter('people', userId='me', collection='visible',
+                           getResponse=True)
+        doc = it.next() # 1st item is the response document
+        gplusSub.update_subscriptions(doc, it) # save to db if changed
+
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!
     def request(self, uri, headers=None, **params):
@@ -115,10 +123,11 @@ class OAuth(object):
         r = requests.get(uri, params=params, headers=headers)
         return r.json()
 
-    def request_iter(self, uri, **kwargs):
+    def request_iter(self, uri, results=None, **kwargs):
         'generate results from query using paging'
         params = kwargs.copy()
-        results = self.request(uri, **params)
+        if results is None: # perform the initial query
+            results = self.request(uri, **params)
         while results['items']:
             for item in results['items']:
                 yield item
@@ -161,7 +170,8 @@ class OAuth(object):
                                          get_replycount, convert_timestamps,
                                          convert_timestamps)
 
-    def api_iter(self, resourceName='activities', verb='list', **kwargs):
+    def api_iter(self, resourceName='activities', verb='list',
+                 getResponse=False, **kwargs):
         'use Google apiclient to iterate over results from request'
         try:
             service = self.service
@@ -173,6 +183,9 @@ class OAuth(object):
         request = getattr(rsrc, verb)(**kwargs)
         while request is not None:
             doc = request.execute(http=http)
+            if getResponse: # caller requested the response document
+                getResponse = False # only yield doc as the first item
+                yield doc
             for item in doc['items']:
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
