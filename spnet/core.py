@@ -213,6 +213,13 @@ class GplusPersonData(EmbeddedDocument):
         return Person(docData=dict(name=d['displayName']))
 
 
+def get_interests_sorted(d):
+    'get topics sorted from most-used to least-used'
+    l = [(len(v),k) for (k,v) in d.items()]
+    l.sort(reverse=True)
+    return [(t[1], d[t[1]]) for t in l]
+
+
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
     _requiredFields = ('name',)
@@ -242,6 +249,18 @@ class Person(Document):
             return False
     def set_password(self, password):
         self.update(dict(password=sha1(password).hexdigest()))
+    def get_interests(self, sorted=False):
+        'return dict of topic:[papers]'
+        d = {}
+        for interest in self.interests:
+            for topic in interest.topics:
+                try:
+                    d[topic].append(interest.parent)
+                except KeyError:
+                    d[topic] = [interest.parent]
+        if sorted:
+            return get_interests_sorted(d)
+        return d
     def get_local_url(self):
         return '/people/' + str(self._id)
 
@@ -370,7 +389,7 @@ class Paper(Document):
         doi=SaveAttr(DoiPaperData, insertNew=False),
         )
     _get_value_attrs = ('arxiv', 'pubmed', 'doi')
-    def get_interests(self):
+    def get_interests(self, sorted=False):
         'return dict of SIG:[people]'
         d = {}
         for interest in getattr(self, 'interests', ()):
@@ -379,6 +398,8 @@ class Paper(Document):
                     d[topic].append(interest.author)
                 except KeyError:
                     d[topic] = [interest.author]
+        if sorted:
+            return get_interests_sorted(d)
         return d
     def get_local_url(self):
         return '/paper/' + str(self._id)
