@@ -366,6 +366,7 @@ class Paper(Document):
         interests=SaveAttrList(PaperInterest, insertNew=False),
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
         pubmed=SaveAttr(PubmedPaperData, insertNew=False),
+        doi=SaveAttr(DoiPaperData, insertNew=False),
         )
     _get_value_attrs = ('arxiv', 'pubmed', 'doi')
     def get_interests(self):
@@ -378,6 +379,8 @@ class Paper(Document):
                 except KeyError:
                     d[sig] = [interest.author]
         return d
+    def get_local_url(self):
+        return '/paper/' + str(self._id)
                 
 
 def get_paper_from_hashtag(t):
