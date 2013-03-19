@@ -42,8 +42,10 @@ sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel', _id='lambdaCDMmodel'))
 int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
                           parent=paper1)
 assert core.Paper(paper1._id).interests == [int1]
+assert core.Paper(paper1._id).get_interests() == {sig1:[jojo]}
 assert core.Person(jojo._id).interests == [int1]
 assert core.SIG(sig1._id).interests == [int1]
+assert core.SIG(sig1._id).get_interests() == {paper1:[jojo]}
 
 intAgain = core.PaperInterest((paper1._id, jojo._id))
 assert intAgain == int1

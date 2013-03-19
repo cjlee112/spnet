@@ -374,11 +374,11 @@ class Paper(Document):
         'return dict of SIG:[people]'
         d = {}
         for interest in getattr(self, 'interests', ()):
-            for sig in interest.sigs:
+            for topic in interest.topics:
                 try:
-                    d[sig].append(interest.author)
+                    d[topic].append(interest.author)
                 except KeyError:
-                    d[sig] = [interest.author]
+                    d[topic] = [interest.author]
         return d
     def get_local_url(self):
         return '/paper/' + str(self._id)
