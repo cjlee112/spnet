@@ -7,7 +7,7 @@ def request_tuple():
     accept = cherrypy.request.headers['Accept']
     if 'text/html' in accept:
         mimeType = 'html'
-    if 'application/json' in accept:
+    if 'application/json' in accept or accept == '*/*':
         mimeType = 'json'
     return cherrypy.request.method, mimeType
 
