@@ -2,6 +2,8 @@ import rest
 import core
 import view
 import gplus
+from bson import ObjectId
+import json
 
 class ArrayDocCollection(rest.Collection):
     def _GET(self, docID, parents):
@@ -10,7 +12,15 @@ class ArrayDocCollection(rest.Collection):
 class InterestCollection(ArrayDocCollection):
     def _POST(self, personID, topic, state, parents):
         'add or remove topic from PaperInterest depending on state'
+        personID = ObjectId(personID)
+        if topic[0] == '#': # don't include hash in ID
+            topic = topic[1:]
         state = int(state)
+        if state: # make sure topic exists
+            try:
+                sig = core.SIG(topic)
+            except KeyError: # create a new topic
+                sig = core.SIG(docData=dict(_id=topic, name='#' + topic))
         try:
             interest = self._GET(personID, parents)
         except KeyError:
@@ -24,6 +34,8 @@ class InterestCollection(ArrayDocCollection):
             return interest.add_topic(topic)
         else:
             return interest.remove_topic(topic)
+    def post_json(self, interest, **kwargs):
+        return json.dumps(dict(interest='very good'))
 
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
