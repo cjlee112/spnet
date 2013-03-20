@@ -50,6 +50,19 @@ class DoiCollection(rest.Collection):
     def _GET(self, shortDOI, parents=None):
         return self.klass(shortDOI=shortDOI, insertNew='findOrInsert').parent
 
+class PersonCollection(rest.Collection):
+    def _GET(self, docID, getUpdates=False, **kwargs):
+        person = rest.Collection._GET(self, docID, **kwargs)
+        if getUpdates:
+            try:
+                gpd = person.gplus
+            except AttributeError:
+                pass
+            else:
+                l = gpd.update_posts() # list of new posts
+                if l: # need to update our object representation to see them
+                    person = rest.Collection._GET(self, docID, **kwargs)
+        return person
     
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
@@ -78,8 +91,8 @@ def get_collections(templateDir='_templates'):
                                templateDir, gplusClientID=gplusClientID)
     papers.likes = likes # bind as subcollection
 
-    people = rest.Collection('person', core.Person, templateEnv, templateDir,
-                             gplusClientID=gplusClientID)
+    people = PersonCollection('person', core.Person, templateEnv, templateDir,
+                              gplusClientID=gplusClientID)
     topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 
