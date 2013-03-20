@@ -91,7 +91,7 @@ class Recommendation(ArrayDocument):
             recID = self.id
         except AttributeError:
             return
-        for r in self.parent.replies:
+        for r in getattr(self.parent, 'replies', ()):
             if r._dbDocDict['replyTo'] == recID:
                 yield r
     def get_local_url(self):
@@ -105,7 +105,7 @@ class Post(UniqueArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     def get_replies(self):
-        for r in self.parent.replies:
+        for r in getattr(self.parent, 'replies' ()):
             if r.replyTo == self:
                 yield r
 
