@@ -11,7 +11,7 @@
 <h1><a href="/">SelectedPapers.net</a> &gt; 
 {% if user %}
 Welcome,
-<a href="/view?view=person&person= {{- user._id -}} "> {{- user.name -}} </a>
+<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
 {% else %}
 <A HREF="/twitter_login"><IMG SRC="/images/sign-in-with-twitter-gray.png"></A>
 <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
@@ -25,7 +25,7 @@ Welcome,
 <dl>
 {% for i,interest in enumerate(user.interests) %}
 <dt>[ {{- i + 1 -}} ]:
-<A HREF="/view?view=paper&paper={{- interest.parent._id -}}">
+<A HREF="{{- interest.parent.get_value('local_url') -}}">
 {{ interest.parent.title }}
 </A>
 </dt>
