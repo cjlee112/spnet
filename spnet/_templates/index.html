@@ -20,6 +20,57 @@ Welcome,
 </div>
 
 {% if user %}
+{% if user.subscriptions %}
+
+<h3>Your Subscriptions</h3>
+
+<dl>
+{% for i,person in enumerate(user.subscriptions) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="{{- person.get_value('local_url') -}}">
+{{ person.name }}
+</A>
+{% if hasattr(person, 'gplus') %}
+<a href=" {{-person.get_local_url() -}} ?getUpdates=1" 
+title="retrieve latest posts and recommendations from this person via Google+">
+<button>Check Google+ for Updates</button></a>
+{% endif %}
+</dt>
+<dd>
+{% for i,rec in enumerate(timesort(person.recommendations)) %}
+<li><A HREF="{{- rec.get_local_url() -}} ">{{ rec.title }}</A>:
+Recommended for:
+{% for topic in rec.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+( {{- display_datetime(rec.published) -}} )
+</li>
+{% endfor %}
+</dd>
+{% endfor %}
+</dl>
+{% else %}
+
+<h3>Invitations</h3>
+None of the people you're subscribed to on Google+ are using
+SelectedPapers.net yet.  Would you like to invite them to share
+their comments and recommendations on papers with you this way?
+(This will simply bring up a Google+ window where you can send
+them an invitation post).<br>
+<button
+  class="g-interactivepost"
+  data-contenturl=" {{- user.get_spnet_url() -}} "
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="I've subscribed to get your recommendations and comments on research papers via SelectedPapers.net.  To use this, just include hashtags in your posts (e.g. #spnetwork #arxiv_1234_5678, for details see http://selectedpapers.net/docs/tags.html) or simply have SelectedPapers.net insert the appropriate hashtags in your posts for you.  It works automatically with your Google+ sign-in.  You can also use this to find and filter paper recommendations from others who share your interests."
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl=" {{- user.get_spnet_url() -}} "
+  title="Click to recommend this paper on Google+">
+  Post Invitation
+</button>
+
+{% endif %}
+
 <h3>Papers You Tagged as Interesting</h3>
 
 <dl>
@@ -61,5 +112,12 @@ for <INPUT TYPE="text" NAME="query" SIZE=30>
 <INPUT TYPE="submit">
 </FORM>
 
+<script type="text/javascript">
+  (function() {
+   var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+   po.src = 'https://apis.google.com/js/client:plusone.js';
+   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+ })();
+</script>
 </body>
 </html>
