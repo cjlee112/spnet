@@ -208,7 +208,7 @@ class OAuth(object):
         postIt = self.search_activities(query='#spnetwork', orderBy='recent')
         return self.load_recent_posts(postIt, **kwargs)
     def load_recent_posts(self, postIt, maxDays=10):
-        now = datetime.now()
+        now = datetime.utcnow()
         for p in self.find_or_insert_posts(postIt):
             yield p
             if (now - p.updated).days > maxDays:
