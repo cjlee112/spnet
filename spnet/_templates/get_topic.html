@@ -16,7 +16,7 @@
 {% if topic.recommendations %}
 <h3>Recommendations</h3>
 <dl>
-{% for i,rec in enumerate(topic.recommendations) %}
+{% for i,rec in enumerate(timesort(topic.recommendations)) %}
 <dt>[ 
 <A HREF="{{- rec.get_local_url() -}}">
 {{- i + 1 -}} </A> ]
@@ -37,7 +37,7 @@
 </span>
 <div class="list-comments">
 {{ rec.text }}
-{% for reply in rec.get_replies() %}
+{% for reply in timesort(rec.get_replies()) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):

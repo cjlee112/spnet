@@ -128,7 +128,7 @@ or enter a new tag here:
 </h3>
 
 <dl>
-{% for i,rec in enumerate(paper.recommendations) %}
+{% for i,rec in enumerate(timesort(paper.recommendations)) %}
 <dt>[ 
 <A HREF="{{- rec.get_local_url() -}} ">
 {{- i + 1 -}} </A> ]
@@ -150,7 +150,7 @@ or enter a new tag here:
 </span>
 <div class="list-comments">
 {{ rec.text }}
-{% for reply in rec.get_replies() %}
+{% for reply in timesort(rec.get_replies()) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
@@ -178,7 +178,7 @@ or enter a new tag here:
 </h3>
 
 <dl>
-{% for i,post in enumerate(paper.posts) %}
+{% for i,post in enumerate(timesort(paper.posts)) %}
 <dt>[ {{- i + 1 -}} ]
 <A HREF="{{- post.author.get_local_url() -}}">
 {{ post.author.name }}
@@ -190,7 +190,7 @@ or enter a new tag here:
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
-{% for reply in post.get_replies() %}
+{% for reply in timesort(post.get_replies()) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
