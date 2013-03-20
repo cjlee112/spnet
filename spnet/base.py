@@ -86,7 +86,7 @@ class Document(object):
     'base class provides flexible method for storing dict as attr objects'
     useObjectId = True
     
-    def __init__(self, fetchID=None, docData={}, insertNew=True):
+    def __init__(self, fetchID=None, docData=None, insertNew=True):
         '''data can be passed in either as object IDs or as objects
 
         If fetchID provided, retrieves that doc, or raises KeyError.
@@ -216,7 +216,8 @@ class EmbeddedDocBase(Document):
 
 class EmbeddedDocument(EmbeddedDocBase):
     'stores a document inside another document in mongoDB'
-    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
+    def __init__(self, fetchID=None, docData=None, parent=None,
+                 insertNew=True):
         if parent is not None:
             self._set_parent(parent)
         if insertNew == 'findOrInsert':
@@ -297,11 +298,14 @@ class ArrayDocument(EmbeddedDocBase):
     Subclasses MUST provide _dbfield attribute of the form
     field.subfield, indicating how to search for fetchID in the parent
     document.'''
-    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
+    def __init__(self, fetchID=None, docData=None, parent=None,
+                 insertNew=True):
         self._set_parent(parent)
         if insertNew == 'findOrInsert':
             try: # retrieve from database
-                Document.__init__(self, docData[self._dbfield.split('.')[-1]])
+                if fetchID is None:
+                    fetchID = docData[self._dbfield.split('.')[-1]]
+                Document.__init__(self, fetchID)
                 return
             except KeyError: # insert new record in database
                 fetchID = None
@@ -450,9 +454,13 @@ class UniqueArrayDocument(ArrayDocument):
 
 class AutoIdArrayDocument(UniqueArrayDocument):
     'makes a unique ID automatically for you'
-    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True):
+    def __init__(self, fetchID=None, docData=(), parent=None, insertNew=True):
         keyField = self._dbfield.split('.')[1]
         if fetchID is None and keyField not in docData: # create an ID
+            try: # copy dict before modifying it, to prevent side-effects
+                docData = docData.copy()
+            except AttributeError:
+                docData = {}
             docData[keyField] = ObjectId() # use pymongo's ID generator
         elif fetchID and not isinstance(fetchID, ObjectId):
             fetchID = ObjectId(fetchID)
