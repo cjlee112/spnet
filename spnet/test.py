@@ -226,6 +226,14 @@ gpd = core.GplusPersonData('112634568601116338347')
 assert gpd.displayName == 'Meenakshi Roy'
 gps = gpd.subscriptions
 assert gps.gplusPerson == gpd
+gps.update(dict(subs=[dict(id='114744049040264263224')]))
+gpd.update_subs_from_gplus()
+mrID = gpd.parent._id
+assert len(getattr(core.Person(mrID), 'subscriptions', [])) == 0
+
+gpd2 = core.GplusPersonData('114744049040264263224',
+                            insertNew='findOrInsert')
+assert getattr(core.Person(mrID), 'subscriptions', []) == [gpd2.parent]
 
 
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
