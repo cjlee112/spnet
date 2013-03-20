@@ -258,7 +258,11 @@ assert paper4.doi.shortDOI == s
 paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
 assert paper4 == paper5
 assert rootColl['shortDOI']._GET(s) == paper4
+txt = 'some text ' + paper4.doi.get_hashtag()
+assert core.get_paper_from_hashtag(txt) == paper4
 
 spnetPaper = core.DoiPaperData('10.3389/fncom.2012.00001',
                                insertNew='findOrInsert').parent
 assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'
+txt = 'a long comment ' + spnetPaper.pubmed.get_hashtag() + ', some more text'
+assert core.get_paper_from_hashtag(txt) == spnetPaper

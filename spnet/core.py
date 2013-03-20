@@ -380,7 +380,7 @@ class DoiPaperData(EmbeddedDocument):
     def get_downloader_url(self):
         return 'http://dx.doi.org/' + self.id
     def get_hashtag(self):
-        return '#shortdoi_' + str(self.shortDOI)
+        return '#shortDOI_' + str(self.shortDOI)
     def get_abstract(self):
         return self.summary
 
@@ -428,7 +428,16 @@ def get_paper_from_hashtag(t):
     if m:
         arxivID = str('.'.join(m.group(1).split('_')))
         return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
-    raise ValueError('no paper hashtag found in text')
+    m = re.search('#pubmed_([0-9]+)', t)
+    if m:
+        pubmedID = str(m.group(1))
+        return PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
+    m = re.search('#shortDOI_([a-zA-Z0-9]+)', t)
+    if m:
+        shortDOI = str(m.group(1))
+        return DoiPaperData(shortDOI=shortDOI,
+                            insertNew='findOrInsert').parent
+
 
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount,
@@ -448,9 +457,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             except KeyError:
                 pass
         if post is None: # extract data for saving post to DB
-            try:
-                paper = get_paper_from_hashtag(content)
-            except ValueError:
+            paper = get_paper_from_hashtag(content)
+            if paper is None:
                 continue # no link to a paper, so nothing to save.
             userID = get_user(d)
             author = find_or_insert_person(userID)
