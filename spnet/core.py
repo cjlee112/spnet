@@ -225,6 +225,22 @@ class GplusPersonData(EmbeddedDocument):
         l = [p for p in oauth.load_recent_posts(postIt, maxDays)
              if getattr(p, '_isNewInsert', False)]
         return l
+    def update_subs_from_gplus(self):
+        oldSubs = self.parent._dbDocDict.get('subscriptions', [])
+        gplusSubs = set()
+        for d in getattr(self.subscriptions, 'subs', ()):
+            try: # find subset that map to Person
+                p = self.__class__(d['id']).parent # find Person record
+                gplusSubs.add(p._id)
+            except KeyError:
+                pass
+        oldSubsSet = set(oldSubs)
+        if gplusSubs == oldSubsSet:
+            return False
+        l = filter(lambda x:x in gplusSubs, oldSubs) # preserve order
+        l += list(gplusSubs - oldSubsSet) # append new additions
+        self.parent.update(dict(subscriptions=l)) # save to db
+        return True
 
 
 
