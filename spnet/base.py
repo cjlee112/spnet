@@ -161,7 +161,7 @@ class Document(object):
         try:
             return cmp(self._id, other._id)
         except AttributeError:
-            return False
+            return cmp(id(self), id(other))
 
     def __hash__(self):
         return hash(self._id)
@@ -266,7 +266,7 @@ class EmbeddedDocument(EmbeddedDocBase):
             return cmp((self._parent_link,self._dbfield),
                        (other._parent_link,other._dbfield))
         except AttributeError:
-            return False
+            return cmp(id(self), id(other))
     def __hash__(self):
         return hash((self._parent_link,self._dbfield))
 
@@ -387,7 +387,7 @@ class ArrayDocument(EmbeddedDocBase):
             return cmp((self._parent_link, self._get_id()),
                        (other._parent_link, other._get_id()))
         except AttributeError:
-            return False
+            return cmp(id(self), id(other))
     def __hash__(self):
         return hash((self._parent_link, self._get_id()))
 
