@@ -217,6 +217,15 @@ class GplusPersonData(EmbeddedDocument):
         subs = GplusSubscriptions(docData=dict(_id=d['id']))
         self.__dict__['subscriptions'] =  subs # bypass LinkDescriptor
         return Person(docData=dict(name=d['displayName']))
+    def update_posts(self, maxDays=20):
+        'get new posts from this person, updating old posts with new replies'
+        import gplus
+        oauth = gplus.publicAccess
+        postIt = oauth.get_person_posts(self.id)
+        l = [p for p in oauth.load_recent_posts(postIt, maxDays)
+             if getattr(p, '_isNewInsert', False)]
+        return l
+
 
 
 class GplusSubscriptions(Document):

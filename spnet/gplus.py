@@ -190,11 +190,14 @@ class OAuth(object):
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
 
-    def load_recent_spnetwork(self, maxDays=10):
+    def load_recent_spnetwork(self, **kwargs):
         'scan recent G+ posts for updates, and save updates to DB'
-        now = datetime.datetime.now()
-        posts = self.search_activities(query='#spnetwork', orderBy='recent')
-        for p in self.find_or_insert_posts(posts):
+        postIt = self.search_activities(query='#spnetwork', orderBy='recent')
+        return self.load_recent_posts(postIt, **kwargs)
+    def load_recent_posts(self, postIt, maxDays=10):
+        now = datetime.now()
+        for p in self.find_or_insert_posts(postIt):
+            yield p
             if (now - p.updated).days > maxDays:
                 break
 
