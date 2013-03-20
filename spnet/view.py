@@ -31,6 +31,7 @@ monthStrings = ('Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.',
                 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.')
 
 def display_datetime(dt):
+    'get string that sidesteps timezone issues thus: 27 minutes ago'
     def singularize(i, s):
         if i == 1:
             return s[:-1]
@@ -41,7 +42,13 @@ def display_datetime(dt):
             n = f(diff)
             return '%d %s ago' % (n, singularize(n, unit))
     return '%s %d, %d' % (monthStrings[dt.month - 1], dt.day, dt.year)
-    
+
+def timesort(stuff, cmpfunc=lambda x,y:cmp(x.published,y.published),
+             reverse=True, **kwargs):
+    'sort items by timestamp, most recent first by default'
+    l = list(stuff)
+    l.sort(cmpfunc, reverse=reverse, **kwargs)
+    return l
 
 #################################################################
 # template loading and rendering
@@ -67,7 +74,7 @@ class TemplateView(object):
                      urlencode=urllib.urlencode, list_people=people_link_list,
                      getattr=getattr, str=str,
                      user=cherrypy.session.get('person', None),
-                     display_datetime=display_datetime,
+                     display_datetime=display_datetime, timesort=timesort,
                      **kwargs) # apply template
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
