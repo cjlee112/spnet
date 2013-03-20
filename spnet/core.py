@@ -225,10 +225,12 @@ class GplusPersonData(EmbeddedDocument):
         l = [p for p in oauth.load_recent_posts(postIt, maxDays)
              if getattr(p, '_isNewInsert', False)]
         return l
-    def update_subs_from_gplus(self):
+    def update_subs_from_gplus(self, subs=None):
         oldSubs = self.parent._dbDocDict.get('subscriptions', [])
         gplusSubs = set()
-        for d in getattr(self.subscriptions, 'subs', ()):
+        if subs is None:
+            subs = getattr(self.subscriptions, 'subs', ())
+        for d in subs:
             try: # find subset that map to Person
                 p = self.__class__(d['id']).parent # find Person record
                 gplusSubs.add(p._id)
@@ -251,9 +253,17 @@ class GplusSubscriptions(Document):
                                  noData=True)
     def update_subscriptions(self, doc, subs):
         if getattr(self, 'etag', None) != doc['etag']:
-            self.update(dict(subs=list(subs), etag=doc['etag'],
+            subs = list(subs) # actually get the data from iterator
+            self.update(dict(subs=subs, etag=doc['etag'],
                              totalItems=doc['totalItems'])) # save to db
-            return True # subscriptions changed
+            return subs # subscriptions changed
+    def update_subscribers(self, personID):
+        '''when Person first inserted to db, connect to pending
+        subscriptions by appending our new personID.'''
+        for gplusID in self.find({'subs.id':self._id}):
+            Person.coll.update({'gplus.id': gplusID},
+                               {'$push': {'subscriptions':personID}})
+
 
 def get_interests_sorted(d):
     'get topics sorted from most-used to least-used'

@@ -98,13 +98,25 @@ class OAuth(object):
             p.update(dict(gplusAccess=self.access_data))
         return p
 
+    def process_new_member(self, gplusPersonData):
+        '''when a new G+ user is added to Person, we need to retrieve
+        their circles, save that in a GplusSubscriptions record,
+        translate that to their Person.subscriptions record,
+        and finally update other Person.subscriptions if they have
+        us in their circles.  This will typically be run in
+        a separate thread when G+ user first signs in.'''
+        subs = self.update_subscriptions(gplusPersonData)
+        gplusPersonData.update_subs_from_gplus(subs)
+        gplusSub = gplusPersonData.subscriptions
+        gplusSub.update_subscribers(gplusPersonData.parent._id)
+
     def update_subscriptions(self, gplusPersonData):
         'retrieve circles data and save to db'
         gplusSub = gplusPersonData.subscriptions
         it = self.api_iter('people', userId='me', collection='visible',
                            getResponse=True)
         doc = it.next() # 1st item is the response document
-        gplusSub.update_subscriptions(doc, it) # save to db if changed
+        return gplusSub.update_subscriptions(doc, it) # save to db if changed
 
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!
