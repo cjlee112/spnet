@@ -1,6 +1,7 @@
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 import urllib
+from datetime import datetime, timedelta
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -21,6 +22,26 @@ def people_link_list(people, maxNames=2):
         s += ' and %d others' (len(people) - maxNames)
     return s
 
+timeUnits = (('seconds', timedelta(minutes=1), lambda t:int(t.seconds)),
+             ('minutes', timedelta(hours=1), lambda t:int(t.seconds / 60)),
+             ('hours', timedelta(1), lambda t:int(t.seconds / 3600)),
+             ('days', timedelta(7), lambda t:t.days))
+
+monthStrings = ('Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.',
+                'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.')
+
+def display_datetime(dt):
+    def singularize(i, s):
+        if i == 1:
+            return s[:-1]
+        return s
+    diff = datetime.utcnow() - dt
+    for unit, td, f in timeUnits:
+        if diff < td:
+            n = f(diff)
+            return '%d %s ago' % (n, singularize(n, unit))
+    return '%s %d, %d' % (monthStrings[dt.month - 1], dt.day, dt.year)
+    
 
 #################################################################
 # template loading and rendering
@@ -46,6 +67,7 @@ class TemplateView(object):
                      urlencode=urllib.urlencode, list_people=people_link_list,
                      getattr=getattr, str=str,
                      user=cherrypy.session.get('person', None),
+                     display_datetime=display_datetime,
                      **kwargs) # apply template
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
