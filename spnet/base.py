@@ -135,6 +135,7 @@ class Document(object):
             pass
         self._id = self.coll.insert(convert_obj_to_id(d))
         self._dbDocDict = d
+        self._isNewInsert = True
 
     def update(self, updateDict):
         'update the specified fields in the DB'
@@ -249,6 +250,7 @@ class EmbeddedDocument(EmbeddedDocBase):
         self.coll.update({'_id': self._parent_link},
                          {'$set': {subdocField: convert_obj_to_id(d)}})
         self._dbDocDict = d
+        self._isNewInsert = True
     def update(self, updateDict):
         'update the existing embedded doc fields in the parent document'
         subdocField = self._dbfield.split('.')[0]
@@ -324,6 +326,7 @@ class ArrayDocument(EmbeddedDocBase):
         arrayField = self._dbfield.split('.')[0]
         self.coll.update({'_id': self._parent_link},
                          {'$push': {arrayField: convert_obj_to_id(d)}})
+        self._isNewInsert = True
     def update(self, updateDict):
         'update the existing record in the array in the parent document'
         arrayField = self._dbfield.split('.')[0]
