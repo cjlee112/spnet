@@ -8,9 +8,9 @@
 <body>
 
 <div id="header">
-<h1><a href="/">SelectedPapers.net</a>
-{% for sig in rec.sigs %}
-<A HREF="/view?view=sig&sig={{- sig._id -}}"> | {{ sig.name }}  </A>
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a>
+{% for topic in rec.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> | {{ topic.name }}  </A>
 {% endfor %}
 </h1>
 </div>
@@ -20,12 +20,12 @@
 {{ rec.title }}
 </h1>
 <div class="authors">
-<A HREF="/view?view=person&person={{- rec.author._id -}}">
+<A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
 </A>
 </div>
 
-<h3>Recommendation for <A HREF="/view?view=paper&paper={{- rec.parent._id -}}">
+<h3>Recommendation for <A HREF="{{- rec.parent.get_value('local_url') -}}">
 {{ rec.parent.title }}
 </a></h3>
 
@@ -33,7 +33,7 @@
 {{ rec.text }}
 </blockquote>
 
-<a href="https://plus.google.com/share?url=http%3A%2F%2Fselectedpapers.net%2Fview%3Fview%3Drec%26recPaper%3D {{- rec.parent._id -}} %26recAuthor%3D {{- rec.author._id -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 
 {% if hasattr(rec.author, 'gplus') %}

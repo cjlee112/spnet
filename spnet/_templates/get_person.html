@@ -8,7 +8,8 @@
 <body>
 
 <div id="header">
-<h1><a href="/">SelectedPapers.net</a> &gt; People &gt; 
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+People &gt; 
 {% if hasattr(person, 'gplus') %}
 <a href=" {{- person.gplus['url'] -}} "> {{- person.name -}} </a>
 {% else %}
