@@ -22,7 +22,7 @@
 {{- i + 1 -}} </A> ]
 <A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
-</A>: <B>{{ rec.title }}</B> 
+</A>: <B>{{ rec.title }}</B> ( {{- display_datetime(rec.published) -}} )
 <a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 {% if hasattr(rec, 'url') %}
@@ -40,7 +40,7 @@
 {% for reply in rec.get_replies() %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
-</A> replies:
+</A> replies ( {{- display_datetime(reply.published) -}} ):
 {{ reply.text }}
 </li>
 {% endfor %}

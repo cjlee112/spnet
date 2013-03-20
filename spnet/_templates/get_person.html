@@ -61,7 +61,7 @@ them an invitation post).<br>
 {{- i + 1 -}} </A> ]
 <A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
-</A>: <B>{{ rec.title }}</B> 
+</A>: <B>{{ rec.title }}</B> ( {{- display_datetime(rec.published) -}} )
 <a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 {% if hasattr(rec, 'url') %}
@@ -79,7 +79,7 @@ them an invitation post).<br>
 {% for reply in rec.get_replies() %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
-</A> replies:
+</A> replies ( {{- display_datetime(reply.published) -}} ):
 {{ reply.text }}
 </li>
 {% endfor %}
@@ -115,7 +115,7 @@ them an invitation post).<br>
 <dt>[ {{- i + 1 -}} ] Comment on
 <A HREF="{{- post.parent.get_value('local_url') -}}">
 {{ post.parent.title }}
-</a></dt>
+</a> ( {{- display_datetime(post.published) -}} )</dt>
 <dd>
 <div class="list-comments">{{ post.text }}
 {% if hasattr(post, 'url') %}
@@ -125,7 +125,7 @@ them an invitation post).<br>
 {% for reply in post.get_replies() %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
-</A> replies:
+</A> replies ( {{- display_datetime(reply.published) -}} ):
 {{ reply.text }}
 </li>
 {% endfor %}

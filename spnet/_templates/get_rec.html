@@ -22,7 +22,7 @@
 <div class="authors">
 <A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
-</A>
+</A> ( {{- display_datetime(rec.published) -}} )
 </div>
 
 <h3>Recommendation for <A HREF="{{- rec.parent.get_value('local_url') -}}">
