@@ -326,6 +326,11 @@ class ArrayDocument(EmbeddedDocBase):
         return self._dbDocDict[keyField]
     def insert(self, d):
         'append to the target array in the parent document'
+        try:
+            if self._timeStampField not in d:
+                d[self._timeStampField] = datetime.utcnow() # add timestamp
+        except AttributeError:
+            pass
         self._dbDocDict = d
         arrayField = self._dbfield.split('.')[0]
         self.coll.update({'_id': self._parent_link},

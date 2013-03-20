@@ -77,14 +77,15 @@ class EmailAddress(UniqueArrayDocument):
 
 
 class Recommendation(ArrayDocument):
+    _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
+    _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by user
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     forwards = LinkDescriptor('forwards', fetch_people)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
-    _dbfield = 'recommendations.author' # dot.name for updating
     def get_replies(self):
         try:
             recID = self.id
@@ -99,6 +100,7 @@ class Recommendation(ArrayDocument):
 
 class Post(UniqueArrayDocument):
     _dbfield = 'posts.id' # dot.name for updating
+    _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
@@ -119,6 +121,7 @@ def fetch_post_or_rec(obj, fetchID):
 
 class Reply(UniqueArrayDocument):
     _dbfield = 'replies.id' # dot.name for updating
+    _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)

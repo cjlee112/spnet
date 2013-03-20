@@ -240,6 +240,11 @@ recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, have you stopped taking your medications?'),
                       parent=paper2._id)
 
+# make sure timestamps present on all recs
+l = [r.published for r in core.Recommendation.find_obj()]
+l = [r.published for r in core.Post.find_obj()]
+l = [r.published for r in core.Reply.find_obj()]
+
 assert recReply.replyTo == rec3
 assert list(recReply.replyTo.get_replies()) == [recReply]
 
