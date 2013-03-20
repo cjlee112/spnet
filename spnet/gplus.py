@@ -1,5 +1,6 @@
 import random
 import urllib
+import thread
 import string
 import json
 import requests
@@ -93,6 +94,8 @@ class OAuth(object):
         self.service = service = build('plus', 'v1', http=http)
         person = service.people().get(userId='me').execute(http=http)
         gpd = core.GplusPersonData(docData=person, insertNew='findOrInsert')
+        if getattr(gpd, '_isNewInsert', False): # retrieve circles
+            thread.start_new_thread(self.process_new_member, (gpd,))
         p = gpd.parent
         if 'refresh_token' in self.access_data:
             p.update(dict(gplusAccess=self.access_data))
@@ -101,14 +104,12 @@ class OAuth(object):
     def process_new_member(self, gplusPersonData):
         '''when a new G+ user is added to Person, we need to retrieve
         their circles, save that in a GplusSubscriptions record,
-        translate that to their Person.subscriptions record,
-        and finally update other Person.subscriptions if they have
-        us in their circles.  This will typically be run in
-        a separate thread when G+ user first signs in.'''
+        translate that to their Person.subscriptions record.
+        This will typically be run in
+        a separate thread when G+ user first signs in.
+        Note we MUST have oauth sign-in as the user to run this.'''
         subs = self.update_subscriptions(gplusPersonData)
         gplusPersonData.update_subs_from_gplus(subs)
-        gplusSub = gplusPersonData.subscriptions
-        gplusSub.update_subscribers(gplusPersonData.parent._id)
 
     def update_subscriptions(self, gplusPersonData):
         'retrieve circles data and save to db'

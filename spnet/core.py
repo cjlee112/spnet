@@ -214,9 +214,11 @@ class GplusPersonData(EmbeddedDocument):
         return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
-        subs = GplusSubscriptions(docData=dict(_id=d['id']))
-        self.__dict__['subscriptions'] =  subs # bypass LinkDescriptor
-        return Person(docData=dict(name=d['displayName']))
+        gps = GplusSubscriptions(docData=dict(_id=d['id']))
+        self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
+        p = Person(docData=dict(name=d['displayName']))
+        gps.update_subscribers(p._id)
+        return p
     def update_posts(self, maxDays=20):
         'get new posts from this person, updating old posts with new replies'
         import gplus
