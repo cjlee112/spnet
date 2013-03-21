@@ -4,6 +4,7 @@ import view
 import gplus
 from bson import ObjectId
 import json
+import cherrypy
 
 class ArrayDocCollection(rest.Collection):
     def _GET(self, docID, parents):
@@ -41,7 +42,48 @@ class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
         return self.klass(docID, insertNew='findOrInsert').parent
     def _search(self, searchID):
-        return rest.Redirect(self.collectionArgs['redirectPath'] % searchID)
+        return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], searchID))
+
+class PaperBlockLoader(object):
+    def __init__(self, f, klass, **kwargs):
+        '''wraps function f so its results [d,...] are returned as
+        [klass(docData=d, **kwargs),...]'''
+        self.f = f
+        self.klass = klass
+        self.kwargs = kwargs
+    def __call__(self, **kwargs):
+        l = []
+        for d in self.f(**kwargs):
+            l.append(self.klass(docData=d, **self.kwargs).parent)
+        return l
+
+class ArxivCollection(ParentCollection):
+    def _search(self, searchString=None, searchID=None, ipage=0,
+                block_size=10, session=None):
+        import arxiv
+        ipage = int(ipage)
+        block_size = int(block_size)
+        if session is None:
+            session = cherrypy.session
+        if searchID: # just get this ID
+            return ParentCollection._search(self, searchID)
+        elif arxiv.is_id_string(searchString): # just get this ID
+            return ParentCollection._search(self, searchString)
+        try: # get from existing query results
+            queryResults = session['queryResults']
+            if queryResults.get_page(ipage, self.collectionArgs['uri'],
+                                     searchString=searchString):
+                return queryResults
+        except KeyError:
+            pass # no stored queryResults, so construct it
+        pbl = PaperBlockLoader(arxiv.search_arxiv, self.klass,
+                               insertNew='findOrInsert')
+        queryResults = view.MultiplePages(pbl, block_size, ipage,
+                                          self.collectionArgs['uri'],
+                                          searchString=searchString)
+        session['queryResults'] = queryResults # keep for this user
+        return queryResults
+        
 
 class DoiCollection(rest.Collection):
     def _GET(self, shortDOI, parents=None):
@@ -69,18 +111,18 @@ def get_collections(templateDir='_templates'):
     papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
     # using arxivID
-    arxivPapers = ParentCollection('paper', core.ArxivPaperData, templateEnv,
+    arxivPapers = ArxivCollection('paper', core.ArxivPaperData, templateEnv,
                                    templateDir, gplusClientID=gplusClientID,
-                             collectionArgs=dict(redirectPath='/arxiv/%s'))
+                             collectionArgs=dict(uri='/arxiv'))
     # using shortDOI
     doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
                               templateDir, gplusClientID=gplusClientID,
-                          collectionArgs=dict(redirectPath='/shortDOI/%s'))
+                          collectionArgs=dict(uri='/shortDOI'))
     # using pubmedID
     pubmedPapers = ParentCollection('paper', core.PubmedPaperData,
                                     templateEnv, templateDir,
                                     gplusClientID=gplusClientID,
-                             collectionArgs=dict(redirectPath='/pubmed/%s'))
+                             collectionArgs=dict(uri='/pubmed'))
 
     recs = ArrayDocCollection('rec', core.Recommendation,
                               templateEnv, templateDir,
