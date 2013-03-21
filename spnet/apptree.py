@@ -40,12 +40,9 @@ class InterestCollection(ArrayDocCollection):
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
         return self.klass(docID, insertNew='findOrInsert').parent
-class ArxivCollection(ParentCollection):
-    def _search(self, arxivID):
-        return core.ArxivPaperData(arxivID,
-                                   insertNew='findOrInsert').parent
-    def search_html(self, paper, **kwargs):
-        return view.redirect(paper.get_value('local_url'))
+    def _search(self, searchID):
+        return rest.Redirect(self.collectionArgs['redirectPath'] % searchID)
+
 class DoiCollection(rest.Collection):
     def _GET(self, shortDOI, parents=None):
         return self.klass(shortDOI=shortDOI, insertNew='findOrInsert').parent
@@ -72,15 +69,18 @@ def get_collections(templateDir='_templates'):
     papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
     # using arxivID
-    arxivPapers = ArxivCollection('paper', core.ArxivPaperData, templateEnv,
-                                   templateDir, gplusClientID=gplusClientID)
+    arxivPapers = ParentCollection('paper', core.ArxivPaperData, templateEnv,
+                                   templateDir, gplusClientID=gplusClientID,
+                             collectionArgs=dict(redirectPath='/arxiv/%s'))
     # using shortDOI
     doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
-                              templateDir, gplusClientID=gplusClientID)
+                              templateDir, gplusClientID=gplusClientID,
+                          collectionArgs=dict(redirectPath='/shortDOI/%s'))
     # using pubmedID
     pubmedPapers = ParentCollection('paper', core.PubmedPaperData,
                                     templateEnv, templateDir,
-                                    gplusClientID=gplusClientID)
+                                    gplusClientID=gplusClientID,
+                             collectionArgs=dict(redirectPath='/pubmed/%s'))
 
     recs = ArrayDocCollection('rec', core.Recommendation,
                               templateEnv, templateDir,
