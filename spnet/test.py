@@ -266,17 +266,18 @@ t = doi.map_to_doi(s)
 assert t == '10.1002/(SICI)1097-0258(19980815/30)17:15/16<1661::AID-SIM968>3.0.CO;2-2'
 assert s == doi.map_to_shortdoi(t)
 
-paper4 = core.DoiPaperData(t, insertNew='findOrInsert').parent
+paper4 = core.DoiPaperData(DOI=t, insertNew='findOrInsert').parent
 paper4.update(dict(authors=[fred._id]))
-assert paper4.doi.id == t
-assert paper4.doi.shortDOI == s
-paper5 = core.DoiPaperData(shortDOI=s, insertNew='findOrInsert').parent
+assert paper4.doi.id == s
+assert paper4.doi.doi == t
+assert paper4.doi.DOI == t.upper()
+paper5 = core.DoiPaperData(s, insertNew='findOrInsert').parent
 assert paper4 == paper5
 assert rootColl['shortDOI']._GET(s) == paper4
 txt = 'some text ' + paper4.doi.get_hashtag()
 assert core.get_paper_from_hashtag(txt) == paper4
 
-spnetPaper = core.DoiPaperData('10.3389/fncom.2012.00001',
+spnetPaper = core.DoiPaperData(DOI='10.3389/fncom.2012.00001',
                                insertNew='findOrInsert').parent
 assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'
 txt = 'a long comment ' + spnetPaper.pubmed.get_hashtag() + ', some more text'

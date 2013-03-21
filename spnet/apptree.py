@@ -85,10 +85,6 @@ class ArxivCollection(ParentCollection):
         return queryResults
         
 
-class DoiCollection(rest.Collection):
-    def _GET(self, shortDOI, parents=None):
-        return self.klass(shortDOI=shortDOI, insertNew='findOrInsert').parent
-
 class PersonCollection(rest.Collection):
     def _GET(self, docID, getUpdates=False, **kwargs):
         person = rest.Collection._GET(self, docID, **kwargs)
@@ -115,8 +111,8 @@ def get_collections(templateDir='_templates'):
                                    templateDir, gplusClientID=gplusClientID,
                              collectionArgs=dict(uri='/arxiv'))
     # using shortDOI
-    doiPapers = DoiCollection('paper', core.DoiPaperData, templateEnv,
-                              templateDir, gplusClientID=gplusClientID,
+    doiPapers = ParentCollection('paper', core.DoiPaperData, templateEnv,
+                                 templateDir, gplusClientID=gplusClientID,
                           collectionArgs=dict(uri='/shortDOI'))
     # using pubmedID
     pubmedPapers = ParentCollection('paper', core.PubmedPaperData,

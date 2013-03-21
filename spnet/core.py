@@ -373,33 +373,38 @@ class DoiPaperData(EmbeddedDocument):
     'store DOI data for a paper as subdocument of Paper'
     _dbfield = 'doi.id'
     def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True,
-                 shortDOI=None):
+                 DOI=None):
+        '''Note the fetchID must be shortDOI; to search for DOI, pass
+        DOI kwarg.
+        docData, if provided should include keys: id=shortDOI, doi=DOI'''
         import doi
-        if fetchID is None and shortDOI: # get DOI
-            d = self.coll.find_one({'doi.shortDOI':shortDOI}, {'doi':1})
-            if d: # found it in our DB
+        if fetchID is None and DOI: # must convert to shortDOI
+            # to implement case-insensitive search, convert to uppercase
+            d = self.coll.find_one({'doi.DOI':DOI.upper()}, {'doi':1})
+            if d: # found DOI in our DB
                 insertNew = False 
                 docData = d['doi']
                 self._parent_link = d['_id']
-            else: # have to query shortdoi.org for DOI
-                fetchID = doi.map_to_doi(shortDOI)
-                self._shortDOI = shortDOI # cache this temporarily
+            else: # have to query shortdoi.org to get shortDOI
+                fetchID = doi.map_to_shortdoi(DOI)
+                self._DOI = DOI # cache this temporarily
         EmbeddedDocument.__init__(self, fetchID, docData, parent, insertNew)
     def _query_external(self, fetchID):
         'obtain doc data from crossref / NCBI'
         import doi
-        doiDict, pubmedDict = doi.get_pubmed_and_doi(fetchID)
-        doiDict['id'] = fetchID
+        try:
+            DOI = self._DOI # use cached value
+        except AttributeError: # retrieve from shortdoi.org
+            DOI = doi.map_to_doi(fetchID)
+        doiDict, pubmedDict = doi.get_pubmed_and_doi(DOI)
+        doiDict['id'] = fetchID # shortDOI
         if pubmedDict:
             self._pubmedDict = pubmedDict
             try: # use abstract from pubmed if available
                 doiDict['summary'] = pubmedDict['summary']
             except KeyError:
                 pass
-        try:
-            doiDict['shortDOI'] = self._shortDOI # use cached value
-        except AttributeError: # retrieve from shortdoi.org
-            doiDict['shortDOI'] = doi.map_to_shortdoi(fetchID)
+        doiDict['doi'] = DOI
         return doiDict
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
@@ -410,8 +415,11 @@ class DoiPaperData(EmbeddedDocument):
         except AttributeError:
             pass
         return Paper(docData=d)
+    def insert(self, d):
+        d['DOI'] = d['doi'].upper() # for case-insensitive search
+        return EmbeddedDocument.insert(self, d)
     def get_local_url(self):
-        return '/shortDOI/' + self.shortDOI
+        return '/shortDOI/' + self.id
     def get_source_url(self):
         try:
             return 'http://www.ncbi.nlm.nih.gov/pubmed/' + \
@@ -419,9 +427,9 @@ class DoiPaperData(EmbeddedDocument):
         except AttributeError:
             return self.get_downloader_url()
     def get_downloader_url(self):
-        return 'http://dx.doi.org/' + self.id
+        return 'http://dx.doi.org/' + self.doi
     def get_hashtag(self):
-        return '#shortDOI_' + str(self.shortDOI)
+        return '#shortDOI_' + str(self.id)
     def get_abstract(self):
         return self.summary
 
@@ -486,8 +494,7 @@ def get_paper_from_hashtag(t, arxivRE=re.compile('#arxiv_([a-z0-9_]+)'),
     m = shortdoiRE.search(t)
     if m:
         shortDOI = str(m.group(1))
-        return DoiPaperData(shortDOI=shortDOI,
-                            insertNew='findOrInsert').parent
+        return DoiPaperData(shortDOI, insertNew='findOrInsert').parent
 
 
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
