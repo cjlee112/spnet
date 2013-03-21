@@ -2,6 +2,7 @@ import cherrypy
 import glob
 import os.path
 from base import IdString
+import view
 
 def request_tuple():
     accept = cherrypy.request.headers['Accept']
@@ -10,6 +11,14 @@ def request_tuple():
     if 'application/json' in accept or accept == '*/*':
         mimeType = 'json'
     return cherrypy.request.method, mimeType
+
+class Redirect(object):
+    '_GET etc. methods can return this to force redirection to a URL'
+    def __init__(self, url):
+        self.url = url
+    def __call__(self):
+        return view.redirect(self.url)
+
 
 class Collection(object):
     '''subclass this by adding the following kinds of methods:
@@ -24,10 +33,13 @@ class Collection(object):
     This will typically be a renderer of a Jinja2 template.
     '''
     def __init__(self, name, klass, templateEnv=None, templateDir='_templates',
-                 docArgs={}, **templateArgs):
+                 docArgs=None, collectionArgs=None, **templateArgs):
         self.name = name
         self.klass = klass
+        if docArgs is None:
+            docArgs = {}
         self.docArgs = docArgs
+        self.collectionArgs = collectionArgs
         if templateEnv: # load our template files
             self.bind_templates(templateEnv, templateDir, **templateArgs)
 
@@ -69,18 +81,20 @@ class Collection(object):
         except AttributeError:
             cherrypy.response.status = 405
             return '%s objects do not allow %s' % (self.name, method)
-        try: # do we support this mimeType?
-            view = getattr(self, method.lower() + '_' + mimeType)
-        except AttributeError:
-            cherrypy.response.status = 406
-            return '%s objects cannot return %s' % (self.name,
-                                                    mimeType)
         try: # execute the request
             o = action(*args, **kwargs)
         except KeyError:
             cherrypy.response.status = 404
             return 'Not found: %s: args=%s, kwargs=%s' \
                    % (self.name, str(args), str(kwargs))
+        if isinstance(o, Redirect):
+            return o() # send the redirect
+        try: # do we support this mimeType?
+            view = getattr(self, method.lower() + '_' + mimeType)
+        except AttributeError:
+            cherrypy.response.status = 406
+            return '%s objects cannot return %s' % (self.name,
+                                                    mimeType)
         return view(o, **kwargs)
 
     def _GET(self, docID, parents={}, **kwargs):
