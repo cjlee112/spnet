@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
+<title>SelectedPapers.net</title>
+</head>
+
+<body>
+
+<div id="header">
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+Papers
+</h1>
+</div>
+
+<h2>arXiv.org Search Results</h2>
+
+{% if paper.error %}
+{{ paper.error }}
+{% endif %}
+{% if getattr(paper, 'ipage', 0) + 1 < getattr(paper, 'totalPages', 999) %}
+<A HREF="{{- paper.get_page_url() -}}">Next {{ paper.block_size }} results</A>
+{% endif %}
+
+{% if paper.results %}
+<h3>Showing results {{ paper.start }} through {{ paper.end }}</h3>
+
+<dl>
+{% for i,paper1 in enumerate(paper.results) %}
+<dt>[ {{- i + paper.start -}} ]:
+<A HREF="{{- paper1.get_value('local_url') -}}">
+{{ paper1.title }}
+</A>
+</dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(paper1.authorNames) }} 
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% endif %}
+
+</body>
+</html>
