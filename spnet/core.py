@@ -327,6 +327,7 @@ class ArxivPaperData(EmbeddedDocument):
     def _query_external(self, arxivID):
         'obtain arxiv data from arxiv.org'
         import arxiv
+        arxivID = arxivID.replace('_', '/')
         return arxiv.lookup_papers((arxivID,)).next()
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
@@ -336,11 +337,11 @@ class ArxivPaperData(EmbeddedDocument):
     def get_local_url(self):
         return '/arxiv/' + self.id
     def get_source_url(self):
-        return 'http://arxiv.org/abs/' + self.id
+        return 'http://arxiv.org/abs/' + self.id.replace('_', '/')
     def get_downloader_url(self):
-        return 'http://arxiv.org/pdf/%s.pdf' % self.id
+        return 'http://arxiv.org/pdf/%s.pdf' % self.id.replace('_', '/')
     def get_hashtag(self):
-        return '#arxiv_' + self.id.replace('.', '_')
+        return '#arxiv_' + self.id.replace('.', '_').replace('-', '_')
     def get_abstract(self):
         return self.summary
 
@@ -462,17 +463,27 @@ class Paper(Document):
         return '/paper/' + str(self._id)
                 
 
-def get_paper_from_hashtag(t):
+def hashtag_to_spnetID(s, subs=((re.compile('([a-z])_([a-z])'), r'\1-\2'),
+                                (re.compile('([0-9])_([0-9])'), r'\1.\2'))):
+    'convert 1234_5678 --> 1234.5678 and gr_qc_12345 --> gr-qc_12345'
+    for pattern, replace in subs:
+        s = pattern.sub(replace, s)
+    return s
+
+
+def get_paper_from_hashtag(t, arxivRE=re.compile('#arxiv_([a-z0-9_]+)'),
+                           pubmedRE=re.compile('#pubmed_([0-9]+)'),
+                           shortdoiRE=re.compile('#shortDOI_([a-zA-Z0-9]+)')):
     'search text for first paper hashtag and return paper object for that ID'
-    m = re.search('#arxiv_([0-9_]+)', t)
+    m = arxivRE.search(t)
     if m:
-        arxivID = str('.'.join(m.group(1).split('_')))
+        arxivID = hashtag_to_spnetID(str(m.group(1)))
         return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
-    m = re.search('#pubmed_([0-9]+)', t)
+    m = pubmedRE.search(t)
     if m:
         pubmedID = str(m.group(1))
         return PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
-    m = re.search('#shortDOI_([a-zA-Z0-9]+)', t)
+    m = shortdoiRE.search(t)
     if m:
         shortDOI = str(m.group(1))
         return DoiPaperData(shortDOI=shortDOI,
