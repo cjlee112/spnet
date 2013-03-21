@@ -236,6 +236,7 @@ gpd2 = core.GplusPersonData('114744049040264263224',
                             insertNew='findOrInsert')
 assert getattr(core.Person(mrID), 'subscriptions', []) == [gpd2.parent]
 
+gpd2.update_posts() # retrieve some recs
 
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, have you stopped taking your medications?'),

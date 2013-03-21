@@ -6,6 +6,7 @@ import json
 import requests
 from datetime import datetime, timedelta
 import dateutil.parser
+import dateutil.tz
 from oauth2client.client import OAuth2Credentials, _extract_id_token
 # supposed to work but doesn't... maybe in a newer version?
 #from oauth2client import GOOGLE_AUTH_URI
@@ -218,7 +219,9 @@ def convert_timestamps(d, fields=('published', 'updated')):
     'convert G+ timestamp string fields to datetime objects'
     for f in fields:
         try:
-            d[f] = dateutil.parser.parse(d[f])
+            t = dateutil.parser.parse(d[f])
+            t = t.astimezone(dateutil.tz.tzutc()) # force to UTC
+            d[f] = t.replace(tzinfo=None) # strip to prevent stupid crashes
         except KeyError:
             pass
 
