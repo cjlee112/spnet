@@ -15,7 +15,17 @@ People &gt;
 {% else %}
 {{ person.name }}
 {% endif %}
+{% if not user %}
+<A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
+{% endif %}
 </h1>
+<form id="search" method="GET" action="/arxiv">
+<div class="search-for">Search or Article-id</div>
+<div class="links">(<a href="http://arxiv.org/help">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)</div>
+<input type="text" name="searchString" size="24" maxlength="64" />
+&nbsp;
+<input type="submit" value="Go!" /><br />
+</form>
 </div>
 
 <h1 class="title">

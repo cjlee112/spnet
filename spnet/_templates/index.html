@@ -13,10 +13,16 @@
 Welcome,
 <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
 {% else %}
-<A HREF="/twitter_login"><IMG SRC="/images/sign-in-with-twitter-gray.png"></A>
 <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
 {% endif %}
 </h1>
+<form id="search" method="GET" action="/arxiv">
+<div class="search-for">Search or Article-id</div>
+<div class="links">(<a href="http://arxiv.org/help">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)</div>
+<input type="text" name="searchString" size="24" maxlength="64" />
+&nbsp;
+<input type="submit" value="Go!" /><br />
+</form>
 </div>
 
 {% if user %}
@@ -85,32 +91,10 @@ them an invitation post).<br>
 
 
 {% else %}
-<h3>Login</h3>
-<BR>
-<FORM ACTION="/login" METHOD="GET">
-your email:<INPUT TYPE="text" NAME="email" SIZE=30><BR>
-password:<INPUT TYPE="password" NAME="password" SIZE=30><BR>
-<INPUT TYPE="submit">
-</FORM>
+(add text explaining how to sign-in via Google+)
 {% endif %}
 
 
-<h3>Search</h3>
-<FORM ACTION="/arxiv" METHOD="GET">
-arXiv ID: <INPUT TYPE="text" NAME="searchID" VALUE="1302.4871" SIZE=30>
-<INPUT TYPE="submit">
-</FORM>
-<BR>
-<FORM ACTION="/view" METHOD="GET">
-<INPUT TYPE="hidden" NAME="view" VALUE="search">
-Search
-<SELECT NAME="collection">
-<OPTION VALUE="paper">Papers</OPTION>
-<OPTION VALUE="person">Authors</OPTION>
-</SELECT>
-for <INPUT TYPE="text" NAME="query" SIZE=30>
-<INPUT TYPE="submit">
-</FORM>
 
 <script type="text/javascript">
   (function() {
