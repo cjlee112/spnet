@@ -80,3 +80,48 @@ class TemplateView(object):
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500
             return 'server error'
+
+##################################################################
+
+class MultiplePages(object):
+    'Interface for paging through result sets'
+    def __init__(self, f, block_size, ipage, uri, **queryArgs):
+        self.f = f
+        self.pages = []
+        self.block_size = block_size
+        self.queryArgs = queryArgs
+        self.uri = uri
+        self.results = () # default: no results
+        self.get_page(ipage, uri, **queryArgs)
+    def get_page(self, ipage, uri, **queryArgs):
+        '''returns True if we can serve the specified query;
+        otherwise False.  Raises StopIteration'''
+        if self.uri != uri or queryArgs != self.queryArgs:
+            return False # a different search!
+        self.error = '' # default: no error
+        while ipage >= len(self.pages):
+            l = self.f(start=ipage * self.block_size,
+                       block_size=self.block_size, **self.queryArgs)
+            if l:
+                self.pages.append(l)
+            if len(l) < self.block_size:
+                self.totalPages = len(self.pages)
+                if not self.pages:
+                    self.error = 'No results matched your query.'
+                    return True # report these search results
+                if not l:
+                    self.error = 'There are no more results matching your query.'
+                ipage = len(self.pages) - 1 # last page
+                break
+        self.ipage = ipage
+        self.start = ipage * self.block_size + 1
+        self.results = self.pages[ipage]
+        self.end = self.start + len(self.results) - 1
+        return True # report these search results
+    def get_page_url(self, step=1):
+        'get URL for page incremented by step'
+        return self.uri + '?' + \
+               urllib.urlencode(dict(ipage=self.ipage + step,
+                                     **self.queryArgs))
+
+
