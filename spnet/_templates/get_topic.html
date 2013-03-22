@@ -76,6 +76,11 @@
 {{ paper.title }}
 </A> ( {{- list_people(people) -}} )
 </dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(paper.authorNames) }} 
+</div>
+</dd>
 {% endfor %}
 </dl>
 

@@ -90,6 +90,11 @@ them an invitation post).<br>
 {{ interest.parent.title }}
 </A>
 </dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(interest.parent.authorNames) }} 
+</div>
+</dd>
 {% endfor %}
 </dl>
 
