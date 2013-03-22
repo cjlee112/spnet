@@ -356,8 +356,13 @@ class PubmedPaperData(EmbeddedDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        return Paper(docData=dict(title=d['title'],
-                                  authorNames=d['authorNames']))
+        try:
+            DOI = d['doi']
+        except KeyError: # no DOI, so save as usual
+            return Paper(docData=dict(title=d['title'],
+                                      authorNames=d['authorNames']))
+        else: # connect with DOI record
+            return DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
     def get_local_url(self):
         return '/pubmed/' + self.id
     def get_source_url(self):
@@ -474,90 +479,6 @@ class Paper(Document):
         return '/paper/' + str(self._id)
                 
 
-def hashtag_to_spnetID(s, subs=((re.compile('([a-z])_([a-z])'), r'\1-\2'),
-                                (re.compile('([0-9])_([0-9])'), r'\1.\2'))):
-    'convert 1234_5678 --> 1234.5678 and gr_qc_12345 --> gr-qc_12345'
-    for pattern, replace in subs:
-        s = pattern.sub(replace, s)
-    return s
-
-
-def get_paper_from_hashtag(t, arxivRE=re.compile('#arxiv_([a-z0-9_]+)'),
-                           pubmedRE=re.compile('#pubmed_([0-9]+)'),
-                           shortdoiRE=re.compile('#shortDOI_([a-zA-Z0-9]+)')):
-    'search text for first paper hashtag and return paper object for that ID'
-    m = arxivRE.search(t)
-    if m:
-        arxivID = hashtag_to_spnetID(str(m.group(1)))
-        return ArxivPaperData(arxivID, insertNew='findOrInsert').parent
-    m = pubmedRE.search(t)
-    if m:
-        pubmedID = str(m.group(1))
-        return PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
-    m = shortdoiRE.search(t)
-    if m:
-        shortDOI = str(m.group(1))
-        return DoiPaperData(shortDOI, insertNew='findOrInsert').parent
-
-
-def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
-                         get_content, get_user, get_replycount,
-                         process_post=None, process_reply=None):
-    'generate each post that has a paper hashtag, adding to DB if needed'
-    for d in posts:
-        post = None
-        content = get_content(d)
-        isRec = content.find('#recommend') >= 0 or \
-                content.find('#mustread') >= 0
-        if not isRec:
-            try:
-                post = Post(d['id'])
-                if getattr(post, 'etag', None) == d.get('etag', ''):
-                    yield post
-                    continue # matches DB record, so nothing to do
-            except KeyError:
-                pass
-        if post is None: # extract data for saving post to DB
-            paper = get_paper_from_hashtag(content)
-            if paper is None:
-                continue # no link to a paper, so nothing to save.
-            userID = get_user(d)
-            author = find_or_insert_person(userID)
-            d['author'] = author._id
-            d['text'] =  content
-            if process_post:
-                process_post(d)
-            if isRec: # see if rec already in DB
-                try:
-                    post = Recommendation((paper._id, author._id))
-                    if getattr(post, 'etag', None) == d.get('etag', ''):
-                        yield post
-                        continue # matches DB record, so nothing to do
-                except KeyError: # need to save new record to DB
-                    post = Recommendation(docData=d, parent=paper)
-            else:
-                post = Post(docData=d, parent=paper)
-        yield post
-        if get_replycount(d) > 0:
-            for c in get_post_comments(d['id']):
-                if process_reply:
-                    process_reply(c)
-                try:
-                    r = Reply(c['id'])
-                    if getattr(r, 'etag', None) != c.get('etag', ''):
-                        # update DB record with latest data
-                        r.update(dict(etag=c.get('etag', ''),
-                                      text=get_content(c),
-                                      updated=c.get('updated', '')))
-                    continue # already stored in DB, no need to save
-                except KeyError:
-                    pass
-                userID = get_user(c)
-                author = find_or_insert_person(userID)
-                c['author'] = author._id
-                c['text'] =  get_content(c)
-                c['replyTo'] = d['id']
-                r = Reply(docData=c, parent=post._parent_link)
 
 
 class Tag(Document):

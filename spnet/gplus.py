@@ -15,6 +15,7 @@ from oauth2client.client import OAuth2Credentials, _extract_id_token
 import httplib2
 from apiclient.discovery import build
 import time
+from incoming import find_or_insert_posts
 
 # Question: what's worse than an F+ ?
 # Answer: this.
@@ -177,12 +178,12 @@ class OAuth(object):
                              x['object']['replies']['totalItems']):
         'save google+ posts to core.find_or_insert_posts()'
         import core
-        return core.find_or_insert_posts(posts, self.get_post_comments,
-                                         lambda x:core.GplusPersonData(x,
+        return find_or_insert_posts(posts, self.get_post_comments,
+                                    lambda x:core.GplusPersonData(x,
                                insertNew='findOrInsert').parent,
-                                         get_content, get_user,
-                                         get_replycount, convert_timestamps,
-                                         convert_timestamps)
+                                    get_content, get_user,
+                                    get_replycount, convert_timestamps,
+                                    convert_timestamps)
 
     def api_iter(self, resourceName='activities', verb='list',
                  getResponse=False, **kwargs):

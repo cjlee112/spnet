@@ -5,6 +5,7 @@ import json
 import doi
 from bson import ObjectId
 import apptree
+import incoming
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -259,7 +260,7 @@ paper3 = core.PubmedPaperData('23482246', insertNew='findOrInsert').parent
 paper3.update(dict(authors=[fred._id]))
 
 assert paper3.pubmed.id == '23482246'
-assert paper3.title == correctDict['title']
+assert paper3.title[:40] == correctDict['title'][:40]
 
 s = 'aabbe'
 t = doi.map_to_doi(s)
@@ -275,10 +276,14 @@ paper5 = core.DoiPaperData(s, insertNew='findOrInsert').parent
 assert paper4 == paper5
 assert rootColl['shortDOI']._GET(s) == paper4
 txt = 'some text ' + paper4.doi.get_hashtag()
-assert core.get_paper_from_hashtag(txt) == paper4
+assert incoming.get_hashtag_dict(txt)['paper'] == [paper4]
 
 spnetPaper = core.DoiPaperData(DOI='10.3389/fncom.2012.00001',
                                insertNew='findOrInsert').parent
 assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'
 txt = 'a long comment ' + spnetPaper.pubmed.get_hashtag() + ', some more text'
-assert core.get_paper_from_hashtag(txt) == spnetPaper
+assert incoming.get_hashtag_dict(txt)['paper'] == [spnetPaper]
+
+t = 'this is text #spnetwork #recommend #arxiv_1302_4871 #pubmed_22291635 #cosmology'
+d = incoming.get_hashtag_dict(t)
+assert d == {'header': ['#spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['#recommend']}
