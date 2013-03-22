@@ -18,10 +18,7 @@ class InterestCollection(ArrayDocCollection):
             topic = topic[1:]
         state = int(state)
         if state: # make sure topic exists
-            try:
-                sig = core.SIG(topic)
-            except KeyError: # create a new topic
-                sig = core.SIG(docData=dict(_id=topic, name='#' + topic))
+            sig = core.SIG.find_or_insert(topic, name='#' + topic)
         try:
             interest = self._GET(personID, parents)
         except KeyError:

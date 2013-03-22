@@ -197,6 +197,13 @@ class Document(object):
         'same as find() but returns objects'
         for d in klass.find(queryDict, None, False, **kwargs):
             yield klass(docData=d, insertNew=False)
+    @classmethod
+    def find_or_insert(klass, fetchID, **kwargs):
+        'save to db if not already present'
+        try:
+            return klass(fetchID)
+        except KeyError:
+            return klass(docData=dict(_id=fetchID, **kwargs))
 
 def convert_obj_to_id(d):
     'replace Document objects by their IDs'
