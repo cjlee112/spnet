@@ -148,7 +148,11 @@ or enter a new tag here:
   data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
+{% if user %}
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' ' + paper.get_value() -}}"
+{% else %}
   data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+{% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to recommend this paper on Google+">
@@ -160,7 +164,11 @@ or enter a new tag here:
   data-contenturl=" {{- paper.get_value('source_url') -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
+{% if user %}
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' ' + paper.get_value() -}}"
+{% else %}
   data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+{% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
   title="Click to recommend this paper as MUST-READ for your area of research">
