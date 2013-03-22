@@ -456,10 +456,12 @@ class Paper(Document):
         doi=SaveAttr(DoiPaperData, insertNew=False),
         )
     _get_value_attrs = ('arxiv', 'pubmed', 'doi')
-    def get_interests(self, sorted=False):
+    def get_interests(self, people=None, sorted=False):
         'return dict of SIG:[people]'
         d = {}
         for interest in getattr(self, 'interests', ()):
+            if people and interest._dbDocDict['author'] not in people:
+                continue # only include interests of these people
             for topic in interest.topics:
                 try:
                     d[topic].append(interest.author)
