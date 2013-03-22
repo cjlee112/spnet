@@ -91,3 +91,6 @@ if __name__ == '__main__':
     s = Server()
     print 'starting server...'
     s.start()
+    print 'starting gplus #spnetwork polling...'
+    gplus.publicAccess.start_poll()
+

@@ -14,7 +14,7 @@ from oauth2client.client import OAuth2Credentials, _extract_id_token
 #from oauth2client import GOOGLE_TOKEN_URI
 import httplib2
 from apiclient.discovery import build
-
+import time
 
 # Question: what's worse than an F+ ?
 # Answer: this.
@@ -204,10 +204,28 @@ class OAuth(object):
                 yield item
             request = getattr(rsrc, verb + '_next')(request, doc)
 
-    def load_recent_spnetwork(self, **kwargs):
+    def poll_recent_spnetwork(self, interval=300, *args, **kwargs):
+        'query for recent #spnetwork traffic every interval seconds'
+        self._continuePoll = True
+        while self._continuePoll:
+            n = 0
+            for post in self.load_recent_spnetwork(*args, **kwargs):
+                n += 1
+            self._pollReceived = n # count of posts screened
+            time.sleep(interval)
+
+    def halt_poll(self):
+        'halt poll_recent_spnetwork()'
+        self._continuePoll = False
+
+    def start_poll(self, *args):
+        'start polling in a background thread'
+        thread.start_new_thread(self.poll_recent_spnetwork, args)        
+
+    def load_recent_spnetwork(self, *args, **kwargs):
         'scan recent G+ posts for updates, and save updates to DB'
         postIt = self.search_activities(query='#spnetwork', orderBy='recent')
-        return self.load_recent_posts(postIt, **kwargs)
+        return self.load_recent_posts(postIt, *args, **kwargs)
     def load_recent_posts(self, postIt, maxDays=10):
         now = datetime.utcnow()
         for p in self.find_or_insert_posts(postIt):
