@@ -6,6 +6,7 @@ import doi
 from bson import ObjectId
 import apptree
 import incoming
+from datetime import datetime
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -40,6 +41,14 @@ jojoGplus.update(dict(etag='oldversion'))
 
 sig1 = core.SIG(docData=dict(name='#cosmology', _id='cosmology'))
 sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel', _id='lambdaCDMmodel'))
+
+topicWords = incoming.get_topicIDs(dict(topics=['cosmology', 'astrophysics']),
+                                   1, datetime.utcnow(), 'test')
+assert topicWords == ['cosmology', 'astrophysics']
+astroSIG = core.SIG('astrophysics')
+assert astroSIG.name == '#astrophysics'
+assert astroSIG.origin == dict(source='test', id=1)
+
 
 int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
                           parent=paper1)

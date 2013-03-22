@@ -24,16 +24,34 @@ GOOGLE_AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_REVOKE_URI = 'https://accounts.google.com/o/oauth2/revoke'
 GOOGLE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 
-def get_keys(keyfile='../google/keys.json'):
-    with open(keyfile, 'r') as ifile:
-        keys = json.loads(ifile.read())
-    return keys
+##################################################################
+# timestamp mangling
 
+def convert_timestamps(d, fields=('published', 'updated')):
+    'convert G+ timestamp string fields to datetime objects'
+    for f in fields:
+        try:
+            t = dateutil.parser.parse(d[f])
+            t = t.astimezone(dateutil.tz.tzutc()) # force to UTC
+            d[f] = t.replace(tzinfo=None) # strip to prevent stupid crashes
+        except KeyError:
+            pass
+
+def get_gplus_timestamp(d):
+    'safe method for getting a timestamp from gplus data dict'
+    try:
+        return d['published']
+    except KeyError:
+        return datetime.utcnow()
+
+####################################################################
+# authentication interface to gplus
 
 # we could just use Google's oauth2client.OAuth2WebServerFlow
 # but for some reason it doesn't implement the state check
 # protection against CSRF attack.  So I implemented simple code
-# that does protect against that.
+# that does protect against that.  Oh, and activities().search()
+# doesn't work at all yet -- won't take any arguments!
 
 class OAuth(object):
     def __init__(self, auth_uri=GOOGLE_AUTH_URI,
@@ -175,15 +193,17 @@ class OAuth(object):
                              get_content=lambda x:x['object']['content'],
                              get_user=lambda x:x['actor']['id'],
                              get_replycount=lambda x:
-                             x['object']['replies']['totalItems']):
+                             x['object']['replies']['totalItems'],
+                             get_id=lambda x:x['id'],
+                             get_timestamp=get_gplus_timestamp):
         'save google+ posts to core.find_or_insert_posts()'
         import core
         return find_or_insert_posts(posts, self.get_post_comments,
                                     lambda x:core.GplusPersonData(x,
                                insertNew='findOrInsert').parent,
-                                    get_content, get_user,
-                                    get_replycount, convert_timestamps,
-                                    convert_timestamps)
+                                    get_content, get_user, get_replycount,
+                                    get_id, get_timestamp, 'gplusPost',
+                                    convert_timestamps, convert_timestamps)
 
     def api_iter(self, resourceName='activities', verb='list',
                  getResponse=False, **kwargs):
@@ -234,15 +254,14 @@ class OAuth(object):
             if (now - p.updated).days > maxDays:
                 break
 
-def convert_timestamps(d, fields=('published', 'updated')):
-    'convert G+ timestamp string fields to datetime objects'
-    for f in fields:
-        try:
-            t = dateutil.parser.parse(d[f])
-            t = t.astimezone(dateutil.tz.tzutc()) # force to UTC
-            d[f] = t.replace(tzinfo=None) # strip to prevent stupid crashes
-        except KeyError:
-            pass
+##################################################################
+# default clientID, API key etc. access
+
+def get_keys(keyfile='../google/keys.json'):
+    with open(keyfile, 'r') as ifile:
+        keys = json.loads(ifile.read())
+    return keys
+
 
 
 publicAccess = OAuth() # gives API key based access (search public data)
