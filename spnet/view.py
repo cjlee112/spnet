@@ -50,6 +50,15 @@ def timesort(stuff, cmpfunc=lambda x,y:cmp(x.published,y.published),
     l.sort(cmpfunc, reverse=reverse, **kwargs)
     return l
 
+def map_helper(it, attr=None, **kwargs):
+    '''jinja2 lacks list-comprehensions, map, lambda, etc... so we need
+    some help with those kind of operations'''
+    if attr:
+        f = lambda x: getattr(x, attr)
+    return map(f, it)
+
+
+
 #################################################################
 # template loading and rendering
 
@@ -72,7 +81,7 @@ class TemplateView(object):
         try:
             return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, str=str,
+                     getattr=getattr, str=str, map=map_helper,
                      user=cherrypy.session.get('person', None),
                      display_datetime=display_datetime, timesort=timesort,
                      **kwargs) # apply template
