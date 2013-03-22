@@ -180,6 +180,22 @@ class SIG(Document):
     recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
                                       noData=True)
     interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
+    tagRE = re.compile('[A-Za-z][A-Za-z0-9_]+$') # string allowed after #
+    @classmethod
+    def standardize_id(klass, fetchID):
+        'ID must follow hashtag rules (or raise KeyError); rm leading #'
+        if fetchID.startswith('#'): # don't include hash in ID
+            fetchID = fetchID[1:]
+        if not klass.tagRE.match(fetchID):
+            raise KeyError('topic does not satisfy hashtag character rules: '
+                           + fetchID)
+        return fetchID
+    @classmethod
+    def find_or_insert(klass, fetchID, **kwargs):
+        'save to db if not already present, after checking ID validity'
+        fetchID = klass.standardize_id(fetchID)
+        return base_find_or_insert(klass, fetchID, name='#' + fetchID,
+                                   **kwargs)
     def get_interests(self):
         'return dict of paper:[people]'
         d = {}
@@ -378,8 +394,8 @@ class PubmedPaperData(EmbeddedDocument):
 class DoiPaperData(EmbeddedDocument):
     'store DOI data for a paper as subdocument of Paper'
     _dbfield = 'doi.id'
-    def __init__(self, fetchID=None, docData={}, parent=None, insertNew=True,
-                 DOI=None):
+    def __init__(self, fetchID=None, docData=None, parent=None,
+                 insertNew=True, DOI=None):
         '''Note the fetchID must be shortDOI; to search for DOI, pass
         DOI kwarg.
         docData, if provided should include keys: id=shortDOI, doi=DOI'''
