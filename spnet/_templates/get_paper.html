@@ -13,8 +13,6 @@ function setInterest(topicID, state, userID)
   {
     topic:topicID,
     state:state
-  }, function(data,status){
-    alert("Data: " + data + "\nStatus: " + status);
   });
 }
 
@@ -29,6 +27,23 @@ function toggleInterest(o, userID)
     o.value="1"
   }
   setInterest(o.name, o.value, userID);
+}
+
+
+function toggleReadingList(o, userID)
+{
+  if (o.value == "1")
+  {
+    o.value="0";
+  }
+  else
+  {
+    o.value="1"
+  }
+  $.post("/people/" + userID + "/reading/" + "{{- paper._id -}}",
+  {
+    state:o.value
+  });
 }
 </script>
 </head>
@@ -78,6 +93,16 @@ function toggleInterest(o, userID)
 {{ paper.get_value('abstract') }}
 </blockquote>
 
+{% if user %}
+<input type="checkbox" name="readingList"
+onclick="toggleReadingList(this, ' {{- user._id -}} ')"
+{% if paper._id in user._dbDocDict.get('readingList', ()) %}
+value="1" CHECKED
+{% else %}
+value="0"
+{% endif %}
+/> Add to my Reading List
+{% endif %}
 
 <h3>Tagged as Interesting by People in the Following Topics</h3>
 {% if user %}

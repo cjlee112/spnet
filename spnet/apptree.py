@@ -98,6 +98,25 @@ class PersonCollection(rest.Collection):
                 if l: # need to update our object representation to see them
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
+
+class ReadingList(rest.Collection):
+    def _POST(self, paperID, state, parents):
+        person = parents.values()[0]
+        paperID = ObjectId(paperID)
+        included = paperID in person._dbDocDict.get('readingList', ())
+        state = (int(state) or False) and True # convert to boolean
+        if state == included: # matches current state, so nothing to do
+            return 0
+        elif state: # add to reading list
+            person.array_append('readingList', paperID)
+            result = 1
+        else:
+            person.array_del('readingList', paperID)
+            result = -1
+        cherrypy.session['person'] = core.Person(person._id) # refresh user
+        return result
+    def post_json(self, status, **kwargs):
+        return json.dumps(dict(status=status))
     
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
@@ -131,6 +150,9 @@ def get_collections(templateDir='_templates'):
 
     people = PersonCollection('person', core.Person, templateEnv, templateDir,
                               gplusClientID=gplusClientID)
+    readingList = ReadingList('reading', core.Paper, templateEnv, templateDir,
+                              gplusClientID=gplusClientID)
+    people.reading = readingList
     topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 

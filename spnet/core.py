@@ -291,6 +291,7 @@ class Person(Document):
     posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
     replies = LinkDescriptor('replies', fetch_person_replies, noData=True)
     interests = LinkDescriptor('interests', fetch_person_interests, noData=True)
+    readingList = LinkDescriptor('readingList', fetch_papers, missingData=())
 
     # custom attr constructors
     _attrHandler = dict(

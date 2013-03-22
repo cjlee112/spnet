@@ -89,6 +89,23 @@ them an invitation post).<br>
 {% endfor %}
 </dl>
 
+<h3>Your Reading List</h3>
+
+<dl>
+{% for i,paper in enumerate(user.readingList[-1::-1]) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="{{- paper.get_value('local_url') -}}">
+{{ paper.title }}
+</A>
+</dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(paper.authorNames) }} 
+</div>
+</dd>
+{% endfor %}
+</dl>
+
 
 {% else %}
 (add text explaining how to sign-in via Google+)
