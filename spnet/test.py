@@ -42,7 +42,7 @@ jojoGplus.update(dict(etag='oldversion'))
 sig1 = core.SIG(docData=dict(name='#cosmology', _id='cosmology'))
 sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel', _id='lambdaCDMmodel'))
 
-topicWords = incoming.get_topicIDs(dict(topics=['cosmology', 'astrophysics']),
+topicWords = incoming.get_topicIDs(dict(topic=['cosmology', 'astrophysics']),
                                    1, datetime.utcnow(), 'test')
 assert topicWords == ['cosmology', 'astrophysics']
 astroSIG = core.SIG('astrophysics')

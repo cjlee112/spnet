@@ -1,6 +1,7 @@
 from base import *
 from hashlib import sha1
 import re
+from datetime import datetime
 
 
 
@@ -191,11 +192,13 @@ class SIG(Document):
                            + fetchID)
         return fetchID
     @classmethod
-    def find_or_insert(klass, fetchID, **kwargs):
+    def find_or_insert(klass, fetchID, published=None, **kwargs):
         'save to db if not already present, after checking ID validity'
         fetchID = klass.standardize_id(fetchID)
+        if published is None:
+            published = datetime.utcnow() # ensure timestamp
         return base_find_or_insert(klass, fetchID, name='#' + fetchID,
-                                   **kwargs)
+                                   published=published, **kwargs)
     def get_interests(self):
         'return dict of paper:[people]'
         d = {}

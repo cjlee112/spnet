@@ -31,7 +31,7 @@ hashTagPats = (
     (re.compile('#spnetwork'), 'header', lambda m:m.group(0)),
     (re.compile('#recommend'), 'rec', lambda m:m.group(0)),
     (re.compile('#mustread'), 'rec', lambda m:m.group(0)),
-    (re.compile('#([a-zA-Z0-9_]+)'), 'topic', lambda m:m.group(1)),
+    (re.compile('#([a-zA-Z][a-zA-Z0-9_]+)'), 'topic', lambda m:m.group(1)),
     )
 
 
@@ -78,9 +78,9 @@ def screen_topics(topicWords, skipAttr='ignore', **kwargs):
 
 def get_topicIDs(hashtagDict, docID, timestamp, source):
     'return list of topic IDs for a post, saving to db if needed'
-    topics = screen_topics(hashtagDict.get('topics', ()),
+    topics = screen_topics(hashtagDict.get('topic', ()),
                            origin=dict(source=source, id=docID),
-                           created=timestamp)
+                           published=timestamp)
     return [t._id for t in topics] # IDs for storing to db, etc.
 
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
