@@ -79,9 +79,16 @@ assert int2.topics == [sig2]
 assert core.Paper(paper2._id).interests == [int2]
 assert core.Person(fred._id).interests == [int2]
 assert core.SIG(sig2._id).interests == [int2]
+try:
+    paperLikes._POST(fred._id, 'this is not allowed', '1',
+                     parents=dict(paper=paper2))
+except KeyError:
+    pass
+else:
+    raise AssertionError('failed to trap bad topic string')
 # test removal via POST
 assert paperLikes._POST(fred._id, sig2._id, '0',
-                           parents=dict(paper=core.Paper(paper2._id))) is None
+                        parents=dict(paper=core.Paper(paper2._id))) == int2
 assert core.Paper(paper2._id).interests == []
 
 int3 = paperLikes._POST(fred._id, '#silicene', '1',

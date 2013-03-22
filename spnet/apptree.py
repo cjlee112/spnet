@@ -6,19 +6,20 @@ from bson import ObjectId
 import json
 import cherrypy
 
+
 class ArrayDocCollection(rest.Collection):
     def _GET(self, docID, parents):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
 
 class InterestCollection(ArrayDocCollection):
-    def _POST(self, personID, topic, state, parents):
+    def _POST(self, personID, topic, state, parents, topic2=''):
         'add or remove topic from PaperInterest depending on state'
+        topic = topic or topic2 # use whichever is non-empty
+        topic = core.SIG.standardize_id(topic) # must follow hashtag rules
         personID = ObjectId(personID)
-        if topic[0] == '#': # don't include hash in ID
-            topic = topic[1:]
         state = int(state)
         if state: # make sure topic exists
-            sig = core.SIG.find_or_insert(topic, name='#' + topic)
+            sig = core.SIG.find_or_insert(topic)
         try:
             interest = self._GET(personID, parents)
         except KeyError:
@@ -29,11 +30,15 @@ class InterestCollection(ArrayDocCollection):
             else: # trying to rm something that doesn't exist
                 raise
         if state:
-            return interest.add_topic(topic)
+            interest.add_topic(topic)
         else:
-            return interest.remove_topic(topic)
+            interest.remove_topic(topic)
+        return interest
     def post_json(self, interest, **kwargs):
         return json.dumps(dict(interest='very good'))
+    def post_html(self, interest, **kwargs):
+        'display interest change by re-displaying the paper page'
+        return view.redirect(interest.parent.get_value('local_url'))
 
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):

@@ -71,7 +71,7 @@ def screen_topics(topicWords, skipAttr='ignore', **kwargs):
     'return list of topic object, filtered by the skipAttr attribute'
     l = []
     for t in topicWords:
-        topic = core.SIG.find_or_insert(t, name='#' + t, **kwargs)
+        topic = core.SIG.find_or_insert(t, **kwargs)
         if not getattr(topic, skipAttr, False):
             l.append(topic)
     return l
