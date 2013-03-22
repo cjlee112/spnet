@@ -21,7 +21,11 @@ People &gt;
 </h1>
 <form id="search" method="GET" action="/arxiv">
 <div class="search-for">Search or Article-id</div>
-<div class="links">(<a href="http://arxiv.org/help">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)</div>
+<div class="links">(<a href="http://arxiv.org/help">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
+{% if user %}
+ | <a href="/signout">Signout</a>
+{% endif %}
+</div>
 <input type="text" name="searchString" size="24" maxlength="64" />
 &nbsp;
 <input type="submit" value="Go!" /><br />

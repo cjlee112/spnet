@@ -76,6 +76,16 @@ class Server(object):
         return view.redirect('/')
     oauth2callback.exposed = True
 
+    def signout(self):
+        'remove the user info from this session'
+        try:
+            del cherrypy.session['person']
+        except KeyError:
+            pass
+        return view.redirect('/')
+    signout.exposed = True
+            
+
 
 if __name__ == '__main__':
     s = Server()
