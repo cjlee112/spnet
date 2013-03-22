@@ -129,18 +129,20 @@ value="0"
 </A> ( {{- list_people(people) -}} )
 {% endfor %}
 {% if user %}
-<BR>Add a topic:
-<select onchange="setInterest(this.value, '1', ' {{- user._id -}} ')" name="chooseTopic">
+<FORM action="{{- '/papers/%s/likes/%s' % (str(paper._id), str(user._id)) -}}" method="POST">
+Add a topic:
+<select name="topic2">
 <option value=""></option>
 {% for topic,papers in user.get_interests(sorted=True) %}
 <option value=" {{- topic._id -}} "> {{- topic.name -}} </option>
 {% endfor %}
 </select>
 or enter a new tag here:
+<INPUT TYPE="hidden" NAME="state" VALUE="1" />
 <INPUT TYPE="text" id="addNewTopic" NAME="topic" SIZE=15/>
-<button onclick="setInterest($('#addNewTopic').val(), '1', ' {{- user._id -}} ')">Save</button>
+<INPUT TYPE="submit" value="Save" />
+</FORM>
 {% endif %}
-<BR>
 
 <h3>Recommendations
 <button
