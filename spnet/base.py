@@ -186,13 +186,24 @@ class Document(object):
         return self._spnet_url_base + self.get_local_url()
 
     @classmethod
-    def find(klass, queryDict={}, fields=None, idOnly=True, **kwargs):
+    def find(klass, queryDict={}, fields=None, idOnly=True,
+             sortKeys=None, limit=None, **kwargs):
         'generic class method for searching a specific collection'
         if fields:
             idOnly = False
         if idOnly:
             fields = {'_id':1}
-        for d in klass.coll.find(queryDict, fields, **kwargs):
+        if sortKeys or limit: # use new mongodb aggregation framework
+            pipeline = []
+            if sortKeys:
+                pipeline.append({'$sort':sortKeys})
+            if limit:
+                pipeline.append({'$limit':limit})
+            r = klass.coll.aggregate(pipeline)
+            it = iter(r['result'])
+        else:
+            it = klass.coll.find(queryDict, fields, **kwargs)
+        for d in it:
             if idOnly:
                 yield d['_id']
             else:
