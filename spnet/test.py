@@ -39,8 +39,8 @@ jojoGplus = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye',
                                 parent=jojo)
 jojoGplus.update(dict(etag='oldversion'))
 
-sig1 = core.SIG(docData=dict(name='#cosmology', _id='cosmology'))
-sig2 = core.SIG(docData=dict(name='#lambdaCDMmodel', _id='lambdaCDMmodel'))
+sig1 = core.SIG.find_or_insert('cosmology')
+sig2 = core.SIG.find_or_insert('lambdaCDMmodel')
 
 topicWords = incoming.get_topicIDs(dict(topic=['cosmology', 'astrophysics']),
                                    1, datetime.utcnow(), 'test')
