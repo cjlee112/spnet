@@ -147,32 +147,32 @@ or enter a new tag here:
 <h3>Recommendations
 <button
   class="g-interactivepost"
-  data-contenturl=" {{- paper.get_value('source_url') -}} "
+  data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
 {% if user %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' ' + paper.get_value() -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
 {% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('hashtag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
 {% endif %}
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
+  data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper on Google+">
   Write recommendation
 </button>
 
 <button
   class="g-interactivepost"
-  data-contenturl=" {{- paper.get_value('source_url') -}} "
+  data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
 {% if user %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' ' + paper.get_value() -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
 {% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('hashtag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
 {% endif %}
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
+  data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper as MUST-READ for your area of research">
   Recommend as Must-Read
 </button>
@@ -218,12 +218,12 @@ or enter a new tag here:
 <h3>Discussion
 <button
   class="g-interactivepost"
-  data-contenturl=" {{- paper.get_value('source_url') -}} "
+  data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[YOUR QUESTION HERE] #spnetwork {{ paper.get_value('hashtag') + ' ' + paper.get_value() -}}"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork {{ paper.get_value('hashtag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
   data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- paper.get_value('source_url') -}} "
+  data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to post a question or comment about this paper on Google+">
   Discuss this paper
 </button>
