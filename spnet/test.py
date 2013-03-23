@@ -160,7 +160,7 @@ replyAgain = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
 assert replyAgain == reply1
 assert core.Paper(paper1._id).replies == [reply1]
 
-reply2 = core.Reply(docData=dict(author=jojo._id, text='Deadly boring paper',
+reply2 = core.Reply(docData=dict(author=jojo._id, text='This paper really made me think.',
                                  id=7891, replyTo=98765), parent=paper1,
                         insertNew='findOrInsert')
 
@@ -178,7 +178,7 @@ rec1.array_append('sigs', sig2)
 assert len(sig2.recommendations) == 2
 assert core.Recommendation((rec1.parent._id, rec1._get_id())).sigs == [sig2]
 
-rec2.update(dict(text='simply dreadful!', score=27))
+rec2.update(dict(text='totally fascinating!', score=27))
 rec3 = core.Recommendation((paper2._id, jojo._id))
 assert rec3.score == 27
 
@@ -221,7 +221,8 @@ assert core.EmailAddress(a4.address).numbers == [17, 6]
 a4.array_del('numbers', 17)
 assert core.EmailAddress(a4.address).numbers == [6]
 
-rec3 = core.Recommendation(docData=dict(author=fred._id, text='big_deal',
+rec3 = core.Recommendation(docData=dict(author=fred._id,
+                         text='I think this is a major breakthrough.',
                                         sigs=[sig2._id], id=3456),
                            parent=paper2._id)
 
@@ -256,7 +257,7 @@ assert getattr(core.Person(mrID), 'subscriptions', []) == [gpd2.parent]
 gpd2.update_posts() # retrieve some recs
 
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
-                      text='Fred, have you stopped taking your medications?'),
+                      text='Fred, thanks for your comments!  Your insights are really helpful.'),
                       parent=paper2._id)
 
 # make sure timestamps present on all recs
