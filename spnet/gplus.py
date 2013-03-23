@@ -195,7 +195,8 @@ class OAuth(object):
                              get_replycount=lambda x:
                              x['object']['replies']['totalItems'],
                              get_id=lambda x:x['id'],
-                             get_timestamp=get_gplus_timestamp):
+                             get_timestamp=get_gplus_timestamp,
+                             recentEvents=None):
         'save google+ posts to core.find_or_insert_posts()'
         import core
         return find_or_insert_posts(posts, self.get_post_comments,
@@ -203,7 +204,8 @@ class OAuth(object):
                                insertNew='findOrInsert').parent,
                                     get_content, get_user, get_replycount,
                                     get_id, get_timestamp, 'gplusPost',
-                                    convert_timestamps, convert_timestamps)
+                                    convert_timestamps, convert_timestamps,
+                                    recentEvents=recentEvents)
 
     def api_iter(self, resourceName='activities', verb='list',
                  getResponse=False, **kwargs):
@@ -247,9 +249,9 @@ class OAuth(object):
         'scan recent G+ posts for updates, and save updates to DB'
         postIt = self.search_activities(query='#spnetwork', orderBy='recent')
         return self.load_recent_posts(postIt, *args, **kwargs)
-    def load_recent_posts(self, postIt, maxDays=10):
+    def load_recent_posts(self, postIt, maxDays=10, recentEvents=None):
         now = datetime.utcnow()
-        for p in self.find_or_insert_posts(postIt):
+        for p in self.find_or_insert_posts(postIt, recentEvents=recentEvents):
             yield p
             if (now - p.updated).days > maxDays:
                 break

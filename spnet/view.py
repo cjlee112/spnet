@@ -2,6 +2,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 import urllib
 from datetime import datetime, timedelta
+import collections
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -84,7 +85,7 @@ class TemplateView(object):
                      getattr=getattr, str=str, map=map_helper,
                      user=cherrypy.session.get('person', None),
                      display_datetime=display_datetime, timesort=timesort,
-                     **kwargs) # apply template
+                     recentEvents=recentEventsDeque, **kwargs) # apply template
         except Exception, e:
             cherrypy.log.error('view function error', traceback=True)
             cherrypy.response.status = 500
@@ -134,3 +135,26 @@ class MultiplePages(object):
                                      **self.queryArgs))
 
 
+#######################################################################
+# recent events deque
+
+recentEventsDeque = collections.deque(maxlen=20)
+
+def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
+                       limit=20):
+    l = []
+    for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
+                                     limit=limit):
+        for r in getattr(paper, 'recommendations', ()):
+            l.append(r)
+        for r in getattr(paper, 'posts', ()):
+            l.append(r)
+        for r in getattr(paper, 'replies', ()):
+            l.append(r)
+    for topic in topicClass.find_obj(sortKeys={'published':-1}, limit=limit):
+        l.append(topic)
+    l.sort(lambda x,y:cmp(x.published, y.published))
+    for r in l:
+        dq.appendleft(r)
+        
+        

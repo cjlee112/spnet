@@ -83,10 +83,12 @@ def get_topicIDs(hashtagDict, docID, timestamp, source):
                            published=timestamp)
     return [t._id for t in topics] # IDs for storing to db, etc.
 
+
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount,
                          get_id, get_timestamp, source,
-                         process_post=None, process_reply=None):
+                         process_post=None, process_reply=None,
+                         recentEvents=None):
     'generate each post that has a paper hashtag, adding to DB if needed'
     for d in posts:
         post = None
@@ -123,8 +125,12 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                     d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
                                              get_timestamp(d), source)
                     post = core.Recommendation(docData=d, parent=paper)
+                    if recentEvents is not None: # add to monitor deque
+                        recentEvents.appendleft(post)
             else:
                 post = core.Post(docData=d, parent=paper)
+                if recentEvents is not None: # add to monitor deque
+                    recentEvents.appendleft(post)
         yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):
@@ -146,4 +152,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 c['text'] =  get_content(c)
                 c['replyTo'] = d['id']
                 r = core.Reply(docData=c, parent=post._parent_link)
+                if recentEvents is not None: # add to monitor deque
+                    recentEvents.appendleft(r)
 

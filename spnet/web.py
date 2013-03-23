@@ -89,8 +89,9 @@ class Server(object):
 
 if __name__ == '__main__':
     s = Server()
+    view.load_recent_events(s.papers.klass, s.topics.klass)
     print 'starting server...'
     s.start()
     print 'starting gplus #spnetwork polling...'
-    gplus.publicAccess.start_poll()
+    gplus.publicAccess.start_poll(300, 10, view.recentEventsDeque)
 
