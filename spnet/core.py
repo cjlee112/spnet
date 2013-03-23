@@ -538,9 +538,4 @@ fetch_gplus_subs.klass = GplusSubscriptions
 
 ##################################################################
 
-def get_or_create_person(d, subdoc, idField, nameField):
-    try:
-        p = Person.find_obj({subdoc + '.' + idField:d[idField]}).next()
-    except StopIteration:
-        p = Person(docData={'name':d[nameField], subdoc:d})
-    return p
+
