@@ -120,6 +120,83 @@ them an invitation post).<br>
 (add text explaining how to sign-in via Google+)
 {% endif %}
 
+<h3>Recent Activity on SelectedPapers.net</h3>
+<dl>
+{% for e in recentEvents %}
+{% if e.__class__.__name__ == 'Post' %}
+<dt>
+<A HREF="{{- e.author.get_local_url() -}}">
+{{ e.author.name }}
+</A> commented on
+<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+( {{- display_datetime(e.published) -}} )
+</dt>
+<dd>
+<div class="list-comments">{{ e.text }}
+{% if hasattr(post, 'url') %}
+<a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+{% endif %}
+</div>
+</dd>
+
+{% elif e.__class__.__name__ == 'Reply' %}
+<dt>
+<A HREF="{{- e.author.get_local_url() -}}">
+{{ e.author.name }}
+</A> replied RE: 
+<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+( {{- display_datetime(e.published) -}} )
+</dt>
+<dd>
+<div class="list-comments">{{ e.text }}
+</div>
+</dd>
+
+
+{% elif e.__class__.__name__ == 'Recommendation' %}
+<dt>
+<A HREF="{{- e.author.get_local_url() -}}">
+{{ e.author.name }}
+</A>: <A HREF="{{- e.get_local_url() -}} ">
+{{ e.title or 'Paper Recommendation' }}</A> 
+( {{- display_datetime(e.published) -}} )
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=e.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
+{% if hasattr(rec, 'url') %}
+<a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+{% endif %}
+</dt>
+<dd>
+<span class="list-identifier">Recommended 
+<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+{% if e.sigs %}
+<LI>Recommended for topics:
+{% for topic in e.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+</LI>
+{% endif %}
+</span>
+<div class="list-comments">
+{{ e.text }}
+</div>
+</dd>
+
+
+{% elif e.__class__.__name__ == 'SIG' %}
+<dt><A href="{{- e.get_local_url() -}}">{{- e.name -}} </A></dt>
+<dd>
+<div class="list-comments">
+new topic created ( {{- display_datetime(e.published) -}} )
+</div>
+</dd>
+{% endif %}
+{% endfor %}
+</dl>
+
+
 
 
 <script type="text/javascript">
