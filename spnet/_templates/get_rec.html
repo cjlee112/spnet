@@ -19,7 +19,7 @@
 <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
 {% endif %}
 </h1>
-<form id="search" method="GET" action="/arxiv">
+<form id="search" method="GET" action="/papers">
 <div class="search-for">Search or Article-id</div>
 <div class="links">(<a href="http://arxiv.org/help">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
 {% if user %}
@@ -28,6 +28,13 @@
 </div>
 <input type="text" name="searchString" size="24" maxlength="64" />
 &nbsp;
+<select name="searchType">
+<option value="arxiv" selected="selected">arXiv</option>
+<option value="arxivID">arXiv ID</option>
+<option value="PMID">Pubmed ID</option>
+<option value="shortDOI">Short DOI</option>
+<option value="DOI">DOI</option>
+</select>
 <input type="submit" value="Go!" /><br />
 </form>
 </div>

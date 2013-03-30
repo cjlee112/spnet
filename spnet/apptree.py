@@ -5,6 +5,7 @@ import gplus
 from bson import ObjectId
 import json
 import cherrypy
+from urllib import urlencode
 
 
 class ArrayDocCollection(rest.Collection):
@@ -39,6 +40,25 @@ class InterestCollection(ArrayDocCollection):
     def post_html(self, interest, **kwargs):
         'display interest change by re-displaying the paper page'
         return view.redirect(interest.parent.get_value('local_url'))
+
+
+class PaperCollection(rest.Collection):
+    def _search(self, searchString, searchType):
+        if searchType == 'arxivID':
+            return rest.Redirect('/arxiv/%s' % searchString.replace('/', '_'))
+        elif searchType == 'arxiv':
+            return rest.Redirect('/arxiv?' + urlencode(dict(searchString=searchString)))
+        elif searchType == 'PMID':
+            return rest.Redirect('/pubmed/%s' % searchString)
+        elif searchType == 'shortDOI':
+            return rest.Redirect('/shortDOI/%s' % searchString)
+        elif searchType == 'DOI':
+            dpd = core.DoiPaperData(DOI=searchString, insertNew='findOrInsert')
+            return rest.Redirect('/shortDOI/%s' % dpd.id)
+        else:
+            raise KeyError('unknown searchType ' + searchType)
+                                 
+    
 
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
@@ -85,7 +105,6 @@ class ArxivCollection(ParentCollection):
                                           searchString=searchString)
         session['queryResults'] = queryResults # keep for this user
         return queryResults
-        
 
 class PersonCollection(rest.Collection):
     def _GET(self, docID, getUpdates=False, **kwargs):
@@ -125,7 +144,7 @@ def get_collections(templateDir='_templates'):
     templateEnv = view.get_template_env(templateDir)
 
     # access Papers using our object ID
-    papers = rest.Collection('paper', core.Paper, templateEnv, templateDir,
+    papers = PaperCollection('paper', core.Paper, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
     # using arxivID
     arxivPapers = ArxivCollection('paper', core.ArxivPaperData, templateEnv,
