@@ -40,6 +40,7 @@ hashTagPats = (
     (re.compile('PMID:\s?([0-9]+)'), 'paper', get_hashtag_pubmed),
     (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),
     (re.compile('[dD][oO][iI]:\s?(10\.\S+)'), 'paper', get_doi_paper),
+    (re.compile('shortDOI:\s?([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),
     (re.compile('#([a-zA-Z][a-zA-Z0-9_]+)'), 'topic', lambda m:m.group(1)),
     )
 

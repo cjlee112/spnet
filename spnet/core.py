@@ -362,6 +362,8 @@ class ArxivPaperData(EmbeddedDocument):
         return 'http://arxiv.org/pdf/%s.pdf' % self.id.replace('_', '/')
     def get_hashtag(self):
         return '#arxiv_' + self.id.replace('.', '_').replace('-', '_')
+    def get_doctag(self):
+        return 'arXiv:' + self.id.replace('_', '/')
     def get_abstract(self):
         return self.summary
 
@@ -390,6 +392,8 @@ class PubmedPaperData(EmbeddedDocument):
         return 'http://dx.doi.org/' + self.doi
     def get_hashtag(self):
         return '#pubmed_' + str(self.id)
+    def get_doctag(self):
+        return 'PMID:' + str(self.id)
     def get_abstract(self):
         return self.summary
 
@@ -455,6 +459,8 @@ class DoiPaperData(EmbeddedDocument):
         return 'http://dx.doi.org/' + self.doi
     def get_hashtag(self):
         return '#shortDOI_' + str(self.id)
+    def get_doctag(self):
+        return 'shortDOI:' + str(self.id)
     def get_abstract(self):
         return self.summary
 
