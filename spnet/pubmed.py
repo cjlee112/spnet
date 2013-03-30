@@ -1,7 +1,8 @@
 from lxml import etree
+import xmltodict
 import requests
 
-def dict_from_xml(xml, **kwargs):
+def dict_from_xml(xml, extractDicts=('PubmedArticleSet.PubmedArticle.MedlineCitation', ), **kwargs):
     root = etree.XML(xml)
     d = {}
     for k,v in kwargs.items():
@@ -22,6 +23,17 @@ def dict_from_xml(xml, **kwargs):
             d[k] = o.text
         elif required:
             raise KeyError('required field not found: ' + v)
+    doc = xmltodict.parse(xml)
+    for xd in extractDicts: # extract desired subtrees
+        dd = doc
+        for k in xd.split('.'):
+            try:
+                dd = dd[k]
+            except KeyError:
+                k = None
+                break
+        if k: # save to result dictionary
+            d[k] = dd
     return d, root
 
 def pubmed_dict_from_xml(xml, title='ArticleTitle',

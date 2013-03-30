@@ -1,7 +1,7 @@
 import core, connect
 import gplus
 import pubmed
-import json
+import pickle
 import doi
 from bson import ObjectId
 import apptree
@@ -269,8 +269,8 @@ assert recReply.replyTo == rec3
 assert list(recReply.replyTo.get_replies()) == [recReply]
 
 pubmedDict = pubmed.get_pubmed_dict('23482246')
-with open('../pubmed/test1.json') as ifile:
-    correctDict = json.loads(ifile.read())
+with open('../pubmed/test1.pickle') as ifile:
+    correctDict = pickle.load(ifile)
 assert pubmedDict == correctDict
 
 paper3 = core.PubmedPaperData('23482246', insertNew='findOrInsert').parent
