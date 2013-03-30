@@ -2,7 +2,27 @@ from lxml import etree
 import xmltodict
 import requests
 
-def dict_from_xml(xml, extractDicts=('PubmedArticleSet.PubmedArticle.MedlineCitation', ), **kwargs):
+def extract_subtrees(xml, extractDicts):
+    'extract subtrees as OrderedDict objects'
+    d = {}
+    doc = xmltodict.parse(xml)
+    for xd in extractDicts: # extract desired subtrees
+        dd = doc
+        for k in xd:
+            if k == '*': # copy all items in dd to d
+                d.update(dd)
+                k = None # nothing further to save
+                break
+            try: # go one level deeper in doc
+                dd = dd[k]
+            except KeyError:
+                k = None # nothing to save
+                break
+        if k: # save to result dictionary
+            d[k] = dd
+    return d
+
+def dict_from_xml(xml, **kwargs):
     root = etree.XML(xml)
     d = {}
     for k,v in kwargs.items():
@@ -23,27 +43,19 @@ def dict_from_xml(xml, extractDicts=('PubmedArticleSet.PubmedArticle.MedlineCita
             d[k] = o.text
         elif required:
             raise KeyError('required field not found: ' + v)
-    doc = xmltodict.parse(xml)
-    for xd in extractDicts: # extract desired subtrees
-        dd = doc
-        for k in xd.split('.'):
-            try:
-                dd = dd[k]
-            except KeyError:
-                k = None
-                break
-        if k: # save to result dictionary
-            d[k] = dd
     return d, root
 
 def pubmed_dict_from_xml(xml, title='ArticleTitle',
                          summary='AbstractText', id='PMID',
                          year='ArticleDate.Year', journal='ISOAbbreviation',
-                         ISSN='ISSN', affiliation='Affiliation', **kwargs):
+                         ISSN='ISSN', affiliation='Affiliation',
+                         extractDicts=('PubmedArticleSet.PubmedArticle.MedlineCitation'.split('.'),),
+                         **kwargs):
     'extract fields + authorNames + DOI from xml, return as dict'
     d, root = dict_from_xml(xml, title=title, summary=summary, id=id,
                             year=year, journal=journal, ISSN=ISSN,
                             affiliation=affiliation, **kwargs)
+    d.update(extract_subtrees(xml, extractDicts))
     authorNames = [] # extract list of author names
     for o in root.findall('.//Author'):
         authorNames.append(o.find('ForeName').text + ' ' +

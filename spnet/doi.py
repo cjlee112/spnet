@@ -93,10 +93,11 @@ def find_abstract(uri, minLength=200, maxFrac=0.11):
     else:
         raise KeyError('(no abstract found)')
 
-def get_pubmed_and_doi(doi):
+def get_pubmed_and_doi(doi, extractDicts=('doi_records.doi_record.crossref.journal.*'.split('.'),)):
     import pubmed
     xml = find_doi_metadata(doi)
     doiDict = doi_dict_from_xml(xml)
+    doiDict.update(pubmed.extract_subtrees(xml, extractDicts))
     xml = pubmed.search_pubmed(doi, retmax='1', field='LID')
     try:
         d, root = pubmed.dict_from_xml(xml, pubmedID='!Id')
