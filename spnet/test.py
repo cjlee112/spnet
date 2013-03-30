@@ -303,4 +303,12 @@ assert incoming.get_hashtag_dict(txt)['paper'] == [spnetPaper]
 
 t = 'this is text #spnetwork #recommend #arxiv_1302_4871 #pubmed_22291635 #cosmology'
 d = incoming.get_hashtag_dict(t)
-assert d == {'header': ['#spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['#recommend']}
+assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
+
+t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
+d = incoming.get_hashtag_dict(t)
+assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
+
+t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
+d = incoming.get_hashtag_dict(t)
+assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [spnetPaper], 'rec': ['recommend']}

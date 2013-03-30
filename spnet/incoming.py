@@ -14,6 +14,10 @@ def get_hashtag_arxiv(m):
     arxivID = hashtag_to_spnetID(str(m.group(1)))
     return core.ArxivPaperData(arxivID, insertNew='findOrInsert').parent
 
+def get_arxiv_paper(m):
+    arxivID = str(m.group(1)).replace('/', '_')
+    return core.ArxivPaperData(arxivID, insertNew='findOrInsert').parent
+
 def get_hashtag_pubmed(m):
     pubmedID = str(m.group(1))
     return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
@@ -22,51 +26,74 @@ def get_hashtag_doi(m):
     shortDOI = str(m.group(1))
     return core.DoiPaperData(shortDOI, insertNew='findOrInsert').parent
 
+def get_doi_paper(m):
+    DOI = m.group(1) # look out, DOI can include any unicode character
+    return core.DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
+
 #################################################################
 # hashtag recognizers
 hashTagPats = (
     (re.compile('#arxiv_([a-z0-9_]+)'), 'paper', get_hashtag_arxiv),
+    (re.compile('ar[xX]iv:\s?([a-z-]+/[0-9]+v?[0-9]+)'), 'paper', get_arxiv_paper),
+    (re.compile('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', get_arxiv_paper),
     (re.compile('#pubmed_([0-9]+)'), 'paper', get_hashtag_pubmed),
+    (re.compile('PMID:\s?([0-9]+)'), 'paper', get_hashtag_pubmed),
     (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),
-    (re.compile('#spnetwork'), 'header', lambda m:m.group(0)),
-    (re.compile('#recommend'), 'rec', lambda m:m.group(0)),
-    (re.compile('#mustread'), 'rec', lambda m:m.group(0)),
+    (re.compile('[dD][oO][iI]:\s?(10\.\S+)'), 'paper', get_doi_paper),
     (re.compile('#([a-zA-Z][a-zA-Z0-9_]+)'), 'topic', lambda m:m.group(1)),
     )
 
+class CategoryList(object):
+    'ensures each string matched only once'
+    recats={'recommend':'rec', 'mustread':'rec', 'spnetwork':'header'}
+    def __init__(self):
+        self.d = {}
+    def append(self, start, k, v):
+        if start in self.d: # ignore duplicate match to same string
+            return
+        try:
+            k = self.recats[v] # recategorize hashtag
+        except KeyError:
+            pass
+        self.d[start] = (k, v)
+    def get_dict(self):
+        'dict of {category:[results]}; results in order of occurence in text'
+        l = self.d.items()
+        l.sort()
+        d = {}
+        for pos, (k, v) in l:
+            try:
+                d[k].append(v)
+            except KeyError:
+                d[k] = [v]
+        return d
+    
 
 def get_hashtag_dict(t, pats=hashTagPats):
     '''extracts a dict of hashtags, of the form {k:[v,...]}
     with the following possible keys:
     paper: list of core.Paper objects
     topic: topic names (leading # removed)
-    rec: #recommend or #mustread
-    header: #spnetwork'''
-    i = 0
-    d = {}
-    while True:
-        try:
-            i = t.index('#', i)
-        except ValueError:
-            break # no more hashtags
-        for pat, k, f in pats: # try all the patterns to find the next hashtag
-            m = pat.match(t, i)
-            if m:
+    rec: recommend or mustread
+    header: spnetwork'''
+    cl = CategoryList()
+    for pat, k, f in pats: # try all the patterns
+        m = pat.search(t)
+        while m:
+            try:
                 result = f(m) # retrieve its output
-                i = m.end() # advance past this hashtag
-                try:
-                    d[k].append(result)
-                except KeyError:
-                    d[k] = [result]
-                break
-        if not m: # no match, so skip #
-            i += 1
-    return d
+                cl.append(m.start(), k, result)
+            except KeyError:
+                pass # bad ID or false positive, so ignore
+            m = pat.search(t, m.end()) # search for next hashtag
+    return cl.get_dict()
 
 
 #################################################################
 # process post content looking for #spnetwork tags
 
+# replace this by class that queries for ignore=1 topics just once,
+# keeps cache
 def screen_topics(topicWords, skipAttr='ignore', **kwargs):
     'return list of topic object, filtered by the skipAttr attribute'
     l = []
@@ -75,6 +102,8 @@ def screen_topics(topicWords, skipAttr='ignore', **kwargs):
         if not getattr(topic, skipAttr, False):
             l.append(topic)
     return l
+
+
 
 def get_topicIDs(hashtagDict, docID, timestamp, source):
     'return list of topic IDs for a post, saving to db if needed'
