@@ -47,6 +47,13 @@ def find_doi_metadata(doi, uri='http://www.crossref.org/openurl/', pid='leec@che
     r = requests.get(uri, params=params)
     return r.content # lxml can't handle unicode encoded...
 
+def safe_text(o, k):
+    v = o.find(k)
+    if v:
+        return v.text
+    else:
+        return ''
+
 def doi_dict_from_xml(xml, title='title', year='publication_date.year',
                       volume='journal_volume.volume',
                       source_url='doi_data.resource', **kwargs):
@@ -55,8 +62,8 @@ def doi_dict_from_xml(xml, title='title', year='publication_date.year',
                                    source_url=source_url, **kwargs)
     authorNames = [] # extract list of author names
     for o in root.findall('.//person_name'):
-        authorNames.append(o.find('given_name').text + ' ' +
-                           o.find('surname').text)
+        authorNames.append(safe_text(o, 'given_name') + ' ' +
+                           safe_text(o, 'surname'))
     d['authorNames'] = authorNames
     return d
 
