@@ -377,13 +377,12 @@ class PubmedPaperData(EmbeddedDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        try:
+        try: # connect with DOI record
             DOI = d['doi']
+            return DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
         except KeyError: # no DOI, so save as usual
             return Paper(docData=dict(title=d['title'],
                                       authorNames=d['authorNames']))
-        else: # connect with DOI record
-            return DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
     def get_local_url(self):
         return '/pubmed/' + self.id
     def get_source_url(self):
