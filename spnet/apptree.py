@@ -50,6 +50,8 @@ class PaperCollection(rest.Collection):
             return rest.Redirect('/arxiv?' + urlencode(dict(searchString=searchString)))
         elif searchType == 'PMID':
             return rest.Redirect('/pubmed/%s' % searchString)
+        elif searchType == 'pubmed':
+            return rest.Redirect('/pubmed?' + urlencode(dict(searchString=searchString)))
         elif searchType == 'shortDOI':
             return rest.Redirect('/shortDOI/%s' % searchString)
         elif searchType == 'DOI':
@@ -106,6 +108,29 @@ class ArxivCollection(ParentCollection):
         session['queryResults'] = queryResults # keep for this user
         return queryResults
 
+class PubmedCollection(ParentCollection):
+    def _search(self, searchString=None, searchID=None, ipage=0,
+                block_size=20, session=None):
+        import pubmed
+        ipage = int(ipage)
+        block_size = int(block_size)
+        try: # get from existing query results
+            queryResults = cherrypy.session['queryResults']
+            if queryResults.get_page(ipage, self.collectionArgs['uri'],
+                                     searchString=searchString):
+                return queryResults
+        except KeyError:
+            pass # no stored queryResults, so construct it
+        ps = pubmed.PubmedSearch(searchString, block_size)
+        pbl = PaperBlockLoader(ps, self.klass, insertNew='findOrInsert')
+        queryResults = view.MultiplePages(pbl, block_size, ipage,
+                                          self.collectionArgs['uri'],
+                                          searchString=searchString)
+        cherrypy.session['queryResults'] = queryResults # keep for this user
+        return queryResults
+        
+
+
 class PersonCollection(rest.Collection):
     def _GET(self, docID, getUpdates=False, **kwargs):
         person = rest.Collection._GET(self, docID, **kwargs)
@@ -155,7 +180,7 @@ def get_collections(templateDir='_templates'):
                                  templateDir, gplusClientID=gplusClientID,
                           collectionArgs=dict(uri='/shortDOI'))
     # using pubmedID
-    pubmedPapers = ParentCollection('paper', core.PubmedPaperData,
+    pubmedPapers = PubmedCollection('paper', core.PubmedPaperData,
                                     templateEnv, templateDir,
                                     gplusClientID=gplusClientID,
                              collectionArgs=dict(uri='/pubmed'))
