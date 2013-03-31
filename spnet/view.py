@@ -134,6 +134,32 @@ class MultiplePages(object):
                urllib.urlencode(dict(ipage=self.ipage + step,
                                      **self.queryArgs))
 
+class SimpleObj(object):
+    'wrapper looks like a Paper object, for storing search results'
+    def __init__(self, docData, **kwargs):
+        self.__dict__.update(docData)
+        self.__dict__.update(kwargs)
+        self.parent = self
+    def get_value(self, val='spnet_url'):
+        f = getattr(self, 'get_' + val)
+        return f()
+    def get_local_url(self):
+        return self.uri + '/' + self.id
+
+class PaperBlockLoader(object):
+    'callable that loads one list of dicts into paper objects'
+    def __init__(self, f, klass=SimpleObj, **kwargs):
+        '''wraps function f so its results [d,...] are returned as
+        [klass(docData=d, **kwargs),...]'''
+        self.f = f
+        self.klass = klass
+        self.kwargs = kwargs
+    def __call__(self, **kwargs):
+        l = []
+        for d in self.f(**kwargs):
+            l.append(self.klass(docData=d, **self.kwargs).parent)
+        return l
+
 
 #######################################################################
 # recent events deque

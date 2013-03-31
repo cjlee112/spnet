@@ -68,19 +68,6 @@ class ParentCollection(rest.Collection):
     def _search(self, searchID):
         return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], searchID))
 
-class PaperBlockLoader(object):
-    def __init__(self, f, klass, **kwargs):
-        '''wraps function f so its results [d,...] are returned as
-        [klass(docData=d, **kwargs),...]'''
-        self.f = f
-        self.klass = klass
-        self.kwargs = kwargs
-    def __call__(self, **kwargs):
-        l = []
-        for d in self.f(**kwargs):
-            l.append(self.klass(docData=d, **self.kwargs).parent)
-        return l
-
 class ArxivCollection(ParentCollection):
     def _search(self, searchString=None, searchID=None, ipage=0,
                 block_size=10, session=None):
@@ -100,8 +87,8 @@ class ArxivCollection(ParentCollection):
                 return queryResults
         except KeyError:
             pass # no stored queryResults, so construct it
-        pbl = PaperBlockLoader(arxiv.search_arxiv, self.klass,
-                               insertNew='findOrInsert')
+        pbl = view.PaperBlockLoader(arxiv.search_arxiv, self.klass,
+                                    insertNew='findOrInsert')
         queryResults = view.MultiplePages(pbl, block_size, ipage,
                                           self.collectionArgs['uri'],
                                           searchString=searchString)
@@ -122,7 +109,7 @@ class PubmedCollection(ParentCollection):
         except KeyError:
             pass # no stored queryResults, so construct it
         ps = pubmed.PubmedSearch(searchString, block_size)
-        pbl = PaperBlockLoader(ps, self.klass, insertNew='findOrInsert')
+        pbl = view.PaperBlockLoader(ps, uri=self.collectionArgs['uri'])
         queryResults = view.MultiplePages(pbl, block_size, ipage,
                                           self.collectionArgs['uri'],
                                           searchString=searchString)
