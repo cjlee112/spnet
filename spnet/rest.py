@@ -84,6 +84,8 @@ class Collection(object):
         try: # execute the request
             o = action(*args, **kwargs)
         except KeyError:
+            if getattr(self, '_debug', False):
+                raise
             cherrypy.response.status = 404
             return 'Not found: %s: args=%s, kwargs=%s' \
                    % (self.name, str(args), str(kwargs))
