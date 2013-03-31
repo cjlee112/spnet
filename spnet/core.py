@@ -388,7 +388,10 @@ class PubmedPaperData(EmbeddedDocument):
     def get_source_url(self):
         return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
     def get_downloader_url(self):
-        return 'http://dx.doi.org/' + self.doi
+        try:
+            return 'http://dx.doi.org/' + self.doi
+        except AttributeError:
+            return self.get_source_url()
     def get_hashtag(self):
         return '#pubmed_' + str(self.id)
     def get_doctag(self):
