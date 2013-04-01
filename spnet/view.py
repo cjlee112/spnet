@@ -58,6 +58,12 @@ def map_helper(it, attr=None, **kwargs):
         f = lambda x: getattr(x, attr)
     return map(f, it)
 
+def report_error(webMsg, logMsg='Trapped exception', status=404,
+                 traceback=True):
+    'log traceback if desired, set status code'
+    cherrypy.log.error(logMsg, traceback=traceback)
+    cherrypy.response.status = status
+    return webMsg
 
 
 #################################################################
@@ -87,9 +93,7 @@ class TemplateView(object):
                      display_datetime=display_datetime, timesort=timesort,
                      recentEvents=recentEventsDeque, **kwargs) # apply template
         except Exception, e:
-            cherrypy.log.error('view function error', traceback=True)
-            cherrypy.response.status = 500
-            return 'server error'
+            return report_error('server error', 'view function error', 500)
 
 ##################################################################
 
