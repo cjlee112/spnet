@@ -276,6 +276,9 @@ assert pubmedDict == correctDict
 paper3 = core.PubmedPaperData('23482246', insertNew='findOrInsert').parent
 paper3.update(dict(authors=[fred._id]))
 
+ppd = core.PubmedPaperData('23139441', insertNew='findOrInsert')
+assert ppd.doi.upper() == '10.1016/J.MSEC.2012.05.020'
+
 assert paper3.pubmed.id == '23482246'
 assert paper3.title[:40] == correctDict['title'][:40]
 

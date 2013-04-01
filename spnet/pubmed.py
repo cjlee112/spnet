@@ -43,7 +43,8 @@ def get_val(v, k, r):
     return {k:v['#text']}
 
 def get_author_names(v, k, r):
-    return {'authorNames':[d['ForeName'] + ' ' + d['LastName'] for d in v]}
+    return {'authorNames':[d['ForeName'] + ' ' + d['LastName']
+                           for d in list_wrap(v)]}
 
 def list_wrap(v):
     if isinstance(v, list):
@@ -130,6 +131,10 @@ def pubmed_dict_from_xml(xml, title='ArticleTitle',
     for o in root.findall('.//ELocationID'): # extract DOI
         if o.get('EIdType', '') == 'doi':
             d['doi'] = o.text
+    if 'doi' not in d:
+        for o in root.findall('.//ArticleId'): # extract DOI
+            if o.get('IdType', '') == 'doi':
+                d['doi'] = o.text
     return d
 
 def query_pubmed(uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
@@ -172,16 +177,18 @@ def get_training_abstracts(terms=('cancer', 'transcription', 'evolution',
             yield o.text
 
 class PubmedSearch(object):
-    def __init__(self, searchString, block_size=20, **kwargs):
+    def __init__(self, searchString, block_size=20,
+                 email='leec@chem.ucla.edu', **kwargs):
         self.block_size =  block_size
-        xml = search_pubmed(searchString, usehistory='y', tool=None,
-                            email=None, retmax=str(block_size), **kwargs)
+        self.email = email
+        xml = search_pubmed(searchString, usehistory='y', tool='spnet',
+                            email=email, retmax=str(block_size), **kwargs)
         d, root = dict_from_xml(xml, WebEnv='!WebEnv', query_key='!QueryKey')
         self.queryArgs = d
     def __call__(self, searchString, start=0, block_size=20):
         'get list of PubmedArticle dicts'
         xml = query_pubmed(retstart=str(start), retmax=str(block_size),
-                           tool=None, email=None, **self.queryArgs)
+                           tool='spnet', email=self.email, **self.queryArgs)
         d = extract_subtrees(xml, ('PubmedArticleSet.PubmedArticle'.split('.'),))
         l = []
         for dd in d['PubmedArticle']:
