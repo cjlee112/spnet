@@ -1,6 +1,9 @@
 from lxml import etree
 import xmltodict
 import requests
+import time
+import errors
+
 
 def bfs_search_results(d, searches, results):
     '''find all keys in searches, and save values to results.
@@ -46,6 +49,14 @@ def get_author_names(v, k, r):
     return {'authorNames':[d['ForeName'] + ' ' + d['LastName']
                            for d in list_wrap(v)]}
 
+def get_abstract(v, k, r):
+    'properly handle multi-part AbstractText'
+    if isinstance(v, list):
+        l = [('%s: %s' % (d.get('@Label', ''), d['#text'])) for d in v]
+        return {'summary':'  '.join(l)}
+    else:
+        return {'summary':v}
+
 def list_wrap(v):
     if isinstance(v, list):
         return v
@@ -58,7 +69,7 @@ def get_doi(v, k, r):
             return {'doi':d['#text']}
     raise KeyError('no doi found')
 
-pubmedExtracts = dict(ArticleTitle='title', AbstractText='summary',
+pubmedExtracts = dict(ArticleTitle='title', AbstractText=get_abstract,
                       PMID=lambda v,k,r:{'id':v['#text']},
                       ArticleDate=lambda v,k,r:{'year':v['Year']},
                       ISOAbbreviation='journal', ISSN=None,
@@ -75,14 +86,20 @@ def extract_subtrees(xml, extractDicts):
     doc = xmltodict.parse(xml)
     for xd in extractDicts: # extract desired subtrees
         dd = doc
+        required = False
         for k in xd:
+            if k.startswith('!'):
+                required = True
+                k = k[1:]
             if k == '*': # copy all items in dd to d
                 d.update(dd)
                 k = None # nothing further to save
                 break
             try: # go one level deeper in doc
                 dd = dd[k]
-            except KeyError:
+            except (TypeError,KeyError):
+                if required:
+                    raise KeyError('required subtree missing')
                 k = None # nothing to save
                 break
         if k: # save to result dictionary
@@ -112,11 +129,11 @@ def dict_from_xml(xml, **kwargs):
             raise KeyError('required field not found: ' + v)
     return d, root
 
-def pubmed_dict_from_xml(xml, title='ArticleTitle',
-                         summary='AbstractText', id='PMID',
+def pubmed_dict_from_xml(xml, title='!ArticleTitle',
+                         summary='AbstractText', id='!PMID',
                          year='ArticleDate.Year', journal='ISOAbbreviation',
                          ISSN='ISSN', affiliation='Affiliation',
-                         extractDicts=('PubmedArticleSet.PubmedArticle.MedlineCitation'.split('.'),),
+                         extractDicts=('!PubmedArticleSet.PubmedArticle.MedlineCitation'.split('.'),),
                          **kwargs):
     'extract fields + authorNames + DOI from xml, return as dict'
     d, root = dict_from_xml(xml, title=title, summary=summary, id=id,
@@ -138,16 +155,31 @@ def pubmed_dict_from_xml(xml, title='ArticleTitle',
     return d
 
 def query_pubmed(uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
-                    tool='example', email='leec@chem.ucla.edu', db='pubmed',
-                    retmode='xml', **kwargs):
+                 tool='spnet', email='leec@chem.ucla.edu', db='pubmed',
+                 retmode='xml', nretry=3, acceptStatus=(200,),
+                 retryStatus=(404, 502, 503), retryTime=1, **kwargs):
+    '''perform a query using eutils API, retrying if service unavailable
+    WARNING: eutils is flaky!  lots of 503s, 502, 404 (when searching
+    for "cancer"!?!), who knows what else!'''
     d = kwargs.copy()
     if tool:
         d['tool'] = tool
     if email:
-        d['email'] = tool
+        d['email'] = email
     params = dict(db=db, retmode=retmode, **d)
-    r = requests.get(uri, params=params)
-    return r.content
+    for i in range(nretry): # often service unavailable (503), so retry
+        r = requests.get(uri, params=params)
+        if r.status_code in acceptStatus: # success
+            return r.content
+        elif r.status_code == 400: # badly formed query
+            raise KeyError('invalid query: ' + str(kwargs))
+        elif r.status_code not in retryStatus: # unexpected status
+            raise errors.UnexpectedStatus('query_pubmed: status=%d, query=%s'
+                                   % (r.status_code, str(d)))
+        if retryTime:
+            time.sleep(retryTime)
+    raise errors.TimeoutError('%s still unavailable after %d retries'
+                              % (uri, nretry))
 
 def search_pubmed(term, uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi',
                   **kwargs):

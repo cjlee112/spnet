@@ -1,5 +1,6 @@
 import re
 import core
+import errors
 
 #################################################################
 # hashtag processors
@@ -20,7 +21,10 @@ def get_arxiv_paper(m):
 
 def get_hashtag_pubmed(m):
     pubmedID = str(m.group(1))
-    return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
+    try: # eutils horribly unreliable, handle its failure gracefully
+        return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
+    except errors.TimeoutError:
+        raise KeyError('eutils timed out, unable to retrive pubmedID')
 
 def get_hashtag_doi(m):
     shortDOI = str(m.group(1))
