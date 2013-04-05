@@ -23,15 +23,14 @@ Welcome,
  | <a href="/signout">Signout</a>
 {% endif %}
 </div>
-<input type="text" name="searchString" size="24" maxlength="64" />
+<input type="text" name="searchString" size="24" maxlength="256" />
 &nbsp;
 <select name="searchType">
 <option value="arxiv" selected="selected">arXiv</option>
 <option value="arxivID">arXiv ID</option>
-<option value="pubmed">Pubmed</option>
-<option value="PMID">Pubmed ID</option>
-<option value="shortDOI">Short DOI</option>
 <option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
 </select>
 <input type="submit" value="Go!" /><br />
 </form>
