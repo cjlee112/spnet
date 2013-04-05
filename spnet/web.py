@@ -7,9 +7,9 @@ import apptree
 import view
 
 class Server(object):
-    def __init__(self, dbconn=None, colls=None):
+    def __init__(self, dbconn=None, colls=None, **kwargs):
         if not dbconn:
-            dbconn = connect.init_connection()
+            dbconn = connect.init_connection(**kwargs)
         self.dbconn = dbconn
         self.gplus_keys = gplus.get_keys()
         self.reload_views(colls)
