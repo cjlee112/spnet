@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" type="text/css" media="screen" href="http://arxiv.org/css/arXiv.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
 <title> {{- paper.title -}} </title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
 </script>
@@ -158,9 +158,9 @@ or enter a new tag here:
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
 {% if user %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
 {% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') -}}"
 {% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
@@ -174,9 +174,9 @@ or enter a new tag here:
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
 {% if user %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
 {% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') -}}"
 {% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
@@ -228,7 +228,7 @@ or enter a new tag here:
   data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[YOUR QUESTION HERE] #spnetwork {{ paper.get_value('doctag') + ' http://selectedpapers.net' + paper.get_value('local_url') -}}"
+  data-prefilltext="[YOUR QUESTION HERE] #spnetwork {{ paper.get_value('doctag') -}}"
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to post a question or comment about this paper on Google+">
