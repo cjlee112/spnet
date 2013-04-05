@@ -17,6 +17,13 @@ def get_arxiv_id(arxivURL):
     except ValueError:
         return s
 
+def normalize_arxiv_dict(d):
+    'convert id and author names to fit our standard'
+    d['id'] = get_arxiv_id(d['id']) # replace URL by arxivID
+    d['authorNames'] = [ad['name'] for ad in d['authors']]
+    return d
+
+
 def is_id_string(s,
                  dottedNumber=re.compile(
                      r'[0-9][0-9][0-9]+\.[0-9]+[0-9v][0-9]+$'),
@@ -30,11 +37,10 @@ def lookup_papers(id_list, **kwargs):
     d = kwargs.copy()
     for i in range(0, len(id_list), 10):
         d['id_list'] = ','.join(id_list[i:i + 10])
-        url = arxivApiUrl + '&'.join(['%s=%s' % t for t in d.items()])
+        url = arxivApiUrl + urllib.urlencode(d)
         f = feedparser.parse(url)
         for e in f.entries:
-            e['id'] = get_arxiv_id(e['id']) # replace URL by arxivID
-            yield e
+            yield normalize_arxiv_dict(e)
 
 def search_arxiv(searchString, start=0, block_size=25):
     'retrieve list of block_size results for specified search'
@@ -44,8 +50,7 @@ def search_arxiv(searchString, start=0, block_size=25):
     f = feedparser.parse(url)
     l = []
     for e in f.entries:
-        e['id'] = get_arxiv_id(e['id'])
-        l.append(e)
+        l.append(normalize_arxiv_dict(e))
     return l
 
 
@@ -58,8 +63,7 @@ def search_arxiv_iter(search_query, block_size=25):
         url = arxivApiUrl + urllib.urlencode(q)
         f = feedparser.parse(url)
         for e in f.entries:
-            e['id'] = get_arxiv_id(e['id']) # replace URL by arxivID
-            yield e
+            yield normalize_arxiv_dict(e)
         start += block_size
         if len(f.entries) < block_size:
             break
