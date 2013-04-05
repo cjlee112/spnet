@@ -49,7 +49,7 @@ def find_doi_metadata(doi, uri='http://www.crossref.org/openurl/', pid='leec@che
 
 def safe_text(o, k):
     v = o.find(k)
-    if v:
+    if v is not None:
         return v.text
     else:
         return ''
@@ -100,11 +100,17 @@ def find_abstract(uri, minLength=200, maxFrac=0.11):
     else:
         raise KeyError('(no abstract found)')
 
-def get_pubmed_and_doi(doi, extractDicts=('doi_records.doi_record.crossref.journal.*'.split('.'),)):
+def get_doi_dict(doi, extractDicts=('doi_records.doi_record.crossref.journal.*'.split('.'),)):
+    'get dict of crossref metadata for this DOI'
     import pubmed
     xml = find_doi_metadata(doi)
     doiDict = doi_dict_from_xml(xml)
     doiDict.update(pubmed.extract_subtrees(xml, extractDicts))
+    return doiDict
+
+def get_pubmed_from_doi(doi):
+    'try to get pubmed dict for this DOI, or None if not found'
+    import pubmed
     xml = pubmed.search_pubmed(doi, retmax='1', field='LID')
     try:
         d, root = pubmed.dict_from_xml(xml, pubmedID='!Id')
@@ -118,20 +124,13 @@ def get_pubmed_and_doi(doi, extractDicts=('doi_records.doi_record.crossref.journ
             pubmedDict = pubmed.get_pubmed_dict(d['pubmedID'])
             if pubmedDict.get('title')[:50].lower() == \
                doiDict.get('title')[:50].lower():
-                return doiDict, pubmedDict
+                return pubmedDict
             
     else:
-        return doiDict, pubmed.get_pubmed_dict(d['pubmedID'])
-    try:
-        doiDict['summary'] = find_abstract(doiDict['source_url'])
-    except KeyError:
-        doiDict['summary'] = '(no abstract found)'
-    return doiDict, None
+        return pubmed.get_pubmed_dict(d['pubmedID'])
         
     
 
-#def get_doi_paper_dict(doi):
-#    try:
         
 
         
