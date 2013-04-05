@@ -81,7 +81,7 @@ class OAuth(object):
         'get URL to redirect user to sign-in with Google'
         return self.login_url
         
-    def get_credentials(self, code, state):
+    def get_credentials(self, code, state, **kwargs):
         'use callback data to get an access token'
         if state != self.state:
             return False # CSRF attack?!?

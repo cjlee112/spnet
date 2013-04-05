@@ -1,4 +1,7 @@
-import tweepy
+try:
+    import tweepy
+except ImportError:
+    pass
 import urllib2
 #import core
 
