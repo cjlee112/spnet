@@ -24,7 +24,7 @@ connectDict = {
 
 
 
-def init_connection(spnetUrlBase='http://selectedpapers.net', **kwargs):
+def init_connection(spnetUrlBase='https://selectedpapers.net', **kwargs):
     'set klass.coll on each db class to give it db connection'
     try:
         dbconn = DBConnection(connectDict, **kwargs)
