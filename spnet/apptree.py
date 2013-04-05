@@ -64,6 +64,19 @@ class PaperCollection(rest.Collection):
 
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
+        try: # use cached query results if present
+            queryResults = cherrypy.session['queryResults']
+        except (AttributeError, KeyError):
+            pass
+        else:
+            try: # use cached docData if found for this docID
+                docData = queryResults.get_doc_data(docID,
+                                           self.collectionArgs['uri'])
+            except KeyError: # not in query results
+                pass
+            else:
+                return self.klass(docData=docData,
+                                  insertNew='findOrInsert').parent
         return self.klass(docID, insertNew='findOrInsert').parent
     def _search(self, searchID):
         return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], searchID))
@@ -87,8 +100,8 @@ class ArxivCollection(ParentCollection):
                 return queryResults
         except KeyError:
             pass # no stored queryResults, so construct it
-        pbl = view.PaperBlockLoader(arxiv.search_arxiv, self.klass,
-                                    insertNew='findOrInsert')
+        pbl = view.PaperBlockLoader(arxiv.search_arxiv,
+                                    uri=self.collectionArgs['uri'])
         queryResults = view.MultiplePages(pbl, block_size, ipage,
                                           self.collectionArgs['uri'],
                                           searchString=searchString)

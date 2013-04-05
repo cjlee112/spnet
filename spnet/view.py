@@ -137,6 +137,11 @@ class MultiplePages(object):
         return self.uri + '?' + \
                urllib.urlencode(dict(ipage=self.ipage + step,
                                      **self.queryArgs))
+    def get_doc_data(self, docID, uri=None):
+        'return docData dict for specified ID and collection URI'
+        if uri and uri != self.uri:
+            raise KeyError('request from different URI: ' + uri)
+        return self.f.get_doc_data(docID)
 
 class SimpleObj(object):
     'wrapper looks like a Paper object, for storing search results'
@@ -158,11 +163,20 @@ class PaperBlockLoader(object):
         self.f = f
         self.klass = klass
         self.kwargs = kwargs
+        self.docs = {}
     def __call__(self, **kwargs):
         l = []
         for d in self.f(**kwargs):
             l.append(self.klass(docData=d, **self.kwargs).parent)
+            try:
+                docID = d['id']
+                self.docs[docID] = d
+            except KeyError:
+                pass
         return l
+    def get_doc_data(self, docID):
+        'return docData dict for specified ID'
+        return self.docs[docID]
 
 
 #######################################################################
