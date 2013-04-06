@@ -12,12 +12,6 @@
 {% for topic in rec.sigs %}
 <A HREF="{{- topic.get_local_url() -}}"> | {{ topic.name }}  </A>
 {% endfor %}
-{% if user %}
-&nbsp;|&nbsp;
-<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
-{% else %}
-<A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
-{% endif %}
 </h1>
 <form id="search" method="GET" action="/papers">
 <div class="search-for">Search or Article-id</div>
