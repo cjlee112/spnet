@@ -145,6 +145,7 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 continue # no link to a paper, so nothing to save.
             userID = get_user(d)
             author = find_or_insert_person(userID)
+            d['author'] = author._id
             if isRec: # see if rec already in DB
                 try:
                     post = core.Recommendation((paper._id, author._id))
@@ -155,7 +156,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                     klass = core.Recommendation
             else:
                 klass = core.Post
-        d['author'] = author._id
         d['text'] =  content
         if process_post:
             process_post(d)
