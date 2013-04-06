@@ -58,6 +58,8 @@ fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
+fetch_sig_posts = FetchQuery(None, lambda sig:
+                            {'posts.sigs':sig._id})
 fetch_sig_interests = FetchQuery(None, lambda sig:
                                  {'interests.topics':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
@@ -106,6 +108,7 @@ class Post(UniqueArrayDocument):
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
+    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     def get_replies(self):
         for r in getattr(self.parent, 'replies', ()):
             if r.replyTo == self:
@@ -181,6 +184,7 @@ class SIG(Document):
     papers = LinkDescriptor('papers', fetch_sig_papers, noData=True)
     recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
                                       noData=True)
+    posts  = LinkDescriptor('posts', fetch_sig_posts, noData=True)
     interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
     tagRE = re.compile('[A-Za-z][A-Za-z0-9_]+$') # string allowed after #
     @classmethod
@@ -547,6 +551,7 @@ fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
+fetch_sig_posts.klass = Post
 fetch_sig_interests.klass = PaperInterest
 fetch_issues.klass = Issue
 fetch_person_posts.klass = Post

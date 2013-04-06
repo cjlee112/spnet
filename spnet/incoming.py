@@ -156,15 +156,15 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                         yield post
                         continue # matches DB record, so nothing to do
                 except KeyError: # need to save new record to DB
-                    d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
-                                             get_timestamp(d), source)
-                    post = core.Recommendation(docData=d, parent=paper)
-                    if recentEvents is not None: # add to monitor deque
-                        recentEvents.appendleft(post)
+                    pass
+                klass = core.Recommendation
             else:
-                post = core.Post(docData=d, parent=paper)
-                if recentEvents is not None: # add to monitor deque
-                    recentEvents.appendleft(post)
+                klass = core.Post
+            d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
+                                     get_timestamp(d), source)
+            post = klass(docData=d, parent=paper)
+            if recentEvents is not None: # add to monitor deque
+                recentEvents.appendleft(post)
         yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):
