@@ -1,5 +1,6 @@
 import re
 import core
+import errors
 
 #################################################################
 # hashtag processors
@@ -20,7 +21,10 @@ def get_arxiv_paper(m):
 
 def get_hashtag_pubmed(m):
     pubmedID = str(m.group(1))
-    return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
+    try: # eutils horribly unreliable, handle its failure gracefully
+        return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
+    except errors.TimeoutError:
+        raise KeyError('eutils timed out, unable to retrive pubmedID')
 
 def get_hashtag_doi(m):
     shortDOI = str(m.group(1))
@@ -141,10 +145,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 continue # no link to a paper, so nothing to save.
             userID = get_user(d)
             author = find_or_insert_person(userID)
-            d['author'] = author._id
-            d['text'] =  content
-            if process_post:
-                process_post(d)
             if isRec: # see if rec already in DB
                 try:
                     post = core.Recommendation((paper._id, author._id))
@@ -152,15 +152,21 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                         yield post
                         continue # matches DB record, so nothing to do
                 except KeyError: # need to save new record to DB
-                    d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
-                                             get_timestamp(d), source)
-                    post = core.Recommendation(docData=d, parent=paper)
-                    if recentEvents is not None: # add to monitor deque
-                        recentEvents.appendleft(post)
+                    klass = core.Recommendation
             else:
-                post = core.Post(docData=d, parent=paper)
-                if recentEvents is not None: # add to monitor deque
-                    recentEvents.appendleft(post)
+                klass = core.Post
+        d['author'] = author._id
+        d['text'] =  content
+        if process_post:
+            process_post(d)
+        d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
+                                 get_timestamp(d), source)
+        if post is None: # save to DB
+            post = klass(docData=d, parent=paper)
+            if recentEvents is not None: # add to monitor deque
+                recentEvents.appendleft(post)
+        else: # update DB with new data and etag
+            post.update(d)
         yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(d['id']):

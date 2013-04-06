@@ -10,12 +10,6 @@
 <div id="header">
 <h1><img src="/favicon.ico"/>
 <a href="/">SelectedPapers.net</a> &gt; Topic Group &gt; {{ topic.name }}
-{% if user %}
-&nbsp;|&nbsp;
-<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
-{% else %}
-<A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
-{% endif %}
 </h1>
 <form id="search" method="GET" action="/papers">
 <div class="search-for">Search or Article-id</div>
@@ -24,14 +18,15 @@
  | <a href="/signout">Signout</a>
 {% endif %}
 </div>
-<input type="text" name="searchString" size="24" maxlength="64" />
+<input type="text" name="searchString" size="24" maxlength="256" />
 &nbsp;
 <select name="searchType">
 <option value="arxiv" selected="selected">arXiv</option>
 <option value="arxivID">arXiv ID</option>
-<option value="PMID">Pubmed ID</option>
-<option value="shortDOI">Short DOI</option>
 <option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
+<option value="ncbipubmed">Pubmed</option>
 </select>
 <input type="submit" value="Go!" /><br />
 </form>
@@ -68,6 +63,33 @@
 {{ reply.text }}
 </li>
 {% endfor %}
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% endif %}
+
+
+{% if topic.posts %}
+<h3>Discussion</h3>
+<dl>
+{% for i,post in enumerate(timesort(topic.posts)) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="{{- post.author.get_local_url() -}}">
+{{ post.author.name }}
+</A> 
+commented on <A HREF="{{- post.parent.get_value('local_url') -}}"> 
+{{- post.parent.title -}} </A>
+{% if post.sigs %}
+RE: topics:
+{% for topic2 in post.sigs %}
+<A HREF="{{- topic2.get_local_url() -}}"> {{ topic2.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(post.published) -}} )
+</dt>
+<dd>
+<div class="list-comments">{{ post.text }}
 </div>
 </dd>
 {% endfor %}

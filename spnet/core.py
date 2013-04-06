@@ -2,6 +2,7 @@ from base import *
 from hashlib import sha1
 import re
 from datetime import datetime
+import errors
 
 
 
@@ -57,6 +58,8 @@ fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
+fetch_sig_posts = FetchQuery(None, lambda sig:
+                            {'posts.sigs':sig._id})
 fetch_sig_interests = FetchQuery(None, lambda sig:
                                  {'interests.topics':sig._id})
 fetch_issues = FetchQuery(None, lambda paper:dict(paper=paper._id))
@@ -105,6 +108,7 @@ class Post(UniqueArrayDocument):
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
+    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     def get_replies(self):
         for r in getattr(self.parent, 'replies', ()):
             if r.replyTo == self:
@@ -180,6 +184,7 @@ class SIG(Document):
     papers = LinkDescriptor('papers', fetch_sig_papers, noData=True)
     recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
                                       noData=True)
+    posts  = LinkDescriptor('posts', fetch_sig_posts, noData=True)
     interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
     tagRE = re.compile('[A-Za-z][A-Za-z0-9_]+$') # string allowed after #
     @classmethod
@@ -348,12 +353,15 @@ class ArxivPaperData(EmbeddedDocument):
         'obtain arxiv data from arxiv.org'
         import arxiv
         arxivID = arxivID.replace('_', '/')
-        return arxiv.lookup_papers((arxivID,)).next()
+        try:
+            return arxiv.lookup_papers((arxivID,)).next()
+        except StopIteration:
+            raise KeyError('arxivID not found: ' + arxivID)
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        authorNames = [ad['name'] for ad in d['authors']]
-        return Paper(docData=dict(title=d['title'], authorNames=authorNames))
+        return Paper(docData=dict(title=d['title'],
+                                  authorNames=d['authorNames']))
     def get_local_url(self):
         return '/arxiv/' + self.id
     def get_source_url(self):
@@ -377,19 +385,22 @@ class PubmedPaperData(EmbeddedDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
-        try:
+        try: # connect with DOI record
             DOI = d['doi']
+            return DoiPaperData(DOI=DOI, insertNew='findOrInsert',
+                                getPubmed=False).parent
         except KeyError: # no DOI, so save as usual
             return Paper(docData=dict(title=d['title'],
                                       authorNames=d['authorNames']))
-        else: # connect with DOI record
-            return DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
     def get_local_url(self):
         return '/pubmed/' + self.id
     def get_source_url(self):
         return 'http://www.ncbi.nlm.nih.gov/pubmed/' + str(self.id)
     def get_downloader_url(self):
-        return 'http://dx.doi.org/' + self.doi
+        try:
+            return 'http://dx.doi.org/' + self.doi
+        except AttributeError:
+            return self.get_source_url()
     def get_hashtag(self):
         return '#pubmed_' + str(self.id)
     def get_doctag(self):
@@ -402,11 +413,12 @@ class DoiPaperData(EmbeddedDocument):
     'store DOI data for a paper as subdocument of Paper'
     _dbfield = 'doi.id'
     def __init__(self, fetchID=None, docData=None, parent=None,
-                 insertNew=True, DOI=None):
+                 insertNew=True, DOI=None, getPubmed=False):
         '''Note the fetchID must be shortDOI; to search for DOI, pass
         DOI kwarg.
         docData, if provided should include keys: id=shortDOI, doi=DOI'''
         import doi
+        self._getPubmed = getPubmed
         if fetchID is None and DOI: # must convert to shortDOI
             # to implement case-insensitive search, convert to uppercase
             d = self.coll.find_one({'doi.DOI':DOI.upper()}, {'doi':1})
@@ -425,22 +437,23 @@ class DoiPaperData(EmbeddedDocument):
             DOI = self._DOI # use cached value
         except AttributeError: # retrieve from shortdoi.org
             DOI = doi.map_to_doi(fetchID)
-        doiDict, pubmedDict = doi.get_pubmed_and_doi(DOI)
+        doiDict = doi.get_doi_dict(DOI)
         doiDict['id'] = fetchID # shortDOI
-        if pubmedDict:
-            self._pubmedDict = pubmedDict
-            try: # use abstract from pubmed if available
-                doiDict['summary'] = pubmedDict['summary']
-            except KeyError:
-                pass
         doiDict['doi'] = DOI
+        if self._getPubmed:
+            try:
+                pubmedDict = doi.get_pubmed_from_doi(DOI)
+                if pubmedDict:
+                    self._pubmedDict = pubmedDict # cache for saving to parent
+            except errors.TimeoutError:
+                pass
         return doiDict
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     def _insert_parent(self, d):
         'create Paper document in db for this arxiv.id'
         d = dict(title=d['title'], authorNames=d['authorNames'])
         try:
-            d['pubmed'] = self._pubmedDict
+            d['pubmed'] = self._pubmedDict # save associated pubmed data
         except AttributeError:
             pass
         return Paper(docData=d)
@@ -462,7 +475,11 @@ class DoiPaperData(EmbeddedDocument):
     def get_doctag(self):
         return 'shortDOI:' + str(self.id)
     def get_abstract(self):
-        return self.summary
+        try:
+            return self.summary
+        except AttributeError:
+            return 'Click <A HREF="%s">here</A> for the Abstract' \
+                   % self.get_downloader_url()
 
 
 class Paper(Document):
@@ -534,6 +551,7 @@ fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
+fetch_sig_posts.klass = Post
 fetch_sig_interests.klass = PaperInterest
 fetch_issues.klass = Issue
 fetch_person_posts.klass = Post

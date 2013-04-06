@@ -84,18 +84,17 @@ class Collection(object):
         try: # execute the request
             o = action(*args, **kwargs)
         except KeyError:
-            cherrypy.response.status = 404
-            return 'Not found: %s: args=%s, kwargs=%s' \
-                   % (self.name, str(args), str(kwargs))
+            return view.report_error('Not found: %s: args=%s, kwargs=%s'
+                   % (self.name, str(args), str(kwargs)), status=404)
         if isinstance(o, Redirect):
             return o() # send the redirect
         try: # do we support this mimeType?
-            view = getattr(self, method.lower() + '_' + mimeType)
+            viewFunc = getattr(self, method.lower() + '_' + mimeType)
         except AttributeError:
             cherrypy.response.status = 406
             return '%s objects cannot return %s' % (self.name,
                                                     mimeType)
-        return view(o, **kwargs)
+        return viewFunc(o, **kwargs)
 
     def _GET(self, docID, parents={}, **kwargs):
         'default GET method'
@@ -110,7 +109,6 @@ class Collection(object):
     def bind_templates(self, env, dirpath, **kwargs):
         '''load template files of the form get_paper.html, bind as
         attrs of the form get_html'''
-        import view
         for fname in glob.glob(os.path.join(dirpath,
                                             '*_%s.html' % self.name)):
             basename = os.path.basename(fname)

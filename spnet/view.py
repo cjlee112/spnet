@@ -18,7 +18,7 @@ def people_link_list(people, maxNames=2):
     l = []
     for p in people[:maxNames]:
         l.append('<A HREF="%s">%s</A>' % (p.get_local_url(), p.name))
-    s = ','.join(l)
+    s = ', '.join(l)
     if len(people) > maxNames:
         s += ' and %d others' (len(people) - maxNames)
     return s
@@ -58,6 +58,12 @@ def map_helper(it, attr=None, **kwargs):
         f = lambda x: getattr(x, attr)
     return map(f, it)
 
+def report_error(webMsg, logMsg='Trapped exception', status=404,
+                 traceback=True):
+    'log traceback if desired, set status code'
+    cherrypy.log.error(logMsg, traceback=traceback)
+    cherrypy.response.status = status
+    return webMsg
 
 
 #################################################################
@@ -87,9 +93,7 @@ class TemplateView(object):
                      display_datetime=display_datetime, timesort=timesort,
                      recentEvents=recentEventsDeque, **kwargs) # apply template
         except Exception, e:
-            cherrypy.log.error('view function error', traceback=True)
-            cherrypy.response.status = 500
-            return 'server error'
+            return report_error('server error', 'view function error', 500)
 
 ##################################################################
 
@@ -133,6 +137,46 @@ class MultiplePages(object):
         return self.uri + '?' + \
                urllib.urlencode(dict(ipage=self.ipage + step,
                                      **self.queryArgs))
+    def get_doc_data(self, docID, uri=None):
+        'return docData dict for specified ID and collection URI'
+        if uri and uri != self.uri:
+            raise KeyError('request from different URI: ' + uri)
+        return self.f.get_doc_data(docID)
+
+class SimpleObj(object):
+    'wrapper looks like a Paper object, for storing search results'
+    def __init__(self, docData, **kwargs):
+        self.__dict__.update(docData)
+        self.__dict__.update(kwargs)
+        self.parent = self
+    def get_value(self, val='spnet_url'):
+        f = getattr(self, 'get_' + val)
+        return f()
+    def get_local_url(self):
+        return self.uri + '/' + self.id
+
+class PaperBlockLoader(object):
+    'callable that loads one list of dicts into paper objects'
+    def __init__(self, f, klass=SimpleObj, **kwargs):
+        '''wraps function f so its results [d,...] are returned as
+        [klass(docData=d, **kwargs),...]'''
+        self.f = f
+        self.klass = klass
+        self.kwargs = kwargs
+        self.docs = {}
+    def __call__(self, **kwargs):
+        l = []
+        for d in self.f(**kwargs):
+            l.append(self.klass(docData=d, **self.kwargs).parent)
+            try:
+                docID = d['id']
+                self.docs[docID] = d
+            except KeyError:
+                pass
+        return l
+    def get_doc_data(self, docID):
+        'return docData dict for specified ID'
+        return self.docs[docID]
 
 
 #######################################################################

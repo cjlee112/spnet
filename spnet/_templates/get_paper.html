@@ -60,12 +60,6 @@ function toggleReadingList(o, userID)
 <a href="http://www.crossref.org/guestquery/">DOI</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.doi.id -}} </a>
 (<A href="http://shortdoi.org/">short DOI</A>)
 {% endif %}
-{% if user %}
-&nbsp;|&nbsp;
-<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
-{% else %}
-<A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
-{% endif %}
 </h1>
 <form id="search" method="GET" action="/papers">
 <div class="search-for">Search or Article-id</div>
@@ -74,36 +68,30 @@ function toggleReadingList(o, userID)
  | <a href="/signout">Signout</a>
 {% endif %}
 </div>
-<input type="text" name="searchString" size="24" maxlength="64" />
+<input type="text" name="searchString" size="24" maxlength="256" />
 &nbsp;
 <select name="searchType">
 <option value="arxiv" selected="selected">arXiv</option>
 <option value="arxivID">arXiv ID</option>
-<option value="PMID">Pubmed ID</option>
-<option value="shortDOI">Short DOI</option>
 <option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
+<option value="ncbipubmed">Pubmed</option>
 </select>
 <input type="submit" value="Go!" /><br />
 </form>
 </div>
 
-<h1 class="title">
-{{ paper.title }}
-</h1>
-<div class="authors">
-{{ ', '.join(paper.authorNames) }}
-</div>
+<div id="abs">
+<div class="extra-services">
 
-<h3>Abstract
-<a href="https://plus.google.com/share? {{- urlencode(dict(url=paper.get_value())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
-<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
-<a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format"><img src="/images/pdf.jpg"/></a>
-</h3>
-
-<blockquote class="abstract">
-{{ paper.get_value('abstract') }}
-</blockquote>
-
+<div class="full-text">
+<h2>View:</h2>
+<ul>
+<li><a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format">Full text</a></li>
+<li><a href="{{- paper.get_value('source_url') -}}">
+{{- paper.get_value('doctag') -}}</a></li>
+</ul>
 {% if user %}
 <input type="checkbox" name="readingList"
 onclick="toggleReadingList(this, ' {{- user._id -}} ')"
@@ -114,12 +102,10 @@ value="0"
 {% endif %}
 /> Add to my Reading List
 {% endif %}
+</div><!--end full-text-->
 
-<h3>Tagged as Interesting by People in the Following Topics</h3>
-{% if user %}
-(Click a checkbox to tag paper as interesting for your work in that area)
-<BR>
-{% endif %}
+<div class="browse">
+<h3>Tagged as interesting for:</h3>
 {% for topic, people in paper.get_interests(sorted=True) %}
 {% if user %}
 <input type="checkbox" name="{{- topic._id -}}"
@@ -133,35 +119,70 @@ value="0"
 {% endif %}
 <A HREF="{{- topic.get_local_url() -}}">
 {{ topic.name }}
-</A> ( {{- list_people(people) -}} )
+</A> (by {{ list_people(people) -}} )
+<BR>
 {% endfor %}
 {% if user %}
+(Click a checkbox to tag paper as interesting for your work in that area)
+<hr>
 <FORM action="{{- '/papers/%s/likes/%s' % (str(paper._id), str(user._id)) -}}" method="POST">
-Add a topic:
+Or add your topic:
 <select name="topic2">
 <option value=""></option>
 {% for topic,papers in user.get_interests(sorted=True) %}
 <option value=" {{- topic._id -}} "> {{- topic.name -}} </option>
 {% endfor %}
 </select>
+<BR>
 or enter a new tag here:
 <INPUT TYPE="hidden" NAME="state" VALUE="1" />
 <INPUT TYPE="text" id="addNewTopic" NAME="topic" SIZE=15/>
 <INPUT TYPE="submit" value="Save" />
 </FORM>
 {% endif %}
+</div>
 
-<h3>Recommendations
+<div class="extra-ref-cite">
+{% if user %}
+Welcome
+<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
+{% else %}
+Use your Google sign-in to tag, share, discuss and recommend papers:
+<BR>
+<A HREF="/gplus_login"><IMG SRC="/images/Red-signin_Long_base_20dp.png"></A>
+{% endif %}
+</div>
+
+<div class="bookmarks">
+<h3>Share This Paper</h3>
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=paper.get_value())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
+</div>
+</div><!--end extra-services-->
+
+<div class="leftcolumn">
+
+
+<h1 class="title">
+{{ paper.title }}
+</h1>
+<div class="authors">
+{{ ', '.join(paper.authorNames) }}
+</div>
+
+<blockquote class="abstract">
+{{ paper.get_value('abstract') }}
+</blockquote>
+
+<div class="submission-history">
+<h2>Recommendations
+{% if user %}
 <button
   class="g-interactivepost"
   data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-{% if user %}
   data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
-{% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') -}}"
-{% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper on Google+">
@@ -173,18 +194,15 @@ or enter a new tag here:
   data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-{% if user %}
   data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
-{% else %}
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') -}}"
-{% endif %}
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper as MUST-READ for your area of research">
   Recommend as Must-Read
 </button>
+{% endif %}
 
-</h3>
+</h2>
 
 <dl>
 {% for i,rec in enumerate(timesort(paper.recommendations)) %}
@@ -202,11 +220,13 @@ or enter a new tag here:
 {% endif %}
 </dt>
 <dd>
+{% if rec.sigs %}
 <span class="list-identifier">Recommended for:
 {% for topic in rec.sigs %}
 <A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
 {% endfor %}
 </span>
+{% endif %}
 <div class="list-comments">
 {{ rec.text }}
 {% for reply in timesort(rec.get_replies()) %}
@@ -222,7 +242,8 @@ or enter a new tag here:
 </dl>
 
 
-<h3>Discussion
+<h2>Discussion
+{% if user %}
 <button
   class="g-interactivepost"
   data-contenturl=" {{- paper.get_value() -}} "
@@ -234,14 +255,22 @@ or enter a new tag here:
   title="Click to post a question or comment about this paper on Google+">
   Discuss this paper
 </button>
-</h3>
+{% endif %}
+</h2>
 
 <dl>
 {% for i,post in enumerate(timesort(paper.posts)) %}
 <dt>[ {{- i + 1 -}} ]
 <A HREF="{{- post.author.get_local_url() -}}">
 {{ post.author.name }}
-</A> ( {{- display_datetime(post.published) -}} )
+</A> 
+{% if post.sigs %}
+on topics:
+{% for topic in post.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(post.published) -}} )
 </dt>
 <dd>
 <div class="list-comments">{{ post.text }}
@@ -261,6 +290,9 @@ or enter a new tag here:
 {% endfor %}
 </dl>
 
+</div>
+</div><!--end leftcolumn-->
+</div><!--end abs-->
 
 
 <script type="text/javascript">
