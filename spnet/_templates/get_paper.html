@@ -87,23 +87,16 @@ function toggleReadingList(o, userID)
 </form>
 </div>
 
-<h1 class="title">
-{{ paper.title }}
-</h1>
-<div class="authors">
-{{ ', '.join(paper.authorNames) }}
-</div>
+<div id="abs">
+<div class="extra-services">
 
-<h3>Abstract
-<a href="https://plus.google.com/share? {{- urlencode(dict(url=paper.get_value())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
-<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
-<a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format"><img src="/images/pdf.jpg"/></a>
-</h3>
-
-<blockquote class="abstract">
-{{ paper.get_value('abstract') }}
-</blockquote>
-
+<div class="full-text">
+<h2>View:</h2>
+<ul>
+<li><a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format">Full text</a></li>
+<li><a href="{{- paper.get_value('source_url') -}}">
+{{- paper.get_value('doctag') -}}</a></li>
+</ul>
 {% if user %}
 <input type="checkbox" name="readingList"
 onclick="toggleReadingList(this, ' {{- user._id -}} ')"
@@ -114,12 +107,10 @@ value="0"
 {% endif %}
 /> Add to my Reading List
 {% endif %}
+</div><!--end full-text-->
 
-<h3>Tagged as Interesting by People in the Following Topics</h3>
-{% if user %}
-(Click a checkbox to tag paper as interesting for your work in that area)
-<BR>
-{% endif %}
+<div class="browse">
+<h3>Tagged as interesting for:</h3>
 {% for topic, people in paper.get_interests(sorted=True) %}
 {% if user %}
 <input type="checkbox" name="{{- topic._id -}}"
@@ -133,25 +124,52 @@ value="0"
 {% endif %}
 <A HREF="{{- topic.get_local_url() -}}">
 {{ topic.name }}
-</A> ( {{- list_people(people) -}} )
+</A> (by {{ list_people(people) -}} )
+<BR>
 {% endfor %}
 {% if user %}
+(Click a checkbox to tag paper as interesting for your work in that area)
+<hr>
 <FORM action="{{- '/papers/%s/likes/%s' % (str(paper._id), str(user._id)) -}}" method="POST">
-Add a topic:
+Or add your topic:
 <select name="topic2">
 <option value=""></option>
 {% for topic,papers in user.get_interests(sorted=True) %}
 <option value=" {{- topic._id -}} "> {{- topic.name -}} </option>
 {% endfor %}
 </select>
+<BR>
 or enter a new tag here:
 <INPUT TYPE="hidden" NAME="state" VALUE="1" />
 <INPUT TYPE="text" id="addNewTopic" NAME="topic" SIZE=15/>
 <INPUT TYPE="submit" value="Save" />
 </FORM>
 {% endif %}
+</div>
 
-<h3>Recommendations
+<div class="bookmarks">
+<h3>Share This Paper</h3>
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=paper.get_value())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this paper on Google+"/></a>
+</div>
+</div><!--end extra-services-->
+
+<div class="leftcolumn">
+
+
+<h1 class="title">
+{{ paper.title }}
+</h1>
+<div class="authors">
+{{ ', '.join(paper.authorNames) }}
+</div>
+
+<blockquote class="abstract">
+{{ paper.get_value('abstract') }}
+</blockquote>
+
+<div class="submission-history">
+<h2>Recommendations
 <button
   class="g-interactivepost"
   data-contenturl=" {{- paper.get_value() -}} "
@@ -184,7 +202,7 @@ or enter a new tag here:
   Recommend as Must-Read
 </button>
 
-</h3>
+</h2>
 
 <dl>
 {% for i,rec in enumerate(timesort(paper.recommendations)) %}
@@ -224,7 +242,7 @@ or enter a new tag here:
 </dl>
 
 
-<h3>Discussion
+<h2>Discussion
 <button
   class="g-interactivepost"
   data-contenturl=" {{- paper.get_value() -}} "
@@ -236,7 +254,7 @@ or enter a new tag here:
   title="Click to post a question or comment about this paper on Google+">
   Discuss this paper
 </button>
-</h3>
+</h2>
 
 <dl>
 {% for i,post in enumerate(timesort(paper.posts)) %}
@@ -270,6 +288,9 @@ on topics:
 {% endfor %}
 </dl>
 
+</div>
+</div><!--end leftcolumn-->
+</div><!--end abs-->
 
 
 <script type="text/javascript">
