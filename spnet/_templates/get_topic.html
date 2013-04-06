@@ -74,6 +74,33 @@
 </dl>
 {% endif %}
 
+
+{% if topic.posts %}
+<h3>Discussion</h3>
+<dl>
+{% for i,post in enumerate(timesort(topic.posts)) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="{{- post.author.get_local_url() -}}">
+{{ post.author.name }}
+</A> 
+commented on <A HREF="{{- post.parent.get_value('local_url') -}}"> 
+{{- post.parent.title -}} </A>
+{% if post.sigs %}
+RE: topics:
+{% for topic2 in post.sigs %}
+<A HREF="{{- topic2.get_local_url() -}}"> {{ topic2.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(post.published) -}} )
+</dt>
+<dd>
+<div class="list-comments">{{ post.text }}
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% endif %}
+
 <h3>Papers</h3>
 
 <dl>

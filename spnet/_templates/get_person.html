@@ -136,7 +136,14 @@ them an invitation post).<br>
 <dt>[ {{- i + 1 -}} ] Comment on
 <A HREF="{{- post.parent.get_value('local_url') -}}">
 {{ post.parent.title }}
-</a> ( {{- display_datetime(post.published) -}} )</dt>
+</a> 
+{% if post.sigs %}
+RE: topics:
+{% for topic in post.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(post.published) -}} )</dt>
 <dd>
 <div class="list-comments">{{ post.text }}
 {% if hasattr(post, 'url') %}

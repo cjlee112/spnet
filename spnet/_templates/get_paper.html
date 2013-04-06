@@ -202,11 +202,13 @@ or enter a new tag here:
 {% endif %}
 </dt>
 <dd>
+{% if rec.sigs %}
 <span class="list-identifier">Recommended for:
 {% for topic in rec.sigs %}
 <A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
 {% endfor %}
 </span>
+{% endif %}
 <div class="list-comments">
 {{ rec.text }}
 {% for reply in timesort(rec.get_replies()) %}
@@ -241,7 +243,14 @@ or enter a new tag here:
 <dt>[ {{- i + 1 -}} ]
 <A HREF="{{- post.author.get_local_url() -}}">
 {{ post.author.name }}
-</A> ( {{- display_datetime(post.published) -}} )
+</A> 
+{% if post.sigs %}
+on topics:
+{% for topic in post.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(post.published) -}} )
 </dt>
 <dd>
 <div class="list-comments">{{ post.text }}
