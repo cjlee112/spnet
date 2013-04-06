@@ -52,6 +52,10 @@ class PaperCollection(rest.Collection):
             return rest.Redirect('/pubmed/%s' % searchString)
         elif searchType == 'pubmed':
             return rest.Redirect('/pubmed?' + urlencode(dict(searchString=searchString)))
+        elif searchType == 'ncbipubmed':
+            return rest.Redirect('http://www.ncbi.nlm.nih.gov/sites/entrez?'
+                                 + urlencode(dict(term=searchString,
+                                                  db='pubmed')))
         elif searchType == 'shortDOI':
             return rest.Redirect('/shortDOI/%s' % searchString)
         elif searchType == 'DOI':
