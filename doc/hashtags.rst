@@ -13,90 +13,64 @@ how to tag your posts manually
 
 If you make a post or recommendation directly from SelectedPapers.net,
 the right hashtags will automatically be added to your post.
-But you can also tag your Google+ posts yourself (even if you
+But you can also tag your posts yourself (even if you
 have never logged in to SelectedPapers.net; indeed, if you have
 old posts that discuss specific papers, you could go
 back and edit them to add these tags).  Please remember
 that hashtags cannot contain *any* characters other than
-letters, numbers, and the underscore character.  So #arxiv_1234_5678
-is a valid hashtag, but #arxiv:1234.5678 is not!  (we didn't
+letters, numbers, and the underscore character.  So #generalRelativity
+is a valid hashtag, but #general-relativity is not!  (we didn't
 make these rules; Twitter did).
 
-Here are the hashtags to use:
+Here are the hashtags and paper ID formats to use:
 
 * **#spnetwork**  This marks your post for indexing by 
   SelectedPapers.net.  This hashtag is required.
 
-* **a hashtag for the specific paper** you are discussing.
+* **an ID for the specific paper** you are discussing.
   The specific tag depends on the origin of the paper:
 
-  * **arXiv**: the hashtag must begin with **#arxiv_**,
-    to which you append the arxiv paper ID, with all special
-    characters (anything other than a letter or number)
-    replaced by underscore (_).  
+  * **arXiv**: simply use the standard arXiv paper
+    reference, e.g. **arXiv:1302.4871**; you can copy this
+    directly from the arXiv website.  
+    A single space after the colon is permissible.
 
-    Example: arXiv paper 1302.4871 becomes
-    the hashtag **#arxiv_1302_4871**
-
-  * **Pubmed**: the hashtag simply consists of **#pubmed_**
-    plus the Pubmed ID number for the paper.
-
-    Example: Pubmed paper 22291635 becomes
-    the hashtag **#pubmed_22291635**
+  * **Pubmed**: simply use the standard Pubmed ID code
+    as shown on any Pubmed search page, e.g. **PMID:22291635**.
+    A single space after the colon is permissible.
 
   * **Digital Object Identifier (DOI)**: virtually all
     papers published in journals now have a DOI, which you
     can generally find on the paper's first page, or
-    on the journal's webpage for the paper.  Unfortunately,
-    DOIs are long, clumsy, and totally incompatible with
-    hashtag rules.  Fortunately, there is now a "short DOI"
-    standard that allocates each DOI a unique
-    short code.  You can obtain this code by entering
-    a DOI on the http://shortdoi.org website.  Then
-    use a hashtag consisting of **#shortDOI_**
-    followed by the short DOI code (only the letters and
-    numbers following the slash (/)).
-  
-    Example: the DOI 10.3389/fncom.2012.00001 maps to the 
-    shortcut http://doi.org/fzkjw8, so its short DOI code is
-    fzkjw8, and its hashtag is **#shortDOI_fzkjw8**
+    on the journal's webpage for the paper,
+    e.g. **doi:10.3389/fncom.2012.00001**.  You can copy this
+    directly from a published paper or search page.
+    A single space after the colon is permissible;
+    the word "doi" can be upper- or lower-case.
 
 * while not required, we strongly suggest that you include a
-  **topic hashtag** for your research interest area.
+  **topic hashtag** for your research interest area.  E.g. if there
+  is a hashtag that people in your field commonly use for
+  posting on Twitter, use it.  If you have to make up a new
+  hashtag, keep it intuitive and follow "camelCase" capitalization
+  e.g. #openPeerReview.
 
 * while not required, we suggest that you also include a **URL
   for the paper on SelectedPapers.net**, so your readers can click to
   see the original paper and all discussion about it.  Unfortunately,
-  clicking the paper hashtag in Google+ will not accomplish that,
-  because Google+ does not know what "arxiv", "pubmed" or "shortDOI"
-  mean, or how they should be handled.  Here are the URLs to
-  use for the three types of papers:
-
-  * **arXiv**: just append the original arXiv paper ID (with no
-    need to replace special characters by underscores) to the
-    base URL **http://selectedpapers.net/arxiv/**
-
-    Example: arXiv paper ``1302.4871`` becomes
-    the URL http://selectedpapers.net/arxiv/1302.4871
-
-  * **Pubmed**: just append the Pubmed ID number to the
-    base URL **http://selectedpapers.net/pubmed/**
-
-    Example: Pubmed paper ``22291635`` becomes
-    the URL http://selectedpapers.net/pubmed/22291635
-
-  * **Digital Object Identifier (DOI)**:
-    just append the shortDOI code (see above) to the
-    base URL **http://selectedpapers.net/shortDOI/**
-
-    Example: shortDOI ``fzkjw8`` becomes
-    the URL http://selectedpapers.net/shortDOI/fzkjw8
-
+  clicking the paper ID in Google+ will not accomplish that,
+  because Google+ does not know what "arxiv", "pubmed" or "DOI"
+  mean, or how they should be handled.  You can get this URL
+  by simply searching with a paper ID on the 
+  https://selectedpapers.net homepage.
 
 That's all you need!
 
-Optional tags: Recommendations and Open Peer Review
----------------------------------------------------
+Optional tags 
+-------------
+
+Recommendations
+...............
 
 A central principle of SelectedPapers.net is that innovations
 can spread most effectively if individual scientists simply recommend
@@ -124,3 +98,42 @@ two following hashtags:
 
   This means you consider the paper "required reading" for your
   research -- it changed how you think or what you're going to do.
+  This is the strongest level of recommendation on SelectedPapers.net.
+
+General user actions
+....................
+
+* ``#question``: this post asks a question about the paper.
+* ``#agree``: you agree with the paper.  This will
+  typically be used as a lightweight "upvote / downvote" poll,
+  an easy way for people to declare themselves on one side or
+  another of an argument.
+* ``#disagree``: you disagree with the paper.
+
+
+Open Peer Review
+................
+
+* ``#valid``: the paper's claims meet your field's standards of evidence,
+  in your judgment.
+* ``#uncertain``: the evidence for a claim is not strong enough
+* ``#unsupported``: no valid evidence for a claim
+* ``#wrong``: you're sure a claim is incorrect (provide your evidence!)
+
+* ``#precedes``: one of the paper's claims
+  appears to have already been published by previous publication A
+  (provide its paper ID).
+
+* ``#assessing``: you intend to assess the paper's validity,
+  at least in part.
+* ``#assessingAll``: you can assess all aspects of the paper,
+  because you are expert in all aspects of the paper, i.e.
+  you have performed similar analyses using similar methods on
+  similar data.
+* ``#exit``: you intend no further consideration
+  of this paper (barring unforeseen new information).
+
+* ``#majorResult``: this statement applies to the paper's main claim(s)
+* ``#minorResult``: this statement applies to a minor point that
+  is not one of the paper's main claims.
+
