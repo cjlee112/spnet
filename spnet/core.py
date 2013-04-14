@@ -251,7 +251,8 @@ class GplusPersonData(EmbeddedDocument):
         import gplus
         oauth = gplus.publicAccess
         postIt = oauth.get_person_posts(self.id)
-        l = [p for p in oauth.load_recent_posts(postIt, maxDays, **kwargs)
+        l = [p for p in oauth.find_or_insert_posts(postIt, maxDays=maxDays,
+                                                   **kwargs)
              if getattr(p, '_isNewInsert', False)]
         return l
     def update_subs_from_gplus(self, subs=None):
