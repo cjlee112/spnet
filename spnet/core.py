@@ -3,6 +3,7 @@ from hashlib import sha1
 import re
 from datetime import datetime
 import errors
+import thread
 
 
 
@@ -244,7 +245,8 @@ class GplusPersonData(EmbeddedDocument):
         gps = GplusSubscriptions(docData=dict(_id=d['id']))
         self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
         p = Person(docData=dict(name=d['displayName']))
-        gps.update_subscribers(p._id)
+        thread.start_new_thread(p.update_subscribers,
+                                (GplusSubscriptions, self._dbfield, d['id']))
         return p
     def update_posts(self, maxDays=20, **kwargs):
         'get new posts from this person, updating old posts with new replies'
@@ -256,6 +258,9 @@ class GplusPersonData(EmbeddedDocument):
              if getattr(p, '_isNewInsert', False)]
         return l
     def update_subs_from_gplus(self, subs=None):
+        '''see if we can update Person.subscriptions based on
+        subs (list of gplus person dicts).
+        If subs is None, update based on our GplusSubscriptions.subs'''
         oldSubs = self.parent._dbDocDict.get('subscriptions', [])
         gplusSubs = set()
         if subs is None:
@@ -279,20 +284,17 @@ class GplusPersonData(EmbeddedDocument):
 class GplusSubscriptions(Document):
     'for a gplus member, store his array of gplus subscriptions (his circles)'
     useObjectId = False # input data will supply _id
+    _subscriptionIdField = 'subs.id' # query to find a subscription by ID
     gplusPerson = LinkDescriptor('gplusPerson', fetch_gplus_by_id,
                                  noData=True)
     def update_subscriptions(self, doc, subs):
+        '''if G+ subscriptions changed, save and return the new list;
+        otherwise return None'''
         if getattr(self, 'etag', None) != doc['etag']:
             subs = list(subs) # actually get the data from iterator
             self.update(dict(subs=subs, etag=doc['etag'],
                              totalItems=doc['totalItems'])) # save to db
             return subs # subscriptions changed
-    def update_subscribers(self, personID):
-        '''when Person first inserted to db, connect to pending
-        subscriptions by appending our new personID.'''
-        for gplusID in self.find({'subs.id':self._id}):
-            Person.coll.update({'gplus.id': gplusID},
-                               {'$push': {'subscriptions':personID}})
 
 
 def get_interests_sorted(d):
@@ -346,6 +348,12 @@ class Person(Document):
         return d
     def get_local_url(self):
         return '/people/' + str(self._id)
+    def update_subscribers(self, klass, dbfield, subscriptionID):
+        '''when Person first inserted to db, connect to pending
+        subscriptions by appending our new personID.'''
+        for subID in klass.find({klass._subscriptionIdField: subscriptionID}):
+            self.coll.update({dbfield: subID},
+                             {'$push': {'subscriptions':self._id}})
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
