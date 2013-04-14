@@ -27,20 +27,26 @@ GOOGLE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 ##################################################################
 # timestamp mangling
 
+def convert_timestamp(s):
+    'convert string to UTC (tz-stripped) datetime'
+    t = dateutil.parser.parse(s)
+    t = t.astimezone(dateutil.tz.tzutc()) # force to UTC
+    return t.replace(tzinfo=None) # strip to prevent stupid crashes
+ 
 def convert_timestamps(d, fields=('published', 'updated')):
     'convert G+ timestamp string fields to datetime objects'
     for f in fields:
         try:
-            t = dateutil.parser.parse(d[f])
-            t = t.astimezone(dateutil.tz.tzutc()) # force to UTC
-            d[f] = t.replace(tzinfo=None) # strip to prevent stupid crashes
+            s = d[f]
         except KeyError:
             pass
+        else:
+            d[f] = convert_timestamp(s)
 
 def get_gplus_timestamp(d):
     'safe method for getting a timestamp from gplus data dict'
     try:
-        return d['published']
+        return convert_timestamp(d['updated'])
     except KeyError:
         return datetime.utcnow()
 
@@ -114,30 +120,24 @@ class OAuth(object):
         self.service = service = build('plus', 'v1', http=http)
         person = service.people().get(userId='me').execute(http=http)
         gpd = core.GplusPersonData(docData=person, insertNew='findOrInsert')
-        if getattr(gpd, '_isNewInsert', False): # retrieve circles
-            thread.start_new_thread(self.process_new_member, (gpd,))
+        # retrieve circles, save subscriptions in background thread
+        thread.start_new_thread(self.update_subscriptions, (gpd,))
         p = gpd.parent
         if 'refresh_token' in self.access_data:
             p.update(dict(gplusAccess=self.access_data))
         return p
 
-    def process_new_member(self, gplusPersonData):
+    def update_subscriptions(self, gplusPersonData):
         '''when a new G+ user is added to Person, we need to retrieve
         their circles, save that in a GplusSubscriptions record,
         translate that to their Person.subscriptions record.
         This will typically be run in
         a separate thread when G+ user first signs in.
         Note we MUST have oauth sign-in as the user to run this.'''
-        subs = self.update_subscriptions(gplusPersonData)
-        gplusPersonData.update_subs_from_gplus(subs)
-
-    def update_subscriptions(self, gplusPersonData):
-        'retrieve circles data and save to db'
-        gplusSub = gplusPersonData.subscriptions
         it = self.api_iter('people', userId='me', collection='visible',
                            getResponse=True)
         doc = it.next() # 1st item is the response document
-        return gplusSub.update_subscriptions(doc, it) # save to db if changed
+        gplusPersonData.update_subscriptions(doc, it)
 
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!
@@ -196,7 +196,7 @@ class OAuth(object):
                              x['object']['replies']['totalItems'],
                              get_id=lambda x:x['id'],
                              get_timestamp=get_gplus_timestamp,
-                             recentEvents=None):
+                             **kwargs):
         'save google+ posts to core.find_or_insert_posts()'
         import core
         return find_or_insert_posts(posts, self.get_post_comments,
@@ -205,7 +205,7 @@ class OAuth(object):
                                     get_content, get_user, get_replycount,
                                     get_id, get_timestamp, 'gplusPost',
                                     convert_timestamps, convert_timestamps,
-                                    recentEvents=recentEvents)
+                                    **kwargs)
 
     def api_iter(self, resourceName='activities', verb='list',
                  getResponse=False, **kwargs):
@@ -245,16 +245,11 @@ class OAuth(object):
         'start polling in a background thread'
         thread.start_new_thread(self.poll_recent_spnetwork, args)        
 
-    def load_recent_spnetwork(self, *args, **kwargs):
+    def load_recent_spnetwork(self, maxDays=10, recentEvents=None, **kwargs):
         'scan recent G+ posts for updates, and save updates to DB'
         postIt = self.search_activities(query='#spnetwork', orderBy='recent')
-        return self.load_recent_posts(postIt, *args, **kwargs)
-    def load_recent_posts(self, postIt, maxDays=10, recentEvents=None):
-        now = datetime.utcnow()
-        for p in self.find_or_insert_posts(postIt, recentEvents=recentEvents):
-            yield p
-            if (now - p.updated).days > maxDays:
-                break
+        return self.find_or_insert_posts(postIt, maxDays=maxDays,
+                                         recentEvents=recentEvents, **kwargs)
 
 ##################################################################
 # default clientID, API key etc. access

@@ -3,6 +3,7 @@ from hashlib import sha1
 import re
 from datetime import datetime
 import errors
+import thread
 
 
 
@@ -53,7 +54,7 @@ fetch_parent_person = FetchParent(None)
 fetch_parent_paper = FetchParent(None)
 fetch_author_papers = FetchQuery(None, lambda author:dict(authors=author._id))
 fetch_subscribers = FetchQuery(None, lambda person:
-                               dict(subscriptions=person._id))
+                               {'subscriptions.author':person._id})
 fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
@@ -241,57 +242,80 @@ class GplusPersonData(EmbeddedDocument):
         return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
-        gps = GplusSubscriptions(docData=dict(_id=d['id']))
-        self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
+        self._createGplusSubs = True
         p = Person(docData=dict(name=d['displayName']))
-        gps.update_subscribers(p._id)
+        thread.start_new_thread(p.update_subscribers,
+                                (GplusSubscriptions, self._dbfield, d['id']))
         return p
-    def update_posts(self, maxDays=20):
+    def update_posts(self, maxDays=20, **kwargs):
         'get new posts from this person, updating old posts with new replies'
         import gplus
         oauth = gplus.publicAccess
         postIt = oauth.get_person_posts(self.id)
-        l = [p for p in oauth.load_recent_posts(postIt, maxDays)
+        l = [p for p in oauth.find_or_insert_posts(postIt, maxDays=maxDays,
+                                                   **kwargs)
              if getattr(p, '_isNewInsert', False)]
         return l
+    def init_subscriptions(self, doc, subs):
+        'save GplusSubscriptions to db, from doc and subs data'
+        d = dict(_id=self.id, subs=list(subs), etag=doc['etag'],
+                 totalItems=doc['totalItems'])
+        gps = GplusSubscriptions(docData=d)
+        self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
+    def update_subscriptions(self, doc, subs):
+        if getattr(self, '_createGplusSubs', False): # create new
+            self._createGplusSubs = False
+            newSubs = self.init_subscriptions(doc, subs)
+        else: # see if we have new subscriptions
+            gplusSub = self.subscriptions
+            newSubs = gplusSub.update_subscriptions(doc, subs)
+            if newSubs is None: # nothing to do
+                return
+        self.update_subs_from_gplus(newSubs) # update Person.subscriptions
+
     def update_subs_from_gplus(self, subs=None):
-        oldSubs = self.parent._dbDocDict.get('subscriptions', [])
-        gplusSubs = set()
-        if subs is None:
-            subs = getattr(self.subscriptions, 'subs', ())
-        for d in subs:
+        '''see if we can update Person.subscriptions based on
+        subs (list of NEW gplus person IDs).
+        If subs is None, update based on our GplusSubscriptions.subs'''
+        gplusSubs = set([d['id'] for d in self.subscriptions.subs])
+        l = []
+        for d in self.parent._dbDocDict.get('subscriptions', ()):
+            try: # filter old subscriptions
+                if d['gplusID'] in gplusSubs: # still in our subscriptions
+                    l.append(d)
+            except KeyError:
+                l.append(d) # from some other service, so keep
+        if subs is None: # all subscriptions are new
+            subs = gplusSubs
+        for gplusID in subs: # append new additions
             try: # find subset that map to Person
-                p = self.__class__(d['id']).parent # find Person record
-                gplusSubs.add(p._id)
+                p = self.__class__(gplusID).parent # find Person record
+                l.append(dict(author=p._id, gplusID=gplusID, topics=[]))
             except KeyError:
                 pass
-        oldSubsSet = set(oldSubs)
-        if gplusSubs == oldSubsSet:
-            return False
-        l = filter(lambda x:x in gplusSubs, oldSubs) # preserve order
-        l += list(gplusSubs - oldSubsSet) # append new additions
         self.parent.update(dict(subscriptions=l)) # save to db
-        return True
+        self.parent._forceReload = True # safe way to refresh view
 
 
 
 class GplusSubscriptions(Document):
     'for a gplus member, store his array of gplus subscriptions (his circles)'
     useObjectId = False # input data will supply _id
+    _subscriptionIdField = 'subs.id' # query to find a subscription by ID
     gplusPerson = LinkDescriptor('gplusPerson', fetch_gplus_by_id,
                                  noData=True)
     def update_subscriptions(self, doc, subs):
-        if getattr(self, 'etag', None) != doc['etag']:
-            subs = list(subs) # actually get the data from iterator
-            self.update(dict(subs=subs, etag=doc['etag'],
-                             totalItems=doc['totalItems'])) # save to db
-            return subs # subscriptions changed
-    def update_subscribers(self, personID):
-        '''when Person first inserted to db, connect to pending
-        subscriptions by appending our new personID.'''
-        for gplusID in self.find({'subs.id':self._id}):
-            Person.coll.update({'gplus.id': gplusID},
-                               {'$push': {'subscriptions':personID}})
+        '''if G+ subscriptions changed, save and return the new list;
+        otherwise return None'''
+        if getattr(self, 'etag', None) == doc['etag']:
+            return None # no change, so nothing to do
+        subs = list(subs) # actually get the data from iterator
+        oldSubsSet = set([d['id'] for d in self.subs])
+        self.update(dict(subs=subs, etag=doc['etag'],
+                         totalItems=doc['totalItems'])) # save to db
+        self.subs = subs
+        newSubsSet = set([d['id'] for d in subs])
+        return newSubsSet - oldSubsSet # new subscriptions
 
 
 def get_interests_sorted(d):
@@ -301,6 +325,14 @@ def get_interests_sorted(d):
     return [(t[1], d[t[1]]) for t in l]
 
 
+class Subscription(ArrayDocument):
+    _dbfield = 'subscriptions.author' # dot.name for updating
+    # attrs that will only be fetched if accessed by user
+    author = LinkDescriptor('author', fetch_person)
+    topics = LinkDescriptor('topics', fetch_sigs, missingData=())
+
+
+
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
     _requiredFields = ('name',)
@@ -308,8 +340,6 @@ class Person(Document):
     papers = LinkDescriptor('papers', fetch_author_papers, noData=True)
     recommendations = LinkDescriptor('recommendations', fetch_recs,
                                      noData=True)
-    subscriptions = LinkDescriptor('subscriptions', fetch_people,
-                                   missingData=())
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
     posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
@@ -321,6 +351,7 @@ class Person(Document):
     _attrHandler = dict(
         email=SaveAttrList(EmailAddress, insertNew=False),
         gplus=SaveAttr(GplusPersonData, insertNew=False),
+        subscriptions = SaveAttrList(Subscription, insertNew=False),
         ## sigs=SaveAttrList(SIGLink, postprocess=merge_sigs, insertNew=False),
         )
 
@@ -345,6 +376,12 @@ class Person(Document):
         return d
     def get_local_url(self):
         return '/people/' + str(self._id)
+    def update_subscribers(self, klass, dbfield, subscriptionID):
+        '''when Person first inserted to db, connect to pending
+        subscriptions by appending our new personID.'''
+        for subID in klass.find({klass._subscriptionIdField: subscriptionID}):
+            self.coll.update({dbfield: subID},
+                             {'$push': {'subscriptions':self._id}})
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'

@@ -1,6 +1,7 @@
 import re
 import core
 import errors
+from datetime import datetime
 
 #################################################################
 # hashtag processors
@@ -122,11 +123,16 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount,
                          get_id, get_timestamp, source,
                          process_post=None, process_reply=None,
-                         recentEvents=None):
+                         recentEvents=None, maxDays=None):
     'generate each post that has a paper hashtag, adding to DB if needed'
+    now = datetime.utcnow()
+    saveEvents = []
     for d in posts:
         post = None
         content = get_content(d)
+        timeStamp = get_timestamp(d)
+        if maxDays is not None and (now - timeStamp).days > maxDays:
+            break
         isRec = content.find('#recommend') >= 0 or \
                 content.find('#mustread') >= 0
         if not isRec:
@@ -137,8 +143,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                     continue # matches DB record, so nothing to do
             except KeyError:
                 pass
+        hashtagDict = get_hashtag_dict(content) # extract tags and IDs
         if post is None: # extract data for saving post to DB
-            hashtagDict = get_hashtag_dict(content)
             try:
                 paper = hashtagDict['paper'][0] # link to first paper
             except KeyError:
@@ -160,11 +166,11 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         if process_post:
             process_post(d)
         d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
-                                 get_timestamp(d), source)
+                                 timeStamp, source)
         if post is None: # save to DB
             post = klass(docData=d, parent=paper)
             if recentEvents is not None: # add to monitor deque
-                recentEvents.appendleft(post)
+                saveEvents.append(post)
         else: # update DB with new data and etag
             post.update(d)
         yield post
@@ -189,5 +195,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 c['replyTo'] = d['id']
                 r = core.Reply(docData=c, parent=post._parent_link)
                 if recentEvents is not None: # add to monitor deque
-                    recentEvents.appendleft(r)
+                    saveEvents.append(r)
+
+    if saveEvents and recentEvents is not None:
+        saveEvents.sort(lambda x,y:cmp(x.published, y.published))
+        for r in saveEvents:
+            recentEvents.appendleft(r) # add to monitor deque
 

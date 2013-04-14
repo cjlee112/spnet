@@ -86,10 +86,17 @@ class TemplateView(object):
         if doc is not None:
             kwargs[self.name] = doc
         try:
+            user = cherrypy.session['person']
+        except KeyError:
+            user = None
+        else:
+            if getattr(user, '_forceReload', False):
+                user = user.__class__(user._id) # reload from DB
+                cherrypy.session['person'] = user # save on session
+        try:
             return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, str=str, map=map_helper,
-                     user=cherrypy.session.get('person', None),
+                     getattr=getattr, str=str, map=map_helper, user=user,
                      display_datetime=display_datetime, timesort=timesort,
                      recentEvents=recentEventsDeque, **kwargs) # apply template
         except Exception, e:
@@ -187,17 +194,21 @@ recentEventsDeque = collections.deque(maxlen=20)
 def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
                        limit=20):
     l = []
-    for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
+    for paper in paperClass.find_obj(sortKeys={'recommendations.published':-1},
                                      limit=limit):
         for r in getattr(paper, 'recommendations', ()):
             l.append(r)
+    for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
+                                     limit=limit):
         for r in getattr(paper, 'posts', ()):
             l.append(r)
+    for paper in paperClass.find_obj(sortKeys={'replies.published':-1},
+                                     limit=limit):
         for r in getattr(paper, 'replies', ()):
             l.append(r)
     for topic in topicClass.find_obj(sortKeys={'published':-1}, limit=limit):
         l.append(topic)
-    l.sort(lambda x,y:cmp(x.published, y.published))
+    l.sort(lambda x,y:cmp(x.published, y.published)) # oldest first
     for r in l:
         dq.appendleft(r)
         
