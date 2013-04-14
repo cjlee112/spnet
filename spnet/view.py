@@ -86,10 +86,17 @@ class TemplateView(object):
         if doc is not None:
             kwargs[self.name] = doc
         try:
+            user = cherrypy.session['person']
+        except KeyError:
+            user = None
+        else:
+            if getattr(user, '_forceReload', False):
+                user = user.__class__(user._id) # reload from DB
+                cherrypy.session['person'] = user # save on session
+        try:
             return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                      urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, str=str, map=map_helper,
-                     user=cherrypy.session.get('person', None),
+                     getattr=getattr, str=str, map=map_helper, user=user,
                      display_datetime=display_datetime, timesort=timesort,
                      recentEvents=recentEventsDeque, **kwargs) # apply template
         except Exception, e:
