@@ -5,36 +5,29 @@ SelectedPapers.net Overview
 Open Scientific Sharing with No Walls
 -------------------------------------
 
-SelectedPapers.net is designed as a *federated* information sharing
-service.  That is, rather than "locking up" your comments and 
-recommendations within its own website (the "walled garden"
-strategy followed by other services), it explicitly shares 
+SelectedPapers.net is a *federated* information sharing
+service.  Instead of "locking up" your comments and 
+recommendations within its own website - the "walled garden"
+strategy followed by other services - it explicitly shares 
 these data in a way that people *not* on SelectedPapers.net
-can easily see (and any other service can see and use them
-too).  Specifically, it uses *existing* social networks 
-such as Google+ as the transport for publishing all its
-content, so users of those social networks will see your
-recommendations (and can reply, discuss them with you etc.)
+can easily see.  Any other service can see and use them
+too.  It does this by using *existing* social networks 
+such as Google+, so users of those social networks can see your
+recommendations and discuss them, 
 even if they've never heard of SelectedPapers.net.
+
 For example, if you're a Google+ user, comments you
 type on SelectedPapers.net are posted on Google+ for you
 (with your usual Google+ identity and associated audience),
 with key hashtags automatically added to identify the
-paper you are discussing (and any other critical metadata
-for your post).  Indeed, if you wanted to strip the
+paper you are discussing.  
+
+So: if you want to strip the
 selected-papers network down to one idea, it's this:
 given that social networks already exist, all we need
 for truly open scientific sharing is simply a *cultural
 convention* on a **consistent set of tags and IDs** for
 discussing papers and research.
-
-Steal These Hashtags!
----------------------
-
-In fact, if you want to go "full-manual" you can of course
-use `these hashtags <hashtags.html>`_ (to write new posts, retag old posts, or
-whatever you want) on your own, *without* even using the 
-SelectedPapers.net website.
 
 Getting Started
 ---------------
@@ -135,11 +128,26 @@ Here's what you can do with a paper:
 
 * **recommend** it to others.  Once again, you **must** include Public in
   the list of recipients for your post, or the spnet cannot see it.
+
+
   We strongly suggest that you include a
   **topic hashtag** for your research interest area.  E.g. if there
   is a hashtag that people in your field commonly use for
   posting on Twitter, use it.  If you have to make up a new
   hashtag, keep it intuitive and follow "camelCase" capitalization
   e.g. #openPeerReview.
+
+
+Steal These Hashtags!
+---------------------
+
+In fact, if you want to go "full-manual" you can of course
+use `these hashtags <hashtags.html>`_ (to write new posts, retag old posts, or
+whatever you want) on your own, *without* even using the 
+SelectedPapers.net website.
+
+
+
+
 
 
