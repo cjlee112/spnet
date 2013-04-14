@@ -38,24 +38,24 @@ Welcome,
 </div>
 
 {% if user %}
-{% if user.subscriptions %}
+{% if getattr(user, 'subscriptions', False) %}
 
 <h3>Your Subscriptions</h3>
 
 <dl>
-{% for i,person in enumerate(user.subscriptions) %}
+{% for i,subscr in enumerate(user.subscriptions) %}
 <dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- person.get_value('local_url') -}}">
-{{ person.name }}
+<A HREF="{{- subscr.author.get_value('local_url') -}}">
+{{ subscr.author.name }}
 </A>
-{% if hasattr(person, 'gplus') %}
-<a href=" {{-person.get_local_url() -}} ?getUpdates=1" 
+{% if hasattr(subscr.author, 'gplus') %}
+<a href=" {{- subscr.author.get_local_url() -}} ?getUpdates=1" 
 title="retrieve latest posts and recommendations from this person via Google+">
 <button>Check Google+ for Updates</button></a>
 {% endif %}
 </dt>
 <dd>
-{% for i,rec in enumerate(timesort(person.recommendations)) %}
+{% for i,rec in enumerate(timesort(subscr.author.recommendations)) %}
 <li><A HREF="{{- rec.get_local_url() -}} ">{{ rec.title }}</A>:
 Recommended for:
 {% for topic in rec.sigs %}

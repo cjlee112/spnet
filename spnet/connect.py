@@ -1,6 +1,6 @@
 
 from dbconn import DBConnection
-from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData, PaperInterest, GplusSubscriptions
+from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData, PaperInterest, GplusSubscriptions, Subscription
 import json
 from pymongo.errors import ConnectionFailure
 
@@ -20,6 +20,7 @@ connectDict = {
     PubmedPaperData:'spnet.paper',
     DoiPaperData:'spnet.paper',
     PaperInterest:'spnet.paper',
+    Subscription:'spnet.person',
     }
 
 

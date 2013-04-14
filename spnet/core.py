@@ -54,7 +54,7 @@ fetch_parent_person = FetchParent(None)
 fetch_parent_paper = FetchParent(None)
 fetch_author_papers = FetchQuery(None, lambda author:dict(authors=author._id))
 fetch_subscribers = FetchQuery(None, lambda person:
-                               dict(subscriptions=person._id))
+                               {'subscriptions.author':person._id})
 fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
@@ -279,18 +279,18 @@ class GplusPersonData(EmbeddedDocument):
         If subs is None, update based on our GplusSubscriptions.subs'''
         gplusSubs = set([d['id'] for d in self.subscriptions.subs])
         l = []
-        for p in self.parent.subscriptions: # filter old subscriptions
-            try:
-                if p.gplus.id in gplusSubs: # still in our subscriptions
-                    l.append(p._id)
-            except AttributeError:
-                l.append(p._id) # from some other service, so keep
+        for d in self.parent._dbDocDict.get('subscriptions', ()):
+            try: # filter old subscriptions
+                if d['gplusID'] in gplusSubs: # still in our subscriptions
+                    l.append(d)
+            except KeyError:
+                l.append(d) # from some other service, so keep
         if subs is None: # all subscriptions are new
             subs = gplusSubs
         for gplusID in subs: # append new additions
             try: # find subset that map to Person
                 p = self.__class__(gplusID).parent # find Person record
-                l.append(p._id)
+                l.append(dict(author=p._id, gplusID=gplusID, topics=[]))
             except KeyError:
                 pass
         self.parent.update(dict(subscriptions=l)) # save to db
@@ -325,6 +325,14 @@ def get_interests_sorted(d):
     return [(t[1], d[t[1]]) for t in l]
 
 
+class Subscription(ArrayDocument):
+    _dbfield = 'subscriptions.author' # dot.name for updating
+    # attrs that will only be fetched if accessed by user
+    author = LinkDescriptor('author', fetch_person)
+    topics = LinkDescriptor('topics', fetch_sigs, missingData=())
+
+
+
 class Person(Document):
     '''interface to a stable identity tied to a set of publications '''
     _requiredFields = ('name',)
@@ -332,8 +340,6 @@ class Person(Document):
     papers = LinkDescriptor('papers', fetch_author_papers, noData=True)
     recommendations = LinkDescriptor('recommendations', fetch_recs,
                                      noData=True)
-    subscriptions = LinkDescriptor('subscriptions', fetch_people,
-                                   missingData=())
     subscribers = LinkDescriptor('subscribers', fetch_subscribers,
                                  noData=True)
     posts = LinkDescriptor('posts', fetch_person_posts, noData=True)
@@ -345,6 +351,7 @@ class Person(Document):
     _attrHandler = dict(
         email=SaveAttrList(EmailAddress, insertNew=False),
         gplus=SaveAttr(GplusPersonData, insertNew=False),
+        subscriptions = SaveAttrList(Subscription, insertNew=False),
         ## sigs=SaveAttrList(SIGLink, postprocess=merge_sigs, insertNew=False),
         )
 
