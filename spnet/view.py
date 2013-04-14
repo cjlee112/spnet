@@ -187,17 +187,21 @@ recentEventsDeque = collections.deque(maxlen=20)
 def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
                        limit=20):
     l = []
-    for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
+    for paper in paperClass.find_obj(sortKeys={'recommendations.published':-1},
                                      limit=limit):
         for r in getattr(paper, 'recommendations', ()):
             l.append(r)
+    for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
+                                     limit=limit):
         for r in getattr(paper, 'posts', ()):
             l.append(r)
+    for paper in paperClass.find_obj(sortKeys={'replies.published':-1},
+                                     limit=limit):
         for r in getattr(paper, 'replies', ()):
             l.append(r)
     for topic in topicClass.find_obj(sortKeys={'published':-1}, limit=limit):
         l.append(topic)
-    l.sort(lambda x,y:cmp(x.published, y.published))
+    l.sort(lambda x,y:cmp(x.published, y.published)) # oldest first
     for r in l:
         dq.appendleft(r)
         
