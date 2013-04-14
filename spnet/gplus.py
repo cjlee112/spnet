@@ -120,30 +120,24 @@ class OAuth(object):
         self.service = service = build('plus', 'v1', http=http)
         person = service.people().get(userId='me').execute(http=http)
         gpd = core.GplusPersonData(docData=person, insertNew='findOrInsert')
-        if getattr(gpd, '_isNewInsert', False): # retrieve circles
-            thread.start_new_thread(self.process_new_member, (gpd,))
+        # retrieve circles, save subscriptions in background thread
+        thread.start_new_thread(self.update_subscriptions, (gpd,))
         p = gpd.parent
         if 'refresh_token' in self.access_data:
             p.update(dict(gplusAccess=self.access_data))
         return p
 
-    def process_new_member(self, gplusPersonData):
+    def update_subscriptions(self, gplusPersonData):
         '''when a new G+ user is added to Person, we need to retrieve
         their circles, save that in a GplusSubscriptions record,
         translate that to their Person.subscriptions record.
         This will typically be run in
         a separate thread when G+ user first signs in.
         Note we MUST have oauth sign-in as the user to run this.'''
-        subs = self.update_subscriptions(gplusPersonData)
-        gplusPersonData.update_subs_from_gplus(subs)
-
-    def update_subscriptions(self, gplusPersonData):
-        'retrieve circles data and save to db'
-        gplusSub = gplusPersonData.subscriptions
         it = self.api_iter('people', userId='me', collection='visible',
                            getResponse=True)
         doc = it.next() # 1st item is the response document
-        return gplusSub.update_subscriptions(doc, it) # save to db if changed
+        gplusPersonData.update_subscriptions(doc, it)
 
     # direct access to Google APIs
     # -- because Google's apiclient search is currently broken!!

@@ -242,8 +242,7 @@ class GplusPersonData(EmbeddedDocument):
         return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
-        gps = GplusSubscriptions(docData=dict(_id=d['id']))
-        self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
+        self._createGplusSubs = True
         p = Person(docData=dict(name=d['displayName']))
         thread.start_new_thread(p.update_subscribers,
                                 (GplusSubscriptions, self._dbfield, d['id']))
@@ -257,27 +256,45 @@ class GplusPersonData(EmbeddedDocument):
                                                    **kwargs)
              if getattr(p, '_isNewInsert', False)]
         return l
+    def init_subscriptions(self, doc, subs):
+        'save GplusSubscriptions to db, from doc and subs data'
+        d = dict(_id=self.id, subs=list(subs), etag=doc['etag'],
+                 totalItems=doc['totalItems'])
+        gps = GplusSubscriptions(docData=d)
+        self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
+    def update_subscriptions(self, doc, subs):
+        if getattr(self, '_createGplusSubs', False): # create new
+            self._createGplusSubs = False
+            newSubs = self.init_subscriptions(doc, subs)
+        else: # see if we have new subscriptions
+            gplusSub = self.subscriptions
+            newSubs = gplusSub.update_subscriptions(doc, subs)
+            if newSubs is None: # nothing to do
+                return
+        self.update_subs_from_gplus(newSubs) # update Person.subscriptions
+
     def update_subs_from_gplus(self, subs=None):
         '''see if we can update Person.subscriptions based on
-        subs (list of gplus person dicts).
+        subs (list of NEW gplus person IDs).
         If subs is None, update based on our GplusSubscriptions.subs'''
-        oldSubs = self.parent._dbDocDict.get('subscriptions', [])
-        gplusSubs = set()
-        if subs is None:
-            subs = getattr(self.subscriptions, 'subs', ())
-        for d in subs:
+        gplusSubs = set([d['id'] for d in self.subscriptions.subs])
+        l = []
+        for p in self.parent.subscriptions: # filter old subscriptions
+            try:
+                if p.gplus.id in gplusSubs: # still in our subscriptions
+                    l.append(p._id)
+            except AttributeError:
+                l.append(p._id) # from some other service, so keep
+        if subs is None: # all subscriptions are new
+            subs = gplusSubs
+        for gplusID in subs: # append new additions
             try: # find subset that map to Person
-                p = self.__class__(d['id']).parent # find Person record
-                gplusSubs.add(p._id)
+                p = self.__class__(gplusID).parent # find Person record
+                l.append(p._id)
             except KeyError:
                 pass
-        oldSubsSet = set(oldSubs)
-        if gplusSubs == oldSubsSet:
-            return False
-        l = filter(lambda x:x in gplusSubs, oldSubs) # preserve order
-        l += list(gplusSubs - oldSubsSet) # append new additions
         self.parent.update(dict(subscriptions=l)) # save to db
-        return True
+        self.parent._forceReload = True # safe way to refresh view
 
 
 
@@ -290,11 +307,15 @@ class GplusSubscriptions(Document):
     def update_subscriptions(self, doc, subs):
         '''if G+ subscriptions changed, save and return the new list;
         otherwise return None'''
-        if getattr(self, 'etag', None) != doc['etag']:
-            subs = list(subs) # actually get the data from iterator
-            self.update(dict(subs=subs, etag=doc['etag'],
-                             totalItems=doc['totalItems'])) # save to db
-            return subs # subscriptions changed
+        if getattr(self, 'etag', None) == doc['etag']:
+            return None # no change, so nothing to do
+        subs = list(subs) # actually get the data from iterator
+        oldSubsSet = set([d['id'] for d in self.subs])
+        self.update(dict(subs=subs, etag=doc['etag'],
+                         totalItems=doc['totalItems'])) # save to db
+        self.subs = subs
+        newSubsSet = set([d['id'] for d in subs])
+        return newSubsSet - oldSubsSet # new subscriptions
 
 
 def get_interests_sorted(d):
