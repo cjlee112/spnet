@@ -24,55 +24,70 @@ paper you are discussing.
 
 So: if you want to strip the
 selected-papers network down to one idea, it's this:
-given that social networks already exist, all we need
-for truly open scientific sharing is simply a *cultural
-convention* on a **consistent set of tags and IDs** for
+*given that social networks already exist, all we need
+for truly open scientific sharing is simply a 
+**convention on a consistent set of tags and IDs** for
 discussing papers and research.
 
-Getting Started
----------------
+Getting Started - Quick Intro
+-----------------------------
 
-As an illustration of our open design, you do not even need
+To see how it works, start by taking a look here:
+
+https://selectedpapers.net.
+
+Under 'Recent activity' you'll see comments and recommendations
+of different papers, so far mostly on the arXiv.  
+
+Right now SelectedPapers.net works
+with Google+.  Support for other social networks such as Twitter
+is coming soon.  But here's how you can use it now:
+
+1) We suggest that you first create (in your Google+ account) a Google+ Circle 
+specifically for discussing research with (e.g. call it “Research”).  If you already have 
+such a circle, or circles, you can just use those.
+
+2) Click **sign in** with Google on https://selectedpapers.net or on  a paper discussion page.
+
+3)  The usual Google sign-in window will appear (unless you are already signed  in).   Google will 
+ask if you want to use the Selected Papers network, and specifically what Circle(s) to let it see 
+who you have added.   (WHAT DOES "LET IT SEE WHO YOU HAVE ADDED" MEAN???)
+SelectedPapers.net needs this to see whose recommendations you want to subscribe 
+to. We suggest you limit this to your “Research” circle, or whatever circle(s) of yours fit this 
+purpose. 
+
+4) Now you can read discussions and recommendations of papers by signing in with Google+ on 
+https://selectedpapers.net
+
+5) Now you can also initiate these discussions, and recommend papers.  There are two ways.  You can 
+write posts on Google+ containing the hashtag #spnetwork, or you can post recommendations while on 
+https://selectedpapers.net.  
+
+6) Here's an example of a Google+ post you can do:
+
+* This article by Perelman outlines a proof of the Poincar&eacute; conjecture!  #spnetwork #mustread #geometry #poincare_conjecture arXiv:math.DG/0211159
+
+The tag #spnetwork is necessary.  Tags like #mustread, #recommend, and so on indicate your attitude to a paper.
+Tags like #geometry, #poincare_conjecture and so on indicate a subject area: they let people search for papers
+by subject.  A tag of the form arXiv:math/0211159 is necessary for papers on the arXiv; note that this does _not_ 
+includea # symbol.  Hashtags are the backbone of SelectedPapers.net, so please read more about them at
+http://docs.selectedpapers.net/hashtags.html  Also look at examples at https://selectedpapers.net/  
+
+Open Design
+-----------
+
+Note that thanks to our open design, you do not even need
 to create a SelectedPapers.net login.  Instead, SelectedPapers.net
-authenticates with Google (for example) that you are signed-in
+authenticates with Google (for example) that you are signed in
 to Google+; you never give SelectedPapers.net your Google
-password or access to confidential information.
-To start using this, click **Sign in with Google** on
-https://selectedpapers.net or on a paper discussion page.
+password or access to any confidential information.  
 
-* we suggest that you first create (in your Google+
-  account) a Google+ Circle specifically
-  for people to discuss research with (e.g. call it 
-  "Research".  Of course, if you already have such a 
-  circle (or circles), you can just use that).
-
-* the usual Google sign-in window will appear (unless
-  you are already signed in).
-
-* Google will then ask you if you want to use
-  the Selected Papers network, and specifically
-  what Circle(s) to let it see who you have added.
-  SelectedPapers.net needs this to see whose
-  recommendations you want to subscribe to.
-  We suggest you limit this to your "Research" circle
-  (or whatever circle(s) of yours fit this purpose).
-  There is no need to include circles such as Family
-  or Friends in this.
-
-Signing in this way does not give SelectedPapers.net
-access to your Google password, confidential data
-stored in Google, or any rights over your Google+
-account.  For example, even when you are signed-in
+Moreover, even when you are signed in
 to SelectedPapers.net using your Google sign-in,
 it cannot see any of your private posts, only those
-you posted publically (i.e. exactly the same as
-what anybody on the Internet can see).
-
-This initial version of SelectedPapers.net works
-with Google sign in, and
-primarily with arXiv preprints.
-Support for other social networks such as Twitter
-is coming soon.
+you posted publicly - in other words, exactly the same 
+as what anybody on the Internet can see.  [OR: POSTS IN
+CIRCLES YOU GAVE IT ACCESS TO???]
 
 Homepage
 --------
@@ -145,9 +160,5 @@ In fact, if you want to go "full-manual" you can of course
 use `these hashtags <hashtags.html>`_ (to write new posts, retag old posts, or
 whatever you want) on your own, *without* even using the 
 SelectedPapers.net website.
-
-
-
-
 
 
