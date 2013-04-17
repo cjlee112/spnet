@@ -244,8 +244,9 @@ class GplusPersonData(EmbeddedDocument):
         'create Person document in db for this gplus.id'
         self._createGplusSubs = True
         p = Person(docData=dict(name=d['displayName']))
+        docData = dict(author=p._id, gplusID=d['id'], topics=[])
         thread.start_new_thread(p.update_subscribers,
-                                (GplusSubscriptions, self._dbfield, d['id']))
+                                (GplusSubscriptions, docData, d['id']))
         return p
     def update_posts(self, maxDays=20, **kwargs):
         'get new posts from this person, updating old posts with new replies'
@@ -376,12 +377,15 @@ class Person(Document):
         return d
     def get_local_url(self):
         return '/people/' + str(self._id)
-    def update_subscribers(self, klass, dbfield, subscriptionID):
+    def update_subscribers(self, klass, docData, subscriptionID):
         '''when Person first inserted to db, connect to pending
         subscriptions by appending our new personID.'''
         for subID in klass.find({klass._subscriptionIdField: subscriptionID}):
-            self.coll.update({dbfield: subID},
-                             {'$push': {'subscriptions':self._id}})
+            p = self.coll.find_one({'gplus.id': subID}, {'_id':1})
+            if p is not None:
+                personID = p['_id']
+                Subscription((personID, self._id), docData=docData,
+                             parent=personID, insertNew='findOrInsert')
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
