@@ -76,8 +76,8 @@ is coming soon.  But here's how you can use it now:
   For PubMed papers, include a tag of the form **PMID:22291635**.  Other published papers usually
   have a DOI (digital object identifier), so for those include a tag of the form **doi:10.3389/fncom.2012.00001**.
 
-  Tags are the backbone of SelectedPapers.net, so when you get serious please read more about 
-  them `here <hashtags.html>`_.  Also look at examples `here <https://selectedpapers.net>`_. 
+  Tags are the backbone of SelectedPapers.net; you can read more about 
+  them `here <hashtags.html>`_.
 
 * You can also post and see comments at https://selectedpapers.net.  This page also
   lets you search for papers in the arXiv and search for published papers via their DOI 
