@@ -65,7 +65,7 @@ is coming soon.  But here's how you can use it now:
 
     This article by Perelman outlines a proof of the Poincare conjecture!  
 
-    #spnetwork #mustread #geometry #poincareConjecture arXiv:math.DG/0211159
+    #spnetwork #mustread #geometry #poincareConjecture arXiv:math/0211159 arXiv:math/0211159
 
   You need the tag **#spnetwork** for SelectedPapers.net to notice your post.  Tags like 
   **#mustread**, **#recommend**, and so on indicate your attitude to a paper. Tags like **#geometry**, 
