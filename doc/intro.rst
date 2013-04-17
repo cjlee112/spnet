@@ -26,9 +26,9 @@ paper you are discussing.
 
 So: if you want to strip the idea down to one sentence, it's this:
 *given that social networks already exist, all we need
-for truly open scientific sharing is simply a 
+for truly open scientific sharing is a 
 **convention on a consistent set of tags and IDs** for
-discussing papers and research.
+discussing papers*.
 
 Getting Started 
 ---------------
