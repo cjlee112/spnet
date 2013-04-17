@@ -29,8 +29,8 @@ for truly open scientific sharing is simply a
 **convention on a consistent set of tags and IDs** for
 discussing papers and research.
 
-Getting Started - Quick Intro
------------------------------
+Getting Started 
+---------------
 
 To see how it works, take a look here:
 
@@ -62,21 +62,21 @@ is coming soon.  But here's how you can use it now:
 
 * Here's an example of a Google+ post you can do:
 
-  This article by Perelman outlines a proof of the Poincar&eacute; conjecture!  
-  #spnetwork #mustread #geometry #poincare_conjecture arXiv:math.DG/0211159
+    This article by Perelman outlines a proof of the Poincare conjecture!  
+
+    #spnetwork #mustread #geometry #poincareConjecture arXiv:math.DG/0211159
 
   You need the tag **#spnetwork** for SelectedPapers.net to notice your post.  Tags like 
   **#mustread**, **#recommend**, and so on indicate your attitude to a paper. Tags like **#geometry**, 
-  **#poincare_conjecture** and so on indicate a subject area: they let people search for papers
+  **#poincareConjecture** and so on indicate a subject area: they let people search for papers
   by subject.  A tag of the form **arXiv:math/0211159** is necessary for arXiv papers; 
-  note that this does *not* includea # symbol.   [CHRIS URGED CAMELCASE - IF THAT'S IMPORTANT
-  PLEASE CHANGE #poincare_conjecture TO CAMELCASE!!!]
+  note that this does *not* include a # symbol.   
 
   For PubMed papers, include a tag of the form **PMID:22291635**.  Other published papers usually
-  have a DOT (digital object identifier), so for those include a tag of the form **doi:10.3389/fncom.2012.00001**.
+  have a DOI (digital object identifier), so for those include a tag of the form **doi:10.3389/fncom.2012.00001**.
 
   Tags are the backbone of SelectedPapers.net, so when you get serious please read more about 
-  them `here <hashtags.html>`_.  Also look at examples `here <https://selectedpapers.net >`_ 
+  them `here <hashtags.html>`_.  Also look at examples `here <https://selectedpapers.net>`_. 
 
 * You can also post and see comments at https://selectedpapers.net.  This page also
   lets you search for papers in the arXiv and search for published papers via their DOI 
@@ -150,12 +150,5 @@ you posted publicly - in other words, exactly the same
 as what anybody on the Internet can see.  
 
 
-Steal These Hashtags!
----------------------
-
-If you want to go "full-manual" you can of course
-use `these hashtags <hashtags.html>`_ (to write new posts, retag old posts, or
-whatever you want) on your own, *without* even using the 
-SelectedPapers.net website.
 
 
