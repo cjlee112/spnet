@@ -5,9 +5,11 @@ SelectedPapers.net Overview
 Open Scientific Sharing with No Walls
 -------------------------------------
 
-SelectedPapers.net is a *federated* information sharing
-service.  Instead of "locking up" your comments and 
-recommendations within its own website - the "walled garden"
+SelectedPapers.net lets you recommend papers, comment on them, 
+discuss them, or simply add them to your reading list.  
+
+But instead of "locking up" your comments within its own 
+website - the "walled garden"
 strategy followed by other services - it explicitly shares 
 these data in a way that people *not* on SelectedPapers.net
 can easily see.  Any other service can see and use them
@@ -22,8 +24,7 @@ type on SelectedPapers.net are posted on Google+ for you
 with key hashtags automatically added to identify the
 paper you are discussing.  
 
-So: if you want to strip the
-selected-papers network down to one idea, it's this:
+So: if you want to strip the idea down to one sentence, it's this:
 *given that social networks already exist, all we need
 for truly open scientific sharing is simply a 
 **convention on a consistent set of tags and IDs** for
@@ -118,7 +119,7 @@ Here's what you can do with a paper:
   already filled in) for writing a post.  Note that in order
   for the spnet to see your post, you **must** include Public in
   the list of recipients for your post (this is an inherent limitation
-  of the Google+ API, which limits Google+ apps to see only the
+  of Google+, which limits apps to see only the
   same posts that *any* internet user would see -- even when you
   are *signed-in* to the app as yourself on Google+).
 
