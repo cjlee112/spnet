@@ -18,19 +18,23 @@ such as Google+, so users of those social networks can see your
 recommendations and discuss them, 
 even if they've never heard of SelectedPapers.net.
 
-For example, if you're a Google+ user, comments you
-type on SelectedPapers.net are posted on Google+ for you
-(with your usual Google+ identity and associated audience),
+For example, if you're a Google+ user, you post comments
+on SelectedPapers.net using your usual Google+ identity
+and posting process,
 with key hashtags automatically added to identify the
-paper you are discussing.  
+paper you are discussing.  And of course your post will be
+seen by your usual Google+ audience -- in addition to people
+who see it on SelectedPapers.net.
 
 So: if you want to strip the idea down to one sentence, it's this:
 given that social networks already exist, all we need
-for truly open scientific research is a 
-**convention on a consistent set of tags and IDs** for
-discussing papers.
+for truly open scientific communication is a 
+`convention on a consistent set of tags and IDs <hashtags.html>`_ for
+discussing papers.  That makes it possible to integrate
+discussion from *all* social networks -- big and small -- 
+as a single unified forum.
 
-Getting Started 
+Getting Started
 ---------------
 
 To see how it works, take a look here:
@@ -48,24 +52,37 @@ is coming soon.  But here's how you can use it now:
   specifically for discussing research with (e.g. call it “Research”).  If you already have 
   such a circle, or circles, you can just use those.
 
-* Click **sign in** with Google on https://selectedpapers.net or on  a paper discussion page.
+* Click **Sign in with Google** on https://selectedpapers.net or on  a paper discussion page.
 
 * The usual Google sign-in window will appear (unless you are already signed  in).   
-  Google will ask if you want to use the Selected Papers network, and specifically what 
-  Circle(s) to let it see who you have added.   [WHAT DOES "LET IT SEE WHO YOU HAVE ADDED" MEAN???]
-  SelectedPapers.net needs this to see whose recommendations you want to subscribe 
-  to. We suggest you limit this to your “Research” circle, or whatever circle(s) of 
-  yours fit thispurpose. 
+  Google will ask if you want to use the Selected Papers network,
+  and specifically for what Circle(s) to let it see the membership
+  list(s) (i.e. the names of people you have added to that Circle).
+  SelectedPapers.net uses this as your initial "subscriptions",
+  i.e. the list of people whose recommendations you want to receive.
+  We suggest you limit this to your “Research” circle, or whatever
+  Circle(s) of yours fit this purpose.
 
-* Now you can also initiate and join discussions of papers.  Currently there are two ways.  You can 
-  write posts on Google+ containing the hashtag #spnetwork, or you can post comments while on 
-  https://selectedpapers.net.  
+  Note the only information
+  you are giving SelectedPapers.net access to is this list of names;
+  in all other respects SelectedPapers.net is limited by Google+
+  to the same information that anyone on the internet can see,
+  i.e. your *public* posts.  For example, SelectedPapers.net cannot
+  ever see your private posts within *any* of your Circles.
 
-* Here's an example of a Google+ post you can do:
+* Now you can initiate and join discussions of papers
+  directly on any SelectedPapers.net page.
+
+* Alternatively, without even signing in to SelectedPapers.net,
+  you can just write posts on Google+ containing the hashtag **#spnetwork**,
+  and they will automatically be included within the SelectedPapers.net
+  discussions (i.e. indexed and displayed so that other people can
+  reply to them etc.).
+  Here's an example of a Google+ post example::
 
     This article by Perelman outlines a proof of the Poincare conjecture!  
 
-    #spnetwork #mustread #geometry #poincareConjecture arXiv:math/0211159 arXiv:math/0211159
+    #spnetwork #mustread #geometry #poincareConjecture arXiv:math/0211159
 
   You need the tag **#spnetwork** for SelectedPapers.net to notice your post.  Tags like 
   **#mustread**, **#recommend**, and so on indicate your attitude to a paper. Tags like **#geometry**, 
@@ -101,8 +118,8 @@ Here's what you can do with a paper:
   attention later.  When you are logged in, your Reading list
   is shown on the homepage.  No one else can see your reading list.
 
-* **share** it with others (such as your Google+ Circles or 
-  Google+ communities that your are part of).
+* **share** the paper with others (such as your Google+ Circles or 
+  Google+ communities that you are part of).
 
 * **tag** it as interesting for a specific topic.  You do this either
   by clicking the checkbox of a topic (it shows topics that other
