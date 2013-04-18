@@ -81,7 +81,16 @@ class EmailAddress(UniqueArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
 
 
-class Recommendation(ArrayDocument):
+class AuthorInfo(object):
+    def get_author_name(self):
+        try:
+            return self.actor['displayName']
+        except (AttributeError, KeyError):
+            return self.author.name # fall back to database query
+    def get_author_url(self):
+        return '/people/' + str(self._dbDocDict['author'])
+
+class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
     _timeStampField = 'published' # auto-add timestamp if missing
@@ -103,7 +112,7 @@ class Recommendation(ArrayDocument):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
 
-class Post(UniqueArrayDocument):
+class Post(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'posts.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
@@ -125,7 +134,7 @@ def fetch_post_or_rec(obj, fetchID):
     raise KeyError('No post or rec found with id=' + str(fetchID))
 
 
-class Reply(UniqueArrayDocument):
+class Reply(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'replies.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
