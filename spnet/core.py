@@ -81,7 +81,16 @@ class EmailAddress(UniqueArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
 
 
-class Recommendation(ArrayDocument):
+class AuthorInfo(object):
+    def get_author_name(self):
+        try:
+            return self.actor['displayName']
+        except (AttributeError, KeyError):
+            return self.author.name # fall back to database query
+    def get_author_url(self):
+        return '/people/' + str(self._dbDocDict['author'])
+
+class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
     _timeStampField = 'published' # auto-add timestamp if missing
@@ -103,7 +112,7 @@ class Recommendation(ArrayDocument):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
 
-class Post(UniqueArrayDocument):
+class Post(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'posts.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
@@ -125,7 +134,7 @@ def fetch_post_or_rec(obj, fetchID):
     raise KeyError('No post or rec found with id=' + str(fetchID))
 
 
-class Reply(UniqueArrayDocument):
+class Reply(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'replies.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
     # attrs that will only be fetched if accessed by getattr
@@ -244,8 +253,9 @@ class GplusPersonData(EmbeddedDocument):
         'create Person document in db for this gplus.id'
         self._createGplusSubs = True
         p = Person(docData=dict(name=d['displayName']))
+        docData = dict(author=p._id, gplusID=d['id'], topics=[])
         thread.start_new_thread(p.update_subscribers,
-                                (GplusSubscriptions, self._dbfield, d['id']))
+                                (GplusSubscriptions, docData, d['id']))
         return p
     def update_posts(self, maxDays=20, **kwargs):
         'get new posts from this person, updating old posts with new replies'
@@ -376,12 +386,15 @@ class Person(Document):
         return d
     def get_local_url(self):
         return '/people/' + str(self._id)
-    def update_subscribers(self, klass, dbfield, subscriptionID):
+    def update_subscribers(self, klass, docData, subscriptionID):
         '''when Person first inserted to db, connect to pending
         subscriptions by appending our new personID.'''
         for subID in klass.find({klass._subscriptionIdField: subscriptionID}):
-            self.coll.update({dbfield: subID},
-                             {'$push': {'subscriptions':self._id}})
+            p = self.coll.find_one({'gplus.id': subID}, {'_id':1})
+            if p is not None:
+                personID = p['_id']
+                Subscription((personID, self._id), docData=docData,
+                             parent=personID, insertNew='findOrInsert')
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'

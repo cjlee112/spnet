@@ -7,6 +7,7 @@ from bson import ObjectId
 import apptree
 import incoming
 from datetime import datetime
+import time
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -231,30 +232,35 @@ rec3 = core.Recommendation(docData=dict(author=fred._id,
 assert core.SIG(sig1._id).recommendations == [rec2]
 assert len(core.SIG(sig2._id).recommendations) == 3
 
-it = gplus.publicAccess.get_person_posts('112634568601116338347')
+it = gplus.publicAccess.get_person_posts('107295654786633294692')
 testPosts = list(gplus.publicAccess.find_or_insert_posts(it))
 assert len(testPosts) > 0
 
 nposts = len(core.Paper(paper1._id).posts)
 nreplies = len(core.Paper(paper1._id).replies)
-it = gplus.publicAccess.get_person_posts('112634568601116338347')
+it = gplus.publicAccess.get_person_posts('107295654786633294692')
 testPosts2 = list(gplus.publicAccess.find_or_insert_posts(it))
 assert testPosts == testPosts2
 assert nposts == len(core.Paper(paper1._id).posts)
 assert nreplies == len(core.Paper(paper1._id).replies)
 
-gpd = core.GplusPersonData('112634568601116338347')
+gpd = core.GplusPersonData('112634568601116338347',
+                           insertNew='findOrInsert')
 assert gpd.displayName == 'Meenakshi Roy'
+gpd.update_subscriptions(dict(etag='foo', totalItems=1),
+                         [dict(id='114744049040264263224')])
 gps = gpd.subscriptions
 assert gps.gplusPerson == gpd
-gps.update(dict(subs=[dict(id='114744049040264263224')]))
-gpd.update_subs_from_gplus()
 mrID = gpd.parent._id
-assert len(getattr(core.Person(mrID), 'subscriptions', [])) == 0
+subscriptions = core.Person(mrID).subscriptions
+assert len(subscriptions) == 0
 
 gpd2 = core.GplusPersonData('114744049040264263224',
                             insertNew='findOrInsert')
-assert getattr(core.Person(mrID), 'subscriptions', []) == [gpd2.parent]
+time.sleep(2)
+subscriptions = core.Person(mrID).subscriptions
+assert len(subscriptions) == 1
+assert subscriptions[0].author == gpd2.parent
 
 gpd2.update_posts() # retrieve some recs
 
