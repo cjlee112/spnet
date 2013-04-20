@@ -322,9 +322,12 @@ class ArrayDocument(EmbeddedDocBase):
         if insertNew == 'findOrInsert':
             try: # retrieve from database
                 if fetchID is None:
-                    fetchID = docData[self._dbfield.split('.')[-1]]
+                    if parent is None:
+                        raise ValueError('missing parent ID')
+                    fetchID = (self._parent_link,
+                               docData[self._dbfield.split('.')[-1]])
                 Document.__init__(self, fetchID)
-                return
+                return # found our data, nothing further to do
             except KeyError: # insert new record in database
                 fetchID = None
         Document.__init__(self, fetchID, docData, insertNew)
