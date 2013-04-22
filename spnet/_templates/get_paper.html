@@ -106,9 +106,9 @@ value="0"
 
 <div class="browse">
 <h3>Tagged as interesting for:</h3>
-{% for topic, people in paper.get_interests(sorted=True) %}
+{% for topicID, people in paper.get_interests(sorted=True) %}
 {% if user %}
-<input type="checkbox" name="{{- topic._id -}}"
+<input type="checkbox" name="{{- topicID -}}"
 onclick="toggleInterest(this, ' {{- user._id -}} ')"
 {% if user in people %}
 value="1" CHECKED
@@ -117,8 +117,8 @@ value="0"
 {% endif %}
 />
 {% endif %}
-<A HREF="{{- topic.get_local_url() -}}">
-{{ topic.name }}
+<A HREF="/topics/{{- topicID -}}">
+{{ '#' + topicID }}
 </A> (by {{ list_people(people) -}} )
 <BR>
 {% endfor %}
@@ -129,8 +129,8 @@ value="0"
 Or add your topic:
 <select name="topic2">
 <option value=""></option>
-{% for topic,papers in user.get_interests(sorted=True) %}
-<option value=" {{- topic._id -}} "> {{- topic.name -}} </option>
+{% for topicID,papers in user.get_interests(sorted=True) %}
+<option value=" {{- topicID -}} "> {{- '#' + topicID -}} </option>
 {% endfor %}
 </select>
 <BR>

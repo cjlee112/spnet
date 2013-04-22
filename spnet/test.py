@@ -54,7 +54,7 @@ assert astroSIG.origin == dict(source='test', id=1)
 int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
                           parent=paper1)
 assert core.Paper(paper1._id).interests == [int1]
-assert core.Paper(paper1._id).get_interests() == {sig1:[jojo]}
+assert core.Paper(paper1._id).get_interests() == {sig1._id:[jojo]}
 assert core.Person(jojo._id).interests == [int1]
 assert core.SIG(sig1._id).interests == [int1]
 assert core.SIG(sig1._id).get_interests() == {paper1:[jojo]}

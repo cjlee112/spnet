@@ -373,14 +373,14 @@ class Person(Document):
     def set_password(self, password):
         self.update(dict(password=sha1(password).hexdigest()))
     def get_interests(self, sorted=False):
-        'return dict of topic:[papers]'
+        'return dict of {topicID:[paperID,]}'
         d = {}
         for interest in self.interests:
-            for topic in interest.topics:
+            for topicID in interest._dbDocDict['topics']:
                 try:
-                    d[topic].append(interest.parent)
+                    d[topicID].append(interest._parent_link)
                 except KeyError:
-                    d[topic] = [interest.parent]
+                    d[topicID] = [interest._parent_link]
         if sorted:
             return get_interests_sorted(d)
         return d
@@ -554,16 +554,20 @@ class Paper(Document):
         )
     _get_value_attrs = ('arxiv', 'pubmed', 'doi')
     def get_interests(self, people=None, sorted=False):
-        'return dict of SIG:[people]'
+        'return dict of {topicID:[person,]}'
         d = {}
         for interest in getattr(self, 'interests', ()):
-            if people and interest._dbDocDict['author'] not in people:
+            personID = interest._dbDocDict['author']
+            if people and personID not in people:
                 continue # only include interests of these people
-            for topic in interest.topics:
+            p = Person(docData=dict(_id=personID, name=interest._dbDocDict.
+                                    get('authorName', 'user')), 
+                       insertNew=False) # dummy object only has name attr
+            for topicID in interest._dbDocDict['topics']: # no db query!
                 try:
-                    d[topic].append(interest.author)
+                    d[topicID].append(p)
                 except KeyError:
-                    d[topic] = [interest.author]
+                    d[topicID] = [p]
         if sorted:
             return get_interests_sorted(d)
         return d

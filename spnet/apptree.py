@@ -25,7 +25,9 @@ class InterestCollection(ArrayDocCollection):
             interest = self._GET(personID, parents)
         except KeyError:
             if state:
-                docData = dict(author=personID, topics=[topic])
+                person = core.Person(personID)
+                docData = dict(author=personID, topics=[topic],
+                               authorName=person.name)
                 return core.PaperInterest(docData=docData,
                                           parent=parents['paper'])
             else: # trying to rm something that doesn't exist
