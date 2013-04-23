@@ -324,8 +324,7 @@ class ArrayDocument(EmbeddedDocBase):
                 if fetchID is None:
                     if parent is None:
                         raise ValueError('missing parent ID')
-                    fetchID = (self._parent_link,
-                               docData[self._dbfield.split('.')[-1]])
+                    fetchID = self._extract_fetchID(docData)
                 Document.__init__(self, fetchID)
                 return # found our data, nothing further to do
             except KeyError: # insert new record in database
@@ -341,6 +340,8 @@ class ArrayDocument(EmbeddedDocBase):
         if not d:
             raise KeyError('no such record: _id=%s' % self._parent_link)
         return find_one_array_doc(d[arrayField], keyField, subID)
+    def _extract_fetchID(self, docData):
+        return (self._parent_link, docData[self._dbfield.split('.')[-1]])
     def _get_id(self):
         'return subID for this array record'
         keyField = self._dbfield.split('.')[1]
@@ -465,6 +466,8 @@ class ArrayDocument(EmbeddedDocBase):
 
 class UniqueArrayDocument(ArrayDocument):
     '''For array documents with unique ID values '''
+    def _extract_fetchID(self, docData):
+        return docData[self._dbfield.split('.')[-1]]
     def _get_doc(self, fetchID):
         'retrieve DB array record containing this document'
         arrayField, keyField = self._dbfield.split('.')
