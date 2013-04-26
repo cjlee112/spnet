@@ -21,10 +21,12 @@ function toggleInterest(o, userID)
   if (o.value == "1")
   {
     o.value="0";
+    alert('Your interest tag has been removed from this paper.');
   }
   else
   {
-    o.value="1"
+    o.value="1";
+    alert('Your interest tag has been added to this paper.');
   }
   setInterest(o.name, o.value, userID);
 }
@@ -35,15 +37,28 @@ function toggleReadingList(o, userID)
   if (o.value == "1")
   {
     o.value="0";
+    alert('This paper has been removed from your reading list.');
   }
   else
   {
-    o.value="1"
+    o.value="1";
+    alert('This paper has been added to your reading list.');
   }
   $.post("/people/" + userID + "/reading/" + "{{- paper._id -}}",
   {
     state:o.value
   });
+}
+
+function validateForm()
+{
+  var topic=document.forms["topicForm"]["topic"].value;
+  var topic2=document.forms["topicForm"]["topic"].value;
+  if ((topic==null || topic=="") && (topic2==null || topic2==""))
+  {
+    alert("You must either choose a topic from the list, or type a new topic name.");
+    return false;
+  }
 }
 </script>
 </head>
@@ -86,7 +101,7 @@ function toggleReadingList(o, userID)
 <div class="extra-services">
 
 <div class="full-text">
-<h2>View:</h2>
+<h2>Next Steps:</h2>
 <ul>
 <li><a href=" {{- paper.get_value('downloader_url') -}} " title="View this paper in PDF format">Full text</a></li>
 <li><a href="{{- paper.get_value('source_url') -}}">
@@ -125,7 +140,7 @@ value="0"
 {% if user %}
 (Click a checkbox to tag paper as interesting for your work in that area)
 <hr>
-<FORM action="{{- '/papers/%s/likes/%s' % (str(paper._id), str(user._id)) -}}" method="POST">
+<FORM name="topicForm" action="{{- '/papers/%s/likes/%s' % (str(paper._id), str(user._id)) -}}" onsubmit="return validateForm()" method="POST">
 Or add your topic:
 <select name="topic2">
 <option value=""></option>
@@ -182,7 +197,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
   data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #recommend {{ paper.get_value('doctag') + ' #'.join([''] + user.get_interests().keys()) -}}"
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper on Google+">
@@ -194,7 +209,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
   data-contenturl=" {{- paper.get_value() -}} "
   data-clientid=" {{- gplusClientID -}} "
   data-cookiepolicy="single_host_origin"
-  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' '  + ' '.join(map(user.get_interests(), attr='name')) -}}"
+  data-prefilltext="[WRITE YOUR RECOMMENDATION HERE] #spnetwork  #mustread {{ paper.get_value('doctag') + ' #'.join([''] + user.get_interests().keys()) -}}"
   data-calltoactionlabel="VIEW"
   data-calltoactionurl=" {{- paper.get_value() -}} "
   title="Click to recommend this paper as MUST-READ for your area of research">
@@ -293,7 +308,6 @@ on topics:
 </div>
 </div><!--end leftcolumn-->
 </div><!--end abs-->
-
 
 <script type="text/javascript">
   (function() {
