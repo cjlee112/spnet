@@ -251,7 +251,6 @@ class GplusPersonData(EmbeddedDocument):
         return gplus.publicAccess.get_person_info(userID)
     def _insert_parent(self, d):
         'create Person document in db for this gplus.id'
-        self._createGplusSubs = True
         p = Person(docData=dict(name=d['displayName']))
         docData = dict(author=p._id, gplusID=d['id'], topics=[])
         thread.start_new_thread(p.update_subscribers,
@@ -273,11 +272,11 @@ class GplusPersonData(EmbeddedDocument):
         gps = GplusSubscriptions(docData=d)
         self.__dict__['subscriptions'] =  gps # bypass LinkDescriptor
     def update_subscriptions(self, doc, subs):
-        if getattr(self, '_createGplusSubs', False): # create new
-            self._createGplusSubs = False
-            newSubs = self.init_subscriptions(doc, subs)
+        try:
+            gplusSub = self.subscriptions # use existing record
+        except KeyError:
+            newSubs = self.init_subscriptions(doc, subs) # create new
         else: # see if we have new subscriptions
-            gplusSub = self.subscriptions
             newSubs = gplusSub.update_subscriptions(doc, subs)
             if newSubs is None: # nothing to do
                 return
