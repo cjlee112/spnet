@@ -58,13 +58,32 @@ def map_helper(it, attr=None, **kwargs):
         f = lambda x: getattr(x, attr)
     return map(f, it)
 
-def report_error(webMsg, logMsg='Trapped exception', status=404,
-                 traceback=True):
-    'log traceback if desired, set status code'
-    cherrypy.log.error(logMsg, traceback=traceback)
-    cherrypy.response.status = status
-    return webMsg
+################################################################
+# error reporting template
 
+class ErrorPage(object):
+    def __call__(self, logMsg='Trapped exception', status=404,
+                 webMsg="""Drat!  Something went wrong during
+the rendering of this page.  The error has been logged, to aid debugging.
+If this problem is inconveniencing you, please add your information
+on how to reproduce this error, on 
+<A HREF="https://github.com/cjlee112/spnet/issues">our issue tracker</A>.
+That will accelerate efforts to track down and squish
+this bug.""", traceback=True):
+        'log traceback if desired, set status code'
+        cherrypy.log.error(logMsg, traceback=traceback)
+        cherrypy.response.status = status
+        try:
+            tv = self.templateView
+        except AttributeError:
+            return webMsg # no template, so just return error string as is
+        else: # apply our template to the error message
+            return tv(webMsg)
+    def bind_template(self, env, templateName, name='errorMessage'):
+        template = env.get_template(templateName)
+        self.templateView = TemplateView(template, name)
+
+report_error = ErrorPage() # our standard error reporting function
 
 #################################################################
 # template loading and rendering
@@ -93,14 +112,11 @@ class TemplateView(object):
             if getattr(user, '_forceReload', False):
                 user = user.__class__(user._id) # reload from DB
                 cherrypy.session['person'] = user # save on session
-        try:
-            return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
-                     urlencode=urllib.urlencode, list_people=people_link_list,
-                     getattr=getattr, str=str, map=map_helper, user=user,
-                     display_datetime=display_datetime, timesort=timesort,
-                     recentEvents=recentEventsDeque, **kwargs) # apply template
-        except Exception, e:
-            return report_error('server error', 'view function error', 500)
+        return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
+                 urlencode=urllib.urlencode, list_people=people_link_list,
+                 getattr=getattr, str=str, map=map_helper, user=user,
+                 display_datetime=display_datetime, timesort=timesort,
+                 recentEvents=recentEventsDeque, **kwargs) # apply template
 
 ##################################################################
 

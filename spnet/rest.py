@@ -47,31 +47,36 @@ class Collection(object):
         'process all requests for this collection'
         try:
             method, mimeType = request_tuple()
-        except KeyError: # purely for testing / debugging
-            method, mimeType = ('GET', 'html')
-        if docID: # a specific document from this collection
-            docID = IdString(docID) # implements proper cmp() vs. ObjectId
-            if not args: # perform the request
-                return self._request(method, mimeType, docID, **kwargs)
-            else: # pass request on to subcollection
-                try:
-                    subcoll = getattr(self, args[0])
-                except AttributeError:
-                    cherrypy.response.status = 404
-                    return 'no such subcollection: %s.%s' \
-                           % (self.name, args[0])
-                try:
-                    parents = kwargs['parents'].copy()
-                except KeyError:
-                    parents = {}
-                parents[self.name] = self._GET(docID, parents=parents)
-                kwargs['parents'] = parents # pass dict of parents
-                return subcoll.default(*args[1:], **kwargs)
-        elif method == 'GET': # search the collection
-            return self._request('search', mimeType, **kwargs)
-        else:
-            cherrypy.response.status = 405
-            return 'REST does not permit collection-%s' % method
+            if docID: # a specific document from this collection
+                docID = IdString(docID) # implements proper cmp() vs. ObjectId
+                if not args: # perform the request
+                    return self._request(method, mimeType, docID, **kwargs)
+                else: # pass request on to subcollection
+                    try:
+                        subcoll = getattr(self, args[0])
+                    except AttributeError:
+                        return view.report_error('no such subcollection: %s.%s'
+                                                 % (self.name, args[0]), 404)
+                    try:
+                        parents = kwargs['parents'].copy()
+                    except KeyError:
+                        parents = {}
+                    try:
+                        parents[self.name] = self._GET(docID, parents=parents)
+                    except KeyError:
+                        return view.report_error('invalid ID: %s' % docID, 404,
+                                                 """Sorry, the data ID %s that
+    you requested does not exist in the database.
+    Please check whether you have the correct ID.""" % docID)
+                    kwargs['parents'] = parents # pass dict of parents
+                    return subcoll.default(*args[1:], **kwargs)
+            elif method == 'GET': # search the collection
+                return self._request('search', mimeType, **kwargs)
+            else:
+                return view.report_error('REST does not permit collection-%s' 
+                                         % method, 405)
+        except Exception:
+            return view.report_error('REST collection error', 500)
     default.exposed = True
 
     def _request(self, method, mimeType, *args, **kwargs):
@@ -79,22 +84,27 @@ class Collection(object):
         try: # do we support this method?
             action = getattr(self, '_' + method)
         except AttributeError:
-            cherrypy.response.status = 405
-            return '%s objects do not allow %s' % (self.name, method)
+            return view.report_error('%s objects do not allow %s' 
+                                     % (self.name, method), 405)
         try: # execute the request
             o = action(*args, **kwargs)
         except KeyError:
             return view.report_error('Not found: %s: args=%s, kwargs=%s'
-                   % (self.name, str(args), str(kwargs)), status=404)
+                   % (self.name, str(args), str(kwargs)), status=404,
+                                     webMsg="""Sorry, the data ID %s that
+you requested does not exist in the database.
+Please check whether you have the correct ID.""" % args[0])
         if isinstance(o, Redirect):
             return o() # send the redirect
         try: # do we support this mimeType?
             viewFunc = getattr(self, method.lower() + '_' + mimeType)
         except AttributeError:
-            cherrypy.response.status = 406
-            return '%s objects cannot return %s' % (self.name,
-                                                    mimeType)
-        return viewFunc(o, **kwargs)
+            return view.report_error('%s objects cannot return %s' 
+                                     % (self.name, mimeType), 406)
+        try:
+            return viewFunc(o, **kwargs)
+        except Exception:
+            return view.report_error('view function error', 500)
 
     def _GET(self, docID, parents={}, **kwargs):
         'default GET method'
