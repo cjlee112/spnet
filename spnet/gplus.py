@@ -196,6 +196,9 @@ class OAuth(object):
                              x['object']['replies']['totalItems'],
                              get_id=lambda x:x['id'],
                              get_timestamp=get_gplus_timestamp,
+                             is_reshare=lambda x: 
+                             x['object']['objectType'] == 'activity' and
+                             x['object'].get('id', False),
                              **kwargs):
         'save google+ posts to core.find_or_insert_posts()'
         import core
@@ -203,7 +206,7 @@ class OAuth(object):
                                     lambda x:core.GplusPersonData(x,
                                insertNew='findOrInsert').parent,
                                     get_content, get_user, get_replycount,
-                                    get_id, get_timestamp, 'gplusPost',
+                                    get_id, get_timestamp, is_reshare, 'gplusPost',
                                     convert_timestamps, convert_timestamps,
                                     **kwargs)
 

@@ -125,7 +125,7 @@ def get_topicIDs(hashtagDict, docID, timestamp, source):
 
 def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount,
-                         get_id, get_timestamp, source,
+                         get_id, get_timestamp, is_reshare, source,
                          process_post=None, process_reply=None,
                          recentEvents=None, maxDays=None):
     'generate each post that has a paper hashtag, adding to DB if needed'
@@ -133,10 +133,12 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
     saveEvents = []
     for d in posts:
         post = None
-        content = get_content(d)
         timeStamp = get_timestamp(d)
         if maxDays is not None and (now - timeStamp).days > maxDays:
             break
+        if is_reshare(d): # just a duplicate (reshared) post, so skip
+            continue
+        content = get_content(d)
         isRec = content.find('#recommend') >= 0 or \
                 content.find('#mustread') >= 0
         if not isRec:
