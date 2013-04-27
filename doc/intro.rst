@@ -49,8 +49,8 @@ with Google+.  Support for other social networks such as Twitter
 is coming soon.  But here's how you can use it now:
 
 * We suggest that you first create (in your Google+ account) a Google+ Circle 
-  specifically for discussing research with (e.g. call it “Research”).  If you already have 
-  such a circle, or circles, you can just use those.
+  specifically for discussing research with (e.g. call it “Research”),
+  unless you already have such a circle.
 
 * Click **Sign in with Google** on https://selectedpapers.net or on  a paper discussion page.
 
@@ -60,8 +60,8 @@ is coming soon.  But here's how you can use it now:
   list(s) (i.e. the names of people you have added to that Circle).
   SelectedPapers.net uses this as your initial "subscriptions",
   i.e. the list of people whose recommendations you want to receive.
-  We suggest you limit this to your “Research” circle, or whatever
-  Circle(s) of yours fit this purpose.
+  You should include all Circles that contain researchers who work
+  in your field (including your new Research Circle, if you created one).
 
   Note the only information
   you are giving SelectedPapers.net access to is this list of names;

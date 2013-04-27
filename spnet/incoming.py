@@ -39,8 +39,12 @@ def get_doi_paper(m):
 # hashtag recognizers
 hashTagPats = (
     (re.compile('#arxiv_([a-z0-9_]+)'), 'paper', get_hashtag_arxiv),
-    (re.compile('ar[xX]iv:\s?([a-z-]+/[0-9]+v?[0-9]+)'), 'paper', get_arxiv_paper),
-    (re.compile('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', get_arxiv_paper),
+    (re.compile('ar[xX]iv:\s?[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+     get_arxiv_paper),
+    (re.compile('ar[xX]iv:\s?([a-zA-Z.-]+/[0-9]+v?[0-9]+)'), 'paper', 
+     get_arxiv_paper),
+    (re.compile('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+     get_arxiv_paper),
     (re.compile('#pubmed_([0-9]+)'), 'paper', get_hashtag_pubmed),
     (re.compile('PMID:\s?([0-9]+)'), 'paper', get_hashtag_pubmed),
     (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),

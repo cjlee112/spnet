@@ -25,7 +25,9 @@ class InterestCollection(ArrayDocCollection):
             interest = self._GET(personID, parents)
         except KeyError:
             if state:
-                docData = dict(author=personID, topics=[topic])
+                person = core.Person(personID)
+                docData = dict(author=personID, topics=[topic],
+                               authorName=person.name)
                 return core.PaperInterest(docData=docData,
                                           parent=parents['paper'])
             else: # trying to rm something that doesn't exist
@@ -171,6 +173,7 @@ class ReadingList(rest.Collection):
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
     templateEnv = view.get_template_env(templateDir)
+    view.report_error.bind_template(templateEnv, 'error.html') # error page
 
     # access Papers using our object ID
     papers = PaperCollection('paper', core.Paper, templateEnv, templateDir,
