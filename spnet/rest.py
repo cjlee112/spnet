@@ -12,12 +12,17 @@ def request_tuple():
         mimeType = 'json'
     return cherrypy.request.method, mimeType
 
-class Redirect(object):
-    '_GET etc. methods can return this to force redirection to a URL'
-    def __init__(self, url):
-        self.url = url
+class Response(object):
+    '_GET etc. methods can return this to pass back HTML output'
+    def __init__(self, content):
+        self.content = content
     def __call__(self):
-        return view.redirect(self.url)
+        return self.content
+
+class Redirect(Response):
+    '_GET etc. methods can return this to force redirection to a URL'
+    def __call__(self):
+        return view.redirect(self.content)
 
 
 class Collection(object):
@@ -94,7 +99,7 @@ class Collection(object):
                                      webMsg="""Sorry, the data ID %s that
 you requested does not exist in the database.
 Please check whether you have the correct ID.""" % args[0])
-        if isinstance(o, Redirect):
+        if isinstance(o, Response):
             return o() # send the redirect
         try: # do we support this mimeType?
             viewFunc = getattr(self, method.lower() + '_' + mimeType)

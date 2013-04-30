@@ -2,6 +2,7 @@ import rest
 import core
 import view
 import gplus
+import errors
 from bson import ObjectId
 import json
 import cherrypy
@@ -127,11 +128,23 @@ class PubmedCollection(ParentCollection):
                 return queryResults
         except KeyError:
             pass # no stored queryResults, so construct it
-        ps = pubmed.PubmedSearch(searchString, block_size)
-        pbl = view.PaperBlockLoader(ps, uri=self.collectionArgs['uri'])
-        queryResults = view.MultiplePages(pbl, block_size, ipage,
-                                          self.collectionArgs['uri'],
-                                          searchString=searchString)
+        try:
+            ps = pubmed.PubmedSearch(searchString, block_size)
+            pbl = view.PaperBlockLoader(ps, uri=self.collectionArgs['uri'])
+            queryResults = view.MultiplePages(pbl, block_size, ipage,
+                                              self.collectionArgs['uri'],
+                                              searchString=searchString)
+        except errors.BackendFailure:
+            s = view.report_error('eutils error: ' + searchString, 502,
+                                  '''Unfortunately, the NCBI eutils server
+failed to perform the requested query.  
+To run the <A HREF="/papers?%s">same search</A> on
+NCBI Pubmed, please click here.  When you find a paper
+of interest, you can copy its PMID (Pubmed ID) and
+paste it in the search box on this page.''' 
+                                  % urlencode(dict(searchType='ncbipubmed',
+                                                   searchString=searchString)))
+            return rest.Response(s)
         cherrypy.session['queryResults'] = queryResults # keep for this user
         return queryResults
         
