@@ -156,7 +156,7 @@ def pubmed_dict_from_xml(xml, title='!ArticleTitle',
 
 def query_pubmed(uri='http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
                  tool='spnet', email='leec@chem.ucla.edu', db='pubmed',
-                 retmode='xml', nretry=3, acceptStatus=(200,),
+                 retmode='xml', nretry=2, acceptStatus=(200,),
                  retryStatus=(404, 502, 503), retryTime=1, **kwargs):
     '''perform a query using eutils API, retrying if service unavailable
     WARNING: eutils is flaky!  lots of 503s, 502, 404 (when searching
