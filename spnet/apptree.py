@@ -111,6 +111,7 @@ class ArxivCollection(ParentCollection):
                                     uri=self.collectionArgs['uri'])
         queryResults = view.MultiplePages(pbl, block_size, ipage,
                                           self.collectionArgs['uri'],
+                                          'arXiv.org Search Results',
                                           searchString=searchString)
         session['queryResults'] = queryResults # keep for this user
         return queryResults
@@ -133,8 +134,9 @@ class PubmedCollection(ParentCollection):
             pbl = view.PaperBlockLoader(ps, uri=self.collectionArgs['uri'])
             queryResults = view.MultiplePages(pbl, block_size, ipage,
                                               self.collectionArgs['uri'],
+                                              'Pubmed Search Results',
                                               searchString=searchString)
-        except errors.BackendFailure:
+        except (errors.BackendFailure,KeyError):
             s = view.report_error('eutils error: ' + searchString, 502,
                                   '''Unfortunately, the NCBI eutils server
 failed to perform the requested query.  
