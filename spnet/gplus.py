@@ -16,6 +16,7 @@ import httplib2
 from apiclient.discovery import build
 import time
 from incoming import find_or_insert_posts
+import traceback
 
 # Question: what's worse than an F+ ?
 # Answer: this.
@@ -235,8 +236,11 @@ class OAuth(object):
         self._continuePoll = True
         while self._continuePoll:
             n = 0
-            for post in self.load_recent_spnetwork(*args, **kwargs):
-                n += 1
+            try: # catch all errors
+                for post in self.load_recent_spnetwork(*args, **kwargs):
+                    n += 1
+            except StandardError: # don't stop polling...
+                traceback.print_exc() # please change this to real logging!
             self._pollReceived = n # count of posts screened
             time.sleep(interval)
 

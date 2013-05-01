@@ -122,12 +122,14 @@ class TemplateView(object):
 
 class MultiplePages(object):
     'Interface for paging through result sets'
-    def __init__(self, f, block_size, ipage, uri, **queryArgs):
+    def __init__(self, f, block_size, ipage, uri, title='Search Results', 
+                 **queryArgs):
         self.f = f
         self.pages = []
         self.block_size = block_size
         self.queryArgs = queryArgs
         self.uri = uri
+        self.title = title
         self.results = () # default: no results
         self.get_page(ipage, uri, **queryArgs)
     def get_page(self, ipage, uri, **queryArgs):

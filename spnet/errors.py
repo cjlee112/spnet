@@ -1,8 +1,11 @@
 
-class UnexpectedStatus(ValueError):
+class BackendFailure(ValueError):
     pass
 
-class TimeoutError(ValueError):
+class UnexpectedStatus(BackendFailure):
+    pass
+
+class TimeoutError(BackendFailure):
     pass
 
 
