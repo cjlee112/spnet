@@ -162,7 +162,7 @@ class OAuth(object):
         params = kwargs.copy()
         if results is None: # perform the initial query
             results = self.request(uri, **params)
-        while results['items']:
+        while results.get('items', False):
             for item in results['items']:
                 yield item
             try:
