@@ -47,6 +47,10 @@ class InterestCollection(ArrayDocCollection):
 
 class PaperCollection(rest.Collection):
     def _search(self, searchString, searchType):
+        # user may type "Google Search:..." into Google Search box
+        if searchString.lower().startswith('arxiv:'):
+            searchString = searchString[6:].strip()
+            searchType = 'arxivID'
         if searchType == 'arxivID':
             return rest.Redirect('/arxiv/%s' % searchString.replace('/', '_'))
         elif searchType == 'arxiv':
