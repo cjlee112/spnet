@@ -229,7 +229,8 @@ def get_collections(templateDir='_templates'):
                              gplusClientID=gplusClientID)
 
     # load homepage template
-    homePage = view.TemplateView(templateEnv.get_template('index.html'))
+    homePage = view.TemplateView(templateEnv.get_template('index.html'),
+                                 gplusClientID=gplusClientID)
 
     # what collections to bind on the server root
     return dict(papers=papers,
