@@ -47,6 +47,11 @@ class InterestCollection(ArrayDocCollection):
 
 class PaperCollection(rest.Collection):
     def _search(self, searchString, searchType):
+        searchString = searchString.strip()
+        # user may type "Google Search:..." into Google Search box
+        if searchString.lower().startswith('arxiv:'):
+            searchString = searchString[6:].strip()
+            searchType = 'arxivID'
         if searchType == 'arxivID':
             return rest.Redirect('/arxiv/%s' % searchString.replace('/', '_'))
         elif searchType == 'arxiv':
@@ -153,7 +158,7 @@ paste it in the search box on this page.'''
 
 
 class PersonCollection(rest.Collection):
-    def _GET(self, docID, getUpdates=False, **kwargs):
+    def _GET(self, docID, getUpdates=False, timeframe=None, **kwargs):
         person = rest.Collection._GET(self, docID, **kwargs)
         if getUpdates:
             try:
@@ -161,7 +166,10 @@ class PersonCollection(rest.Collection):
             except AttributeError:
                 pass
             else: # get list of new posts
-                l = gpd.update_posts(recentEvents=view.recentEventsDeque)
+                if timeframe == 'all': # get last 10 years
+                    l = gpd.update_posts(3650, recentEvents=view.recentEventsDeque)
+                else:
+                    l = gpd.update_posts(recentEvents=view.recentEventsDeque)
                 if l: # need to update our object representation to see them
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
@@ -225,7 +233,8 @@ def get_collections(templateDir='_templates'):
                              gplusClientID=gplusClientID)
 
     # load homepage template
-    homePage = view.TemplateView(templateEnv.get_template('index.html'))
+    homePage = view.TemplateView(templateEnv.get_template('index.html'),
+                                 gplusClientID=gplusClientID)
 
     # what collections to bind on the server root
     return dict(papers=papers,
