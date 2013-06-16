@@ -45,9 +45,20 @@ People &gt;
 {% if hasattr(person, 'gplus') %}
 <a href=" {{- person.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
 <img src=" {{- person.gplus['image']['url'] -}} ">Subscribe</a>
-<a href=" {{-person.get_local_url() -}} ?getUpdates=1" 
-title="retrieve latest posts and recommendations from this person via Google+">
-<button>Check Google+ for Updates</button></a>
+<form id="updater" method="GET" action=" {{- person.get_local_url() -}} ">
+<input type="hidden" name="getUpdates" value="1"/>
+Check
+<select name="timeframe">
+<option value="recent" selected="selected">last 20 days</option>
+{% if user == person %}
+<option value="all">ALL</option>
+{% endif %}
+</select>
+of this person's posts for updates.
+<input type="submit" value="Get updates"
+title="retrieve latest posts and recommendations from this person via Google+" />
+(Normally not needed unless old posts re-tagged with #spnetwork)
+</form>
 
 {% if user == person %}
 <h3>Invitations</h3>

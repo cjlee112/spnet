@@ -158,7 +158,7 @@ paste it in the search box on this page.'''
 
 
 class PersonCollection(rest.Collection):
-    def _GET(self, docID, getUpdates=False, **kwargs):
+    def _GET(self, docID, getUpdates=False, timeframe=None, **kwargs):
         person = rest.Collection._GET(self, docID, **kwargs)
         if getUpdates:
             try:
@@ -166,7 +166,10 @@ class PersonCollection(rest.Collection):
             except AttributeError:
                 pass
             else: # get list of new posts
-                l = gpd.update_posts(recentEvents=view.recentEventsDeque)
+                if timeframe == 'all': # get last 10 years
+                    l = gpd.update_posts(3650, recentEvents=view.recentEventsDeque)
+                else:
+                    l = gpd.update_posts(recentEvents=view.recentEventsDeque)
                 if l: # need to update our object representation to see them
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
