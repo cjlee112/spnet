@@ -39,6 +39,11 @@ Welcome,
 </div>
 
 {% if user %}
+<p><I>This is an initial, alpha release of SelectedPapers.net.
+Please give us your feedback</I>: either 
+<A HREF="https://github.com/cjlee112/spnet/issues/4">general comments</A> or 
+specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
+or feature suggestions</A>.</p>
 {% if getattr(user, 'subscriptions', False) %}
 
 <h3>Your Subscriptions</h3>
@@ -123,7 +128,6 @@ them an invitation post).<br>
 </dd>
 {% endfor %}
 </dl>
-
 
 {% else %}
 <p>SelectedPapers.net is a free, open-source project aimed
