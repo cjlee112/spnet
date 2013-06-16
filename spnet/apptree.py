@@ -47,6 +47,7 @@ class InterestCollection(ArrayDocCollection):
 
 class PaperCollection(rest.Collection):
     def _search(self, searchString, searchType):
+        searchString = searchString.strip()
         # user may type "Google Search:..." into Google Search box
         if searchString.lower().startswith('arxiv:'):
             searchString = searchString[6:].strip()
