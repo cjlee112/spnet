@@ -91,7 +91,8 @@ class ParentCollection(rest.Collection):
                                   insertNew='findOrInsert').parent
         return self.klass(docID, insertNew='findOrInsert').parent
     def _search(self, searchID):
-        return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], searchID))
+        return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], 
+                                        searchID.replace('/', '_')))
 
 class ArxivCollection(ParentCollection):
     def _search(self, searchString=None, searchID=None, ipage=0,
