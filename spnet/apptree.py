@@ -19,9 +19,22 @@ class InterestCollection(ArrayDocCollection):
         topic = topic or topic2 # use whichever is non-empty
         topic = core.SIG.standardize_id(topic) # must follow hashtag rules
         personID = ObjectId(personID)
+        try:
+            if personID != cherrypy.session['person']._id:
+                s = view.report_error('TRAP set_interest by different user!', 403,
+                                      "You cannot change someone else's settings!")
+                return rest.Response(s)
+        except KeyError:
+            s = view.report_error('TRAP set_interest, not logged in!', 401,
+                                  'You must log in to access this interface')
+            return rest.Response(s)
         state = int(state)
         if state: # make sure topic exists
             sig = core.SIG.find_or_insert(topic)
+        interest = self.set_interest(personID, topic, state, parents)
+        cherrypy.session['person'] = core.Person(personID) # refresh user
+        return interest
+    def set_interest(self, personID, topic, state, parents):
         try:
             interest = self._GET(personID, parents)
         except KeyError:
@@ -91,7 +104,8 @@ class ParentCollection(rest.Collection):
                                   insertNew='findOrInsert').parent
         return self.klass(docID, insertNew='findOrInsert').parent
     def _search(self, searchID):
-        return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], searchID))
+        return rest.Redirect('%s/%s' % (self.collectionArgs['uri'], 
+                                        searchID.replace('/', '_')))
 
 class ArxivCollection(ParentCollection):
     def _search(self, searchString=None, searchID=None, ipage=0,
