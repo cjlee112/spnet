@@ -36,6 +36,7 @@
 </div>
 
 
+<div id="content">
 <h1 class="title">
 {{ rec.title }}
 </h1>
@@ -60,7 +61,7 @@
 <a href=" {{- rec.author.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
 <img src=" {{- rec.author.gplus['image']['url'] -}} ">Subscribe</a>
 {% endif %}
-
+</div>
 
 </body>
 </html>
