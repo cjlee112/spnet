@@ -108,6 +108,15 @@ class ParentCollection(rest.Collection):
                                         searchID.replace('/', '_')))
 
 class ArxivCollection(ParentCollection):
+    def _POST(self, docID, showLatex=None):
+        paper = self._GET(docID)
+        if showLatex: # save on user session
+            showLatex = int(showLatex)
+            viewArgs = view.get_view_options()
+            viewArgs.setdefault('showLatex', {})[paper] = showLatex
+        return paper
+    def post_html(self, paper, **kwargs):
+        return self.get_html(paper, **kwargs)
     def _search(self, searchString=None, searchID=None, ipage=0,
                 block_size=10, session=None):
         import arxiv

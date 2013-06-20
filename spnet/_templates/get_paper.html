@@ -122,6 +122,20 @@ value="0"
 {% endif %}
 /> Add to my Reading List
 {% endif %}
+{% if hasattr(paper, 'arxiv') %}
+<form id="dollarToggle" method="POST" action=" {{- paper.get_value('local_url') -}} ">
+{% set showLatex = kwargs.get('showLatex', {}).get(paper, 0) %}
+{% if showLatex %}
+<INPUT TYPE="hidden" NAME="showLatex" VALUE="0" />
+<INPUT TYPE="submit" value="Don't treat $ as inline math" />
+{% else %}
+<INPUT TYPE="hidden" NAME="showLatex" VALUE="1" />
+<INPUT TYPE="submit" value="Treat $ as inline math" />
+{% endif %}
+</form>
+{% else %}
+{% set showLatex = 0 %}
+{% endif %}
 </div><!--end full-text-->
 
 <div class="browse">
@@ -191,7 +205,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 </div>
 
 <blockquote class="abstract">
-{{ paper.get_value('abstract') }}
+{{ paper.get_value('abstract', showLatex=showLatex) }}
 </blockquote>
 
 <div class="submission-history">
