@@ -112,6 +112,7 @@ class ArxivCollection(ParentCollection):
         paper = self._GET(docID)
         if showLatex: # save on user session
             showLatex = int(showLatex)
+            paper.update({'texDollars': showLatex and 1 or -1}, op='$inc')
             viewArgs = view.get_view_options()
             viewArgs.setdefault('showLatex', {})[paper] = showLatex
         return paper
