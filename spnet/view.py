@@ -102,6 +102,10 @@ class TemplateView(object):
     def __call__(self, doc=None, **kwargs):
         f = self.template.render
         kwargs.update(self.kwargs)
+        try:
+            kwargs.update(cherrypy.session['viewArgs'])
+        except KeyError:
+            pass
         if doc is not None:
             kwargs[self.name] = doc
         try:
@@ -117,6 +121,15 @@ class TemplateView(object):
                  getattr=getattr, str=str, map=map_helper, user=user,
                  display_datetime=display_datetime, timesort=timesort,
                  recentEvents=recentEventsDeque, **kwargs) # apply template
+
+def get_view_options():
+    'get dict of session kwargs passed to view templates'
+    try:
+        return cherrypy.session['viewArgs']
+    except KeyError:
+        d = {}
+        cherrypy.session['viewArgs'] = d
+        return d
 
 ##################################################################
 
