@@ -124,25 +124,53 @@ easy to install, mainly a matter of getting its dependencies
     pip install feedparser lxml Jinja2 google-api-python-client requests pymongo cherrypy xmltodict
 
   Also download python ``dateutils`` package (get the version for Python 2),
-  and run ``python setup.py install`` to install it.
+  and run ``python setup.py install`` to install it.  One way you can
+  do this is::
 
-* edit paths in ``spnet/spnet/cp.conf`` to match your setup.
-* you can test your setup by running the test suite::
+    pip install dateutils
+
+* Now create and edit the configuration files for your local install.
+  These files are not tracked in the git repository because they need
+  to be customized for each installation.  You might not want to
+  publicize these settings to the world, and you definitely don't want
+  them to be overridden by someone else's settings.  We do include
+  template files for these, so you should begin by copying from these
+  templates.
+
+  - Issue the following commands inside the top-level spnet directory::
+
+      cp spnet/cp.template.conf spnet/cp.conf
+      cp google/keys.template.json google/keys.json
+      cp twitter/keys.template twitter/keys
+
+  - Open ``cp.conf`` with a text editor and update the paths to
+    match your system.
+
+  - Generate a new Google+ API OAuth2 key at
+    https://code.google.com/apis/console.  Download the JSON file
+    containing your Client ID, open it, and paste the appropriate
+    values into ``google/keys.json``.  Also add your API key, found in
+    the "Simple API Access" section of the Google API Console.
+    
+  - You don't need to do anything with ``twitter/keys`` for now. 
+
+  
+
+* You can test your setup by running the test suite::
 
     python test.py
 
-* run ``spnet/spnet/web.py``.  I usually do this inside a screen session,
+   Note that currently this test suite will not finish successfully.
+
+* Run ``spnet/spnet/web.py``.  I usually do this inside a screen session,
   retaining access to the interpreter prompt, so I can inspect data
   while running a test server::
 
     python -i web.py
 
-* point your web browser at ``http://localhost:8000``
+* Point your web browser at ``http://localhost:8000``
   to verify that your server is running.
 
-Note that to test Google+ signin, you will have to obtain your
-own client ID/secret and API key and store them in JSON format in 
-``spnet/google/keys.json``.
 
 
 
