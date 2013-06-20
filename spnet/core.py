@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 import errors
 import thread
-
+import latex
 
 
 ##########################################################
@@ -421,8 +421,11 @@ class ArxivPaperData(EmbeddedDocument):
         return '#arxiv_' + self.id.replace('.', '_').replace('-', '_')
     def get_doctag(self):
         return 'arXiv:' + self.id.replace('_', '/')
-    def get_abstract(self):
-        return self.summary
+    def get_abstract(self, showLatex=False):
+        if showLatex:
+            return latex.convert_tex_dollars(self.summary)
+        else:
+            return self.summary
 
 class PubmedPaperData(EmbeddedDocument):
     'store pubmed data for a paper as subdocument of Paper'
@@ -454,7 +457,7 @@ class PubmedPaperData(EmbeddedDocument):
         return '#pubmed_' + str(self.id)
     def get_doctag(self):
         return 'PMID:' + str(self.id)
-    def get_abstract(self):
+    def get_abstract(self, **kwargs):
         return self.summary
 
 
@@ -523,7 +526,7 @@ class DoiPaperData(EmbeddedDocument):
         return '#shortDOI_' + str(self.id)
     def get_doctag(self):
         return 'shortDOI:' + str(self.id)
-    def get_abstract(self):
+    def get_abstract(self, **kwargs):
         try:
             return self.summary
         except AttributeError:
