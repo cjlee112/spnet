@@ -143,9 +143,9 @@ class Document(object):
         self._dbDocDict = d
         self._isNewInsert = True
 
-    def update(self, updateDict):
+    def update(self, updateDict, op='$set'):
         'update the specified fields in the DB'
-        self.coll.update({'_id': self._id}, {'$set': updateDict})
+        self.coll.update({'_id': self._id}, {op: updateDict})
         self._dbDocDict.update(updateDict)
         self.set_attrs(updateDict)
         
