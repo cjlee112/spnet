@@ -172,7 +172,7 @@ class Document(object):
     def __hash__(self):
         return hash(self._id)
 
-    def get_value(self, stem='spnet_url'):
+    def get_value(self, stem='spnet_url', **kwargs):
         'get specified kind of value by dispatching to specific paper type'
         for b in getattr(self, '_get_value_attrs', ()):
             try:
@@ -180,8 +180,8 @@ class Document(object):
             except AttributeError:
                 pass
             else:
-                return getattr(o, 'get_' + stem)()
-        return getattr(self, 'get_' + stem)()
+                return getattr(o, 'get_' + stem)(**kwargs)
+        return getattr(self, 'get_' + stem)(**kwargs)
     def get_spnet_url(self):
         return self._spnet_url_base + self.get_local_url()
 
