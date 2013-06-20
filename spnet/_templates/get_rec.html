@@ -3,6 +3,21 @@
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
 <title> {{- rec.title -}} </title>
+
+{% if not hasattr(rec.parent, 'pubmed') %}
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+{% endif %}
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+</script>
+
 </head>
 
 <body>
