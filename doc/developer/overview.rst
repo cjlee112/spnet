@@ -147,10 +147,18 @@ easy to install, mainly a matter of getting its dependencies
     match your system.
 
   - Generate a new Google+ API OAuth2 key at
-    https://code.google.com/apis/console.  Download the JSON file
-    containing your Client ID, open it, and paste the appropriate
-    values into ``google/keys.json``.  Also add your API key, found in
-    the "Simple API Access" section of the Google API Console.
+    https://code.google.com/apis/console.  When you do this, you'll
+    need to use the IP address and port number from cp.conf.  The default
+    127.0.0.1 is "localhost", so that's a good choice.  
+
+    Unless you want (and know how) to serve secure http connections
+    from your local machine to itself, you should change the "https"
+    to "http" for the redirect URI and javascript origin fields.
+
+    Download the JSON file containing your Client ID, open it, and
+    paste the appropriate values into ``google/keys.json``.  Also add
+    your API key, found in the "Simple API Access" section of the
+    Google API Console.
     
   - You don't need to do anything with ``twitter/keys`` for now. 
 
