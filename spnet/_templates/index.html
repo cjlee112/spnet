@@ -172,7 +172,7 @@ or learn more about how it works.</p>
 ( {{- display_datetime(e.published) -}} )
 </dt>
 <dd>
-<div class="list-comments">{{ e.text }}
+<div class="list-comments">{{ e.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -189,7 +189,7 @@ or learn more about how it works.</p>
 ( {{- display_datetime(e.published) -}} )
 </dt>
 <dd>
-<div class="list-comments">{{ e.text }}
+<div class="list-comments">{{ e.get_text() }}
 </div>
 </dd>
 
@@ -220,7 +220,7 @@ or learn more about how it works.</p>
 {% endif %}
 </span>
 <div class="list-comments">
-{{ e.text }}
+{{ e.get_text() }}
 </div>
 </dd>
 

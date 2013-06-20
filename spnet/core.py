@@ -89,6 +89,11 @@ class AuthorInfo(object):
             return self.author.name # fall back to database query
     def get_author_url(self):
         return '/people/' + str(self._dbDocDict['author'])
+    def get_text(self, showLatex=True):
+        if showLatex:
+            return latex.convert_tex_dollars(self.text)
+        else:
+            return self.text
 
 class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating

@@ -110,12 +110,12 @@ them an invitation post).<br>
 {{ rec.parent.title }} </A>
 </span>
 <div class="list-comments">
-{{ rec.text }}
+{{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies()) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
-{{ reply.text }}
+{{ reply.get_text() }}
 </li>
 {% endfor %}
 </div>
@@ -159,7 +159,7 @@ RE: topics:
 {% endif %}
 ( {{- display_datetime(post.published) -}} )</dt>
 <dd>
-<div class="list-comments">{{ post.text }}
+<div class="list-comments">{{ post.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -168,7 +168,7 @@ RE: topics:
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
-{{ reply.text }}
+{{ reply.get_text() }}
 </li>
 {% endfor %}
 </div>
