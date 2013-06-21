@@ -5,11 +5,13 @@ from base import IdString
 import view
 
 def request_tuple():
-    accept = cherrypy.request.headers['Accept']
-    if 'text/html' in accept:
-        mimeType = 'html'
-    if 'application/json' in accept or accept == '*/*':
-        mimeType = 'json'
+    mimeType = 'html'
+    try:
+        accept = cherrypy.request.headers['Accept']
+        if 'application/json' in accept or accept == '*/*':
+            mimeType = 'json'
+    except KeyError:
+        pass
     return cherrypy.request.method, mimeType
 
 class Response(object):
