@@ -61,6 +61,10 @@ class InterestCollection(ArrayDocCollection):
 class PaperCollection(rest.Collection):
     def _search(self, searchString, searchType):
         searchString = searchString.strip()
+        if not searchString:
+            s = view.report_error('empty searchString', 400,
+                                  'You did not provide a search string.')
+            return rest.Response(s)
         # user may type "Google Search:..." into Google Search box
         if searchString.lower().startswith('arxiv:'):
             searchString = searchString[6:].strip()
@@ -127,6 +131,10 @@ class ArxivCollection(ParentCollection):
             session = cherrypy.session
         if searchID: # just get this ID
             return ParentCollection._search(self, searchID)
+        if not searchString:
+            s = view.report_error('empty searchString', 400,
+                                  'You did not provide a search string.')
+            return rest.Response(s)
         elif arxiv.is_id_string(searchString): # just get this ID
             return ParentCollection._search(self, searchString)
         try: # get from existing query results
@@ -149,6 +157,10 @@ class PubmedCollection(ParentCollection):
     def _search(self, searchString=None, searchID=None, ipage=0,
                 block_size=20, session=None):
         import pubmed
+        if not searchString:
+            s = view.report_error('empty searchString', 400,
+                                  'You did not provide a search string.')
+            return rest.Response(s)
         ipage = int(ipage)
         block_size = int(block_size)
         try: # get from existing query results
