@@ -87,14 +87,18 @@ is coming soon.  But here's how you can use it now:
   You need the tag **#spnetwork** for SelectedPapers.net to notice your post.  Tags like 
   **#mustread**, **#recommend**, and so on indicate your attitude to a paper. Tags like **#geometry**, 
   **#poincareConjecture** and so on indicate a subject area: they let people search for papers
-  by subject.  A tag of the form **arXiv:math/0211159** is necessary for arXiv papers; 
-  note that this does *not* include a # symbol.   
+  by subject.  A tag of the form **arXiv:1234.5678** (i.e. the official
+  arXiv ID for the paper) is necessary for arXiv papers; 
+  note that this does *not* include a # symbol.  
 
   For PubMed papers, include a tag of the form **PMID:22291635**.  Other published papers usually
   have a DOI (digital object identifier), so for those include a tag of the form **doi:10.3389/fncom.2012.00001**.
 
   Tags are the backbone of SelectedPapers.net; you can read more about 
   them `here <hashtags.html>`_.
+
+* you can include LaTeX in your posts and comments.  Click here for
+  `details <#latex>`_
 
 * You can also post and see comments at https://selectedpapers.net.  This page also
   lets you search for papers in the arXiv and search for published papers via their DOI 
@@ -151,6 +155,88 @@ Here's what you can do with a paper:
   hashtag, keep it intuitive and follow "camelCase" capitalization
   e.g. #openPeerReview.
 
+LaTeX
+-----
+
+SelectedPapers.net supports the use of 
+`LaTeX <http://www.latex-project.org/>`_ equations, both
+"inline" and "display" math.  Specifically, it uses 
+`MathJax <http://mathjax.org>`_
+to convert LaTeX to the format that will best display equations
+in your particular browser.  A few notes:
+
+* LaTeX is supported in all user content: recommendations, posts,
+  and comments.
+* the **recommended** delimiters for inline math and display math are
+  ``\( ... \)`` and ``\[ ... \]`` respectively.  These are the defaults
+  recommended by both LaTeX and MathJax.  If you use these, your equations
+  will display correctly in a very wide variety of settings, from LaTeX
+  to the web.
+* the use of ``$`` as a delimiter for inline math is **deprecated** but
+  allowed, mainly to support old, legacy content.  For any new writing
+  that you do, we *strongly recommend* that you use ``\( ... \)``
+  instead.  Note:
+
+  * ``\$`` is ignored (i.e. not treated as inline math delimiter).
+  * to protect against text like "it costs $5 for five minutes and $15
+    for the full half hour" (and errors like omitting one of the ``$``
+    delimiting an equation), ``$`` will only be treated as the start
+    of inline math if it's followed by a character that is *not* whitespace
+    or comma (,), period (.), colon (:) or semi-colon (;).  Similarly,
+    ``$`` will only be treated as a the end of inline math if it's
+    preceded by a *non-whitespace* character.
+
+* of course, Google+ will display LaTeX in your posts as text, not as equations.
+  But that's a bit beyond our control.
+
+LaTeX in arXiv Abstracts
+........................
+
+Usage of LaTeX in arXiv abstracts is unfortunately rather inconsistent:
+some papers include it (typically as $inlinemath$); others don't;
+and some abstracts have serious errors in their $inlinemath$
+(such as unbalanced $).  Hence, it would not be appropriate to activate
+$inlinemath$ on all arXiv abstracts; that would turn some abstracts
+into an ugly mess.  Instead, selectedpapers.net gives you control
+over whether you want a specific abstract: just click the 
+"Treat $ as inline math" button in the Next Steps box on the right
+(or click it again to toggle it off).  Furthermore, selectedpapers.net
+"crowdsources" the default setting: if multiple people turn it on
+(as opposed to turning it off), that becomes the default setting
+for that abstract.
+
+Why are you so anti-$?
+......................
+
+We have no antipathy to capitalism, but we do hate $ 
+as a marker for inline math.
+If you're habituated to $inlinemath$ and loath to change, please
+consider: why do you bother typing all those $ anyway?  What's the 
+point?  A human being can tell which parts of a text are
+math (vs. not) without needing the $.  Thus their only
+purpose is to inform a *computer* which parts are math (vs. not).
+But do they do this?  No: $ is supposed to indicate a *transition*
+between math and text, but it does not indicate whether the math
+is *starting* or *ending*.  Would you replace all the parentheses 
+(...) in your equations with $...$?  No -- you wouldn't be able to 
+tell whether $ means open or close. 
+Similarly, a computer can't tell whether $ means start-inlinemath 
+or stop-inlinemath (even though that may seem obvious to you), 
+for the very simple reason that it can't tell the difference between 
+math vs. text -- that's why it needed a delimiter in the first place!
+Concretely, if a user accidentally forgets one $ for an equation
+(or, perish the thought, writes "$15"), then $ immediately shows
+its worthlessness by reversing the correct calls (all subsequent text gets called
+as inline math, and all inline math gets called as text).
+
+To make a long story short, $inlinemath$ must die, because
+
+* people make mistakes;
+* computers must be able to detect and handle those mistakes sanely;
+* $inlinemath$ makes that impossible.
+
+If you want more gory details, for a start see 
+`this discussion <https://github.com/cjlee112/spnet/issues/24>`_.
 
 Open Design
 -----------
