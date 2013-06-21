@@ -126,7 +126,7 @@ value="0"
 <form id="dollarToggle" method="POST" action=" {{- paper.get_value('local_url') -}} ">
 {% set showLatex = kwargs.get('showLatex', {}).get(paper, 'NULL') %}
 {% if showLatex == 'NULL' %}
-{% set showLatex = (getattr(paper, 'texDollars', 0) > 0) %}
+{% set showLatex = (getattr(paper, 'texDollars', 0) > 2) %}
 {% endif %}
 {% if showLatex %}
 <INPUT TYPE="hidden" NAME="showLatex" VALUE="0" />
