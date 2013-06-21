@@ -130,10 +130,12 @@ value="0"
 {% endif %}
 {% if showLatex %}
 <INPUT TYPE="hidden" NAME="showLatex" VALUE="0" />
-<INPUT TYPE="submit" value="Don't treat $ as inline math" />
+<INPUT TYPE="submit" value="Don't treat $ as inline math" 
+title="Click this to stop treating $ as inline math delimiter."/>
 {% else %}
 <INPUT TYPE="hidden" NAME="showLatex" VALUE="1" />
-<INPUT TYPE="submit" value="Treat $ as inline math" />
+<INPUT TYPE="submit" value="Treat $ as inline math" 
+title="Click this to display $inlinemath$ as equations."/>
 {% endif %}
 </form>
 {% else %}
