@@ -71,7 +71,7 @@ function validateForm()
 <div id="header">
 <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
 {% if hasattr(paper, 'arxiv') %}
-<a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id -}} </a>
+<a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id.replace('_', '/') -}} </a>
 {% elif hasattr(paper, 'pubmed') %}
 <a href="http://www.ncbi.nlm.nih.gov/pubmed">Pubmed</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.pubmed.id -}} </a>
 {% elif hasattr(paper, 'doi') %}
