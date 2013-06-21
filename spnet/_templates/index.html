@@ -3,6 +3,10 @@
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
 <title>SelectedPapers.net</title>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+</script>
+
 </head>
 
 <body>
@@ -40,9 +44,11 @@ Welcome,
 
 <div id="content">
 {% if user %}
-<p><I>This is an initial, alpha release of SelectedPapers.net.
+<p>Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
+LaTeX equations are now supported.</A>
+<I>This is an initial, alpha release of SelectedPapers.net.
 Please give us your feedback</I>: either 
-<A HREF="https://github.com/cjlee112/spnet/issues/4">general comments</A> or 
+<A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
 specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
 or feature suggestions</A>.</p>
 {% if getattr(user, 'subscriptions', False) %}
@@ -139,9 +145,12 @@ we can help deliver content specifically tuned to your interests.  But we're jus
 and we can use your help.
 <I>This is an initial, alpha release of SelectedPapers.net.
 Please give us your feedback</I>: either 
-<A HREF="https://github.com/cjlee112/spnet/issues/4">general comments</A> or 
+<A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
 specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
-or feature suggestions</A>.</p>
+or feature suggestions</A>.
+Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
+LaTeX equations are now supported.</A>
+</p>
 
 <p>Give it a try by signing in below,
 or learn more about how it works.</p>
@@ -168,7 +177,7 @@ or learn more about how it works.</p>
 ( {{- display_datetime(e.published) -}} )
 </dt>
 <dd>
-<div class="list-comments">{{ e.text }}
+<div class="list-comments">{{ e.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -185,7 +194,7 @@ or learn more about how it works.</p>
 ( {{- display_datetime(e.published) -}} )
 </dt>
 <dd>
-<div class="list-comments">{{ e.text }}
+<div class="list-comments">{{ e.get_text() }}
 </div>
 </dd>
 
@@ -216,7 +225,7 @@ or learn more about how it works.</p>
 {% endif %}
 </span>
 <div class="list-comments">
-{{ e.text }}
+{{ e.get_text() }}
 </div>
 </dd>
 

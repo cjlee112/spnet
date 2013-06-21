@@ -6,6 +6,9 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
 </script>
 
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+</script>
+
 <script type="text/javascript">
 function setInterest(topicID, state, userID)
 {
@@ -68,7 +71,7 @@ function validateForm()
 <div id="header">
 <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
 {% if hasattr(paper, 'arxiv') %}
-<a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id -}} </a>
+<a href="http://arxiv.org">arXiv.org</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.arxiv.id.replace('_', '/') -}} </a>
 {% elif hasattr(paper, 'pubmed') %}
 <a href="http://www.ncbi.nlm.nih.gov/pubmed">Pubmed</a> &gt; <a href=" {{- paper.get_value('source_url') -}} "> {{- paper.pubmed.id -}} </a>
 {% elif hasattr(paper, 'doi') %}
@@ -118,6 +121,25 @@ value="1" CHECKED
 value="0"
 {% endif %}
 /> Add to my Reading List
+{% endif %}
+{% if hasattr(paper, 'arxiv') %}
+<form id="dollarToggle" method="POST" action=" {{- paper.get_value('local_url') -}} ">
+{% set showLatex = kwargs.get('showLatex', {}).get(paper, 'NULL') %}
+{% if showLatex == 'NULL' %}
+{% set showLatex = (getattr(paper, 'texDollars', 0) > 2) %}
+{% endif %}
+{% if showLatex %}
+<INPUT TYPE="hidden" NAME="showLatex" VALUE="0" />
+<INPUT TYPE="submit" value="Don't treat $ as inline math" 
+title="Click this to stop treating $ as inline math delimiter."/>
+{% else %}
+<INPUT TYPE="hidden" NAME="showLatex" VALUE="1" />
+<INPUT TYPE="submit" value="Treat $ as inline math" 
+title="Click this to display $inlinemath$ as equations."/>
+{% endif %}
+</form>
+{% else %}
+{% set showLatex = 0 %}
 {% endif %}
 </div><!--end full-text-->
 
@@ -188,7 +210,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 </div>
 
 <blockquote class="abstract">
-{{ paper.get_value('abstract') }}
+{{ paper.get_value('abstract', showLatex=showLatex) }}
 </blockquote>
 
 <div class="submission-history">
@@ -245,12 +267,12 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 </span>
 {% endif %}
 <div class="list-comments">
-{{ rec.text }}
+{{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies()) %}
 <li><A HREF="{{- reply.get_author_url() -}}">
 {{ reply.get_author_name() }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
-{{ reply.text }}
+{{ reply.get_text() }}
 </li>
 {% endfor %}
 </div>
@@ -290,7 +312,7 @@ on topics:
 ( {{- display_datetime(post.published) -}} )
 </dt>
 <dd>
-<div class="list-comments">{{ post.text }}
+<div class="list-comments">{{ post.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -299,7 +321,7 @@ on topics:
 <li><A HREF="{{- reply.get_author_url() -}}">
 {{ reply.get_author_name() }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
-{{ reply.text }}
+{{ reply.get_text() }}
 </li>
 {% endfor %}
 </div>

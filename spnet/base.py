@@ -143,9 +143,9 @@ class Document(object):
         self._dbDocDict = d
         self._isNewInsert = True
 
-    def update(self, updateDict):
+    def update(self, updateDict, op='$set'):
         'update the specified fields in the DB'
-        self.coll.update({'_id': self._id}, {'$set': updateDict})
+        self.coll.update({'_id': self._id}, {op: updateDict})
         self._dbDocDict.update(updateDict)
         self.set_attrs(updateDict)
         
@@ -172,7 +172,7 @@ class Document(object):
     def __hash__(self):
         return hash(self._id)
 
-    def get_value(self, stem='spnet_url'):
+    def get_value(self, stem='spnet_url', **kwargs):
         'get specified kind of value by dispatching to specific paper type'
         for b in getattr(self, '_get_value_attrs', ()):
             try:
@@ -180,8 +180,8 @@ class Document(object):
             except AttributeError:
                 pass
             else:
-                return getattr(o, 'get_' + stem)()
-        return getattr(self, 'get_' + stem)()
+                return getattr(o, 'get_' + stem)(**kwargs)
+        return getattr(self, 'get_' + stem)(**kwargs)
     def get_spnet_url(self):
         return self._spnet_url_base + self.get_local_url()
 

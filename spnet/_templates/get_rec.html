@@ -3,6 +3,10 @@
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
 <title> {{- rec.title -}} </title>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+</script>
+
 </head>
 
 <body>
@@ -51,7 +55,7 @@
 </a></h3>
 
 <blockquote class="abstract">
-{{ rec.text }}
+{{ rec.get_text() }}
 </blockquote>
 
 <a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
