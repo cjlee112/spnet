@@ -20,7 +20,7 @@ def people_link_list(people, maxNames=2):
         l.append('<A HREF="%s">%s</A>' % (p.get_local_url(), p.name))
     s = ', '.join(l)
     if len(people) > maxNames:
-        s += ' and %d others' (len(people) - maxNames)
+        s += ' and %d others' % (len(people) - maxNames)
     return s
 
 timeUnits = (('seconds', timedelta(minutes=1), lambda t:int(t.seconds)),
