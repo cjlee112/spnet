@@ -44,7 +44,6 @@ def merge_sigs(person, attr, sigLinks):
 # forward declarations to avoid circular ref problem
 fetch_paper = FetchObj(None)
 fetch_person = FetchObj(None)
-fetch_post = FetchObj(None)
 fetch_sig = FetchObj(None)
 fetch_sigs = FetchList(None)
 fetch_people = FetchList(None)
@@ -95,6 +94,16 @@ class AuthorInfo(object):
         else:
             return self.text
 
+def get_replies(self):
+    'used by both Post and Recommendation to find replies'
+    try:
+        docID = self.id
+    except AttributeError:
+        return
+    for r in getattr(self.parent, 'replies', ()):
+        if r._dbDocDict['replyTo'] == docID:
+            yield r
+
 class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
@@ -105,14 +114,7 @@ class Recommendation(ArrayDocument, AuthorInfo):
     forwards = LinkDescriptor('forwards', fetch_people)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
-    def get_replies(self):
-        try:
-            recID = self.id
-        except AttributeError:
-            return
-        for r in getattr(self.parent, 'replies', ()):
-            if r._dbDocDict['replyTo'] == recID:
-                yield r
+    get_replies = get_replies
     def get_local_url(self):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
@@ -124,18 +126,15 @@ class Post(UniqueArrayDocument, AuthorInfo):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
-    def get_replies(self):
-        for r in getattr(self.parent, 'replies', ()):
-            if r.replyTo == self:
-                yield r
+    get_replies = get_replies
 
 def fetch_post_or_rec(obj, fetchID):
-    try:
-        return fetch_post(obj, fetchID)
-    except KeyError:
-        for rec in obj.parent.recommendations:
-            if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
-                return rec
+    for post in obj.parent.posts:
+        if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
+            return post
+    for rec in obj.parent.recommendations:
+        if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
+            return rec
     raise KeyError('No post or rec found with id=' + str(fetchID))
 
 
@@ -599,7 +598,6 @@ class Tag(Document):
 # connect forward declarations to their target classes
 fetch_paper.klass = Paper
 fetch_parent_issue.klass = Issue
-fetch_post.klass = Post
 fetch_sig.klass = SIG
 fetch_sigs.klass = SIG
 fetch_person.klass = Person
