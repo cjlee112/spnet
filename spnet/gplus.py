@@ -270,3 +270,11 @@ def get_keys(keyfile='../google/keys.json'):
 
 publicAccess = OAuth() # gives API key based access (search public data)
 
+if __name__ == '__main__':
+    import connect
+    dbconn = connect.init_connection()
+    n = 0
+    for post in publicAccess.load_recent_spnetwork():
+        n += 1
+    print 'received %d new posts' % n
+

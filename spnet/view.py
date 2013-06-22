@@ -224,6 +224,7 @@ recentEventsDeque = collections.deque(maxlen=20)
 
 def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
                        limit=20):
+    'obtain list of recent events stored in our database'
     l = []
     for paper in paperClass.find_obj(sortKeys={'recommendations.published':-1},
                                      limit=limit):
@@ -244,3 +245,13 @@ def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
         dq.appendleft(r)
         
         
+def poll_recent_events(paperClass, topicClass, interval=300):
+    'update recentEventsDeque every interval; run in separate thread'
+    import time
+    dq = collections.deque(maxlen=20)
+    while True:
+        load_recent_events(paperClass, topicClass, dq)
+        recentEventsDeque.clear()
+        recentEventsDeque.extend(dq)
+        dq.clear()
+        time.sleep(interval)
