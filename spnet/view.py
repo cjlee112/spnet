@@ -248,10 +248,12 @@ def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
 def poll_recent_events(paperClass, topicClass, interval=300):
     'update recentEventsDeque every interval; run in separate thread'
     import time
+    import gc
     dq = collections.deque(maxlen=20)
     while True:
         load_recent_events(paperClass, topicClass, dq)
         recentEventsDeque.clear()
         recentEventsDeque.extend(dq)
         dq.clear()
+        gc.collect() # frequent GC seems to keep RSS from growing unsustainably
         time.sleep(interval)
