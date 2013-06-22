@@ -86,12 +86,11 @@ class Server(object):
     signout.exposed = True
             
 
-
 if __name__ == '__main__':
     s = Server()
-    view.load_recent_events(s.papers.klass, s.topics.klass)
+    thread.start_new_thread(view.poll_recent_events, (s.papers.klass, s.topics.klass))
     print 'starting server...'
     s.start()
-    print 'starting gplus #spnetwork polling...'
-    gplus.publicAccess.start_poll(300, 10, view.recentEventsDeque)
+    #print 'starting gplus #spnetwork polling...'
+    #gplus.publicAccess.start_poll(300, 10, view.recentEventsDeque)
 
