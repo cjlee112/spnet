@@ -6,7 +6,7 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
 </script>
 
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
 </script>
 
 <script type="text/javascript">
@@ -268,7 +268,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 {% endif %}
 <div class="list-comments">
 {{ rec.get_text() }}
-{% for reply in timesort(rec.get_replies()) %}
+{% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.get_author_url() -}}">
 {{ reply.get_author_name() }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
@@ -317,7 +317,7 @@ on topics:
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
-{% for reply in timesort(post.get_replies()) %}
+{% for reply in timesort(post.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.get_author_url() -}}">
 {{ reply.get_author_name() }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):

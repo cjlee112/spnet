@@ -71,17 +71,13 @@ class Server(object):
             return error
         oauth = cherrypy.session['gplus_oauth']
         oauth.get_credentials(**kwargs)
-        self.gplus_oauth = oauth # just for hand testing
         cherrypy.session['person'] = oauth.get_person()
         return view.redirect('/')
     oauth2callback.exposed = True
 
     def signout(self):
-        'remove the user info from this session'
-        try:
-            del cherrypy.session['person']
-        except KeyError:
-            pass
+        'force this session to expire immediately'
+        cherrypy.lib.sessions.expire()
         return view.redirect('/')
     signout.exposed = True
             
