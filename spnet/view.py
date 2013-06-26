@@ -111,11 +111,10 @@ class TemplateView(object):
         try:
             user = cherrypy.session['person']
         except KeyError:
-            user = None
-        else:
-            if getattr(user, '_forceReload', False):
-                user = user.__class__(user._id) # reload from DB
-                cherrypy.session['person'] = user # save on session
+            user = cherrypy.session['person'] = None
+        if getattr(user, '_forceReload', False):
+            user = user.__class__(user._id) # reload from DB
+            cherrypy.session['person'] = user # save on session
         return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                  urlencode=urllib.urlencode, list_people=people_link_list,
                  getattr=getattr, str=str, map=map_helper, user=user,
