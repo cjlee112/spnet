@@ -1,0 +1,8 @@
+# ignore local config files
+spnet/cp.conf
+google/keys.json
+twitter/keys
+
+# ignore build documentation
+
+doc/_build

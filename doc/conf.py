@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'SelectedPapers.net'
-copyright = u'2013, Christopher Lee'
+project = u'spnet'
+copyright = u'2013, SelectedPapers.net'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -85,6 +85,9 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
+
+# If true, keep warnings as "system message" paragraphs in the built documents.
+#keep_warnings = False
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -183,8 +186,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'SelectedPapersnet.tex', u'SelectedPapers.net Documentation',
-   u'Christopher Lee', 'manual'),
+  ('index2', 'spnet.tex', u'spnet Documentation',
+   u'SPnet', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,8 +216,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'selectedpapersnet', u'SelectedPapers.net Documentation',
-     [u'Christopher Lee'], 1)
+    ('index2', 'spnet', u'spnet Documentation',
+     [u'SPnet'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -227,8 +230,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'SelectedPapersnet', u'SelectedPapers.net Documentation',
-   u'Christopher Lee', 'SelectedPapersnet', 'One line description of project.',
+  ('index2', 'spnet', u'spnet Documentation',
+   u'SPnet', 'spnet', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -240,3 +243,6 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+# If true, do not generate a @detailmenu in the "Top" node's menu.
+#texinfo_no_detailmenu = False

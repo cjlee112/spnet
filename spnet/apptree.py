@@ -230,7 +230,7 @@ class ReadingList(rest.Collection):
         return json.dumps(dict(status=status))
     
 def get_collections(templateDir='_templates'):
-    gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
+    gplusClientID = gplus.get_keys()['client_id'] # most templates need this
     templateEnv = view.get_template_env(templateDir)
     view.report_error.bind_template(templateEnv, 'error.html') # error page
 

@@ -78,7 +78,7 @@ class OAuth(object):
             keys = get_keys()
         self.keys = keys
         d = dict(state=self.state, redirect_uri=self.keys['redirect_uri'],
-                 client_id=self.keys['client_ID'], access_type=access_type,
+                 client_id=self.keys['client_id'], access_type=access_type,
                  response_type=response_type, scope=scope,
                  requestvisibleactions=requestvisibleactions)
         d.update(kwargs)
@@ -92,7 +92,7 @@ class OAuth(object):
         'use callback data to get an access token'
         if state != self.state:
             return False # CSRF attack?!?
-        d = dict(code=code, client_id=self.keys['client_ID'],
+        d = dict(code=code, client_id=self.keys['client_id'],
                  client_secret=self.keys['client_secret'],
                  redirect_uri=self.keys['redirect_uri'],
                  grant_type='authorization_code')
