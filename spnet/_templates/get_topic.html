@@ -62,7 +62,7 @@
 </span>
 <div class="list-comments">
 {{ rec.get_text() }}
-{% for reply in timesort(rec.get_replies()) %}
+{% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
 {{ reply.author.name }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
