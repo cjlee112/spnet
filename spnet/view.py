@@ -3,6 +3,7 @@ from jinja2 import Environment, FileSystemLoader
 import urllib
 from datetime import datetime, timedelta
 import collections
+from sessioninfo import get_session
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -102,19 +103,20 @@ class TemplateView(object):
     def __call__(self, doc=None, **kwargs):
         f = self.template.render
         kwargs.update(self.kwargs)
+        session = get_session()
         try:
-            kwargs.update(cherrypy.session['viewArgs'])
+            kwargs.update(session['viewArgs'])
         except KeyError:
             pass
         if doc is not None:
             kwargs[self.name] = doc
         try:
-            user = cherrypy.session['person']
+            user = session['person']
         except KeyError:
-            user = cherrypy.session['person'] = None
+            user = session['person'] = None
         if getattr(user, '_forceReload', False):
             user = user.__class__(user._id) # reload from DB
-            cherrypy.session['person'] = user # save on session
+            session['person'] = user # save on session
         return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,
                  urlencode=urllib.urlencode, list_people=people_link_list,
                  getattr=getattr, str=str, map=map_helper, user=user,
@@ -124,10 +126,10 @@ class TemplateView(object):
 def get_view_options():
     'get dict of session kwargs passed to view templates'
     try:
-        return cherrypy.session['viewArgs']
+        return get_session()['viewArgs']
     except KeyError:
         d = {}
-        cherrypy.session['viewArgs'] = d
+        get_session()['viewArgs'] = d
         return d
 
 ##################################################################

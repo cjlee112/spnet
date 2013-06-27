@@ -5,7 +5,7 @@ import gplus
 import errors
 from bson import ObjectId
 import json
-import cherrypy
+from sessioninfo import get_session
 from urllib import urlencode
 
 
@@ -20,7 +20,7 @@ class InterestCollection(ArrayDocCollection):
         topic = core.SIG.standardize_id(topic) # must follow hashtag rules
         personID = ObjectId(personID)
         try:
-            if personID != cherrypy.session['person']._id:
+            if personID != get_session()['person']._id:
                 s = view.report_error('TRAP set_interest by different user!', 403,
                                       "You cannot change someone else's settings!")
                 return rest.Response(s)
@@ -32,7 +32,7 @@ class InterestCollection(ArrayDocCollection):
         if state: # make sure topic exists
             sig = core.SIG.find_or_insert(topic)
         interest = self.set_interest(personID, topic, state, parents)
-        cherrypy.session['person'] = core.Person(personID) # refresh user
+        get_session()['person'] = core.Person(personID) # refresh user
         return interest
     def set_interest(self, personID, topic, state, parents):
         try:
@@ -94,7 +94,7 @@ class PaperCollection(rest.Collection):
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
         try: # use cached query results if present
-            queryResults = cherrypy.session['queryResults']
+            queryResults = get_session()['queryResults']
         except (AttributeError, KeyError):
             pass
         else:
@@ -128,7 +128,7 @@ class ArxivCollection(ParentCollection):
         ipage = int(ipage)
         block_size = int(block_size)
         if session is None:
-            session = cherrypy.session
+            session = get_session()
         if searchID: # just get this ID
             return ParentCollection._search(self, searchID)
         if not searchString:
@@ -164,7 +164,7 @@ class PubmedCollection(ParentCollection):
         ipage = int(ipage)
         block_size = int(block_size)
         try: # get from existing query results
-            queryResults = cherrypy.session['queryResults']
+            queryResults = get_session()['queryResults']
             if queryResults.get_page(ipage, self.collectionArgs['uri'],
                                      searchString=searchString):
                 return queryResults
@@ -188,7 +188,7 @@ paste it in the search box on this page.'''
                                   % urlencode(dict(searchType='ncbipubmed',
                                                    searchString=searchString)))
             return rest.Response(s)
-        cherrypy.session['queryResults'] = queryResults # keep for this user
+        get_session()['queryResults'] = queryResults # keep for this user
         return queryResults
         
 
@@ -224,7 +224,7 @@ class ReadingList(rest.Collection):
         else:
             person.array_del('readingList', paperID)
             result = -1
-        cherrypy.session['person'] = core.Person(person._id) # refresh user
+        get_session()['person'] = core.Person(person._id) # refresh user
         return result
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))

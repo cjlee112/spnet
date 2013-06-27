@@ -5,6 +5,7 @@ import twitter
 import gplus
 import apptree
 import view
+from sessioninfo import get_session
 
 class Server(object):
     def __init__(self, dbconn=None, colls=None, **kwargs):
@@ -36,8 +37,8 @@ class Server(object):
             return 'no such email address'
         p = a.parent
         if p.authenticate(password):
-            cherrypy.session['email'] = email
-            cherrypy.session['person'] = p
+            get_session()['email'] = email
+            get_session()['person'] = p
         else:
             return 'bad password'
         return view.redirect('/view?view=person&person=' + str(p._id))
@@ -45,33 +46,33 @@ class Server(object):
 
     def twitter_login(self):
         redirect_url, tokens = twitter.start_oauth('http://localhost:8000/twitter_oauth')
-        cherrypy.session['twitter_request_token'] = tokens
+        get_session()['twitter_request_token'] = tokens
         return view.redirect(redirect_url)
     twitter_login.exposed = True
 
     def twitter_oauth(self, oauth_token, oauth_verifier):
-        t = cherrypy.session['twitter_request_token']
+        t = get_session()['twitter_request_token']
         auth = twitter.complete_oauth(t[0], t[1], oauth_verifier)
         p, user, api = twitter.get_auth_person(auth)
-        cherrypy.session['person'] = p
-        cherrypy.session['twitter_user'] = user
-        cherrypy.session['twitter_api'] = api
+        get_session()['person'] = p
+        get_session()['twitter_user'] = user
+        get_session()['twitter_api'] = api
         self.twitter_auth = auth # just for hand testing
         return 'Logged in to twitter'
     twitter_oauth.exposed = True
 
     def gplus_login(self):
         oauth = gplus.OAuth(keys=self.gplus_keys)
-        cherrypy.session['gplus_oauth'] = oauth
+        get_session()['gplus_oauth'] = oauth
         return view.redirect(oauth.get_authorize_url())
     gplus_login.exposed = True
 
     def oauth2callback(self, error=False, **kwargs):
         if error:
             return error
-        oauth = cherrypy.session['gplus_oauth']
+        oauth = get_session()['gplus_oauth']
         oauth.get_credentials(**kwargs)
-        cherrypy.session['person'] = oauth.get_person()
+        get_session()['person'] = oauth.get_person()
         return view.redirect('/')
     oauth2callback.exposed = True
 
