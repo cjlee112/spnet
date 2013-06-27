@@ -104,6 +104,18 @@ def get_replies(self):
         if r._dbDocDict['replyTo'] == docID:
             yield r
 
+def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
+    'wrap insert() or update() to insert topics into author Person record'
+    try:
+        topics = d[attr]
+    except KeyError:
+        pass
+    else:
+        personID = d[personAttr]
+        Person.coll.update({'_id': personID},
+                           {'$addToSet': {'topics': {'$each':topics}}})
+    return getattr(super(self.__class__, self), method)(d)
+
 class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
@@ -115,6 +127,8 @@ class Recommendation(ArrayDocument, AuthorInfo):
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     get_replies = get_replies
+    insert = lambda self,d:report_topics(self, d)
+    update = lambda self,d:report_topics(self, d, method='update')
     def get_local_url(self):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
@@ -127,12 +141,14 @@ class Post(UniqueArrayDocument, AuthorInfo):
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     get_replies = get_replies
+    insert = lambda self,d:report_topics(self, d)
+    update = lambda self,d:report_topics(self, d, method='update')
 
 def fetch_post_or_rec(obj, fetchID):
-    for post in obj.parent.posts:
+    for post in getattr(obj.parent, 'posts', ()):
         if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
             return post
-    for rec in obj.parent.recommendations:
+    for rec in getattr(obj.parent, 'recommendations', ()):
         if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
             return rec
     raise KeyError('No post or rec found with id=' + str(fetchID))
@@ -152,6 +168,8 @@ class PaperInterest(ArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     topics = LinkDescriptor('topics', fetch_sigs, missingData=())
+    insert = lambda self,d:report_topics(self, d, 'topics')
+    update = lambda self,d:report_topics(self, d, 'topics', method='update')
     def add_topic(self, topic):
         topics = set(self._dbDocDict.get('topics', ()))
         topics.add(topic)

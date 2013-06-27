@@ -8,6 +8,7 @@ import apptree
 import incoming
 from datetime import datetime
 import time
+import sessioninfo
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -56,6 +57,7 @@ int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
 assert core.Paper(paper1._id).interests == [int1]
 assert core.Paper(paper1._id).get_interests() == {sig1._id:[jojo]}
 assert core.Person(jojo._id).interests == [int1]
+assert core.Person(jojo._id).topics == [sig1._id]
 assert core.SIG(sig1._id).interests == [int1]
 assert core.SIG(sig1._id).get_interests() == {paper1:[jojo]}
 
@@ -72,6 +74,7 @@ assert core.Paper(paper1._id).interests == []
 
 # test creation via POST
 paperLikes = rootColl['papers'].likes
+sessioninfo.get_session.sessionDict = dict(person=fred)
 int2 = paperLikes._POST(fred._id, sig2._id, '1',
                         parents=dict(paper=paper2))
 assert int2.parent == paper2
@@ -79,6 +82,7 @@ assert int2.author == fred
 assert int2.topics == [sig2]
 assert core.Paper(paper2._id).interests == [int2]
 assert core.Person(fred._id).interests == [int2]
+assert core.Person(fred._id).topics == [sig2._id]
 assert core.SIG(sig2._id).interests == [int2]
 try:
     paperLikes._POST(fred._id, 'this is not allowed', '1',
@@ -95,6 +99,7 @@ assert core.Paper(paper2._id).interests == []
 int3 = paperLikes._POST(fred._id, '#silicene', '1',
                         parents=dict(paper=paper2))
 assert core.SIG('silicene').interests == [int3]
+assert set(core.Person(fred._id).topics) == set([sig2._id, 'silicene'])
 
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
@@ -113,9 +118,11 @@ rec1 = core.Recommendation(docData=dict(author=fred._id,
 rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
                                         sigs=[sig1._id, sig2._id]),
                            parent=paper2._id)
+assert set(core.Person(jojo._id).topics) == set([sig1._id, sig2._id])
 
 post1 = core.Post(docData=dict(author=fred._id, text='interesting paper!',
                                id=98765, sigs=[sig1._id]), parent=paper1)
+assert set(core.Person(fred._id).topics) == set([sig1._id, sig2._id, 'silicene'])
 reply1 = core.Reply(docData=dict(author=jojo._id, text='I disagree with Fred.',
                                  id=7890, replyTo=98765), parent=paper1)
 
