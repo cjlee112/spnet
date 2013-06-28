@@ -409,9 +409,9 @@ class Person(Document):
                 personID = p['_id']
                 Subscription((personID, self._id), docData=docData,
                              parent=personID, insertNew='findOrInsert')
-    def get_topics(self):
+    def get_topics(self, order = dict(hide=0, low=1, medium=2, high=3)):
         topicOptions = {}
-        for tOpt in self.topicOptions:
+        for tOpt in getattr(self, 'topicOptions', ()):
             topicOptions[tOpt._dbDocDict['topic']] = tOpt
         l = []
         for topic in getattr(self, 'topics', ()):
@@ -421,11 +421,50 @@ class Person(Document):
                          getattr(tOpt, 'fromOthers', 'low')))
             except KeyError:
                 l.append((topic, 'low', 'low'))
-        order = dict(hide=0, low=1, medium=2, high=3)
         l.sort(lambda x,y:cmp(order.get(x[1], -1), order.get(y[1], -1)), 
                reverse=True)
         return l
-            
+    def get_deliveries(self, order = dict(hide=0, low=1, medium=2, high=3)):
+        topics = {}
+        for topic, fromMySubs, fromOthers in self.get_topics():
+            fromMySubs = order[fromMySubs]
+            if fromOthers == 'same':
+                fromOthers = fromMySubs
+            else:
+                fromOthers = order[fromOthers]
+            if fromMySubs > 0:
+                topics[topic] = (fromMySubs, fromOthers)
+        subs = {}
+        for s in self.subscriptions:
+            subs[s._get_id()] = s
+        priority = 0
+        l = []
+        for r in getattr(self, 'received', ()):
+            try:
+                sub = subs[r['from']]
+                i = 0
+            except KeyError:
+                sub = None
+                i = 1
+            for topic in r['topics']:
+                try:
+                    priority = max(priority, topics[topic][i])
+                except KeyError:
+                    pass
+            if sub:
+                if priority > 0:
+                    level = getattr(sub, 'onMyTopics', 'topic')
+                else:
+                    level = getattr(sub, 'onOthers', 'low')
+                if level != 'topic':
+                    priority = max(priority, order[level])
+            if priority > 0:
+                r['priority'] = priority
+                l.append(r)
+        l.sort(lambda x,y:cmp(x['priority'], y['priority']), reverse=True)
+        return l
+                
+                    
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
