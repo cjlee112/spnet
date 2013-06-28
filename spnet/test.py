@@ -9,6 +9,7 @@ import incoming
 from datetime import datetime
 import time
 import sessioninfo
+import bulk
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -331,3 +332,8 @@ assert incoming.get_hashtag_dict(txt)['paper'] == [spnetPaper]
 t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
 d = incoming.get_hashtag_dict(t)
 assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [spnetPaper], 'rec': ['recommend']}
+
+topics, subs = bulk.get_people_subs()
+bulk.deliver_recs(topics, subs)
+assert len(core.Person(jojo._id).received) == 2
+assert len(core.Person(fred._id).received) == 1
