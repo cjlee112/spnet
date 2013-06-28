@@ -33,6 +33,7 @@ def insert_people_topics(peopleTopics):
                                 {'$addToSet': {'topics': {'$each':list(topics)}}})
 
 def get_people_subs():
+    'get dicts of {topic:[subscribers]} and {person:[subscribers]}'
     topics = {}
     subs = {}
     for d in core.Person.find({}, {'topics':1, 'topicOptions':1, 'subscriptions':1}):
@@ -57,20 +58,18 @@ def get_people_subs():
 
 
 def deliver_recs(topics, subs):
-    for d in core.Paper.find({'recommendations': {'$exists':True}}, 
-                             {'recommendations':1}):
-        paperID = d['_id']
-        for r in d['recommendations']:
-            author = r['author']
-            sigs = r.get('sigs', ())
-            for personID in subs.get(author, ()): # deliver to subscribers
+    'insert appropriate recs to Person.received array records'
+    for paperID, r in core.Recommendation.find(idOnly=False, parentID=True):
+        author = r['author']
+        sigs = r.get('sigs', ())
+        for personID in subs.get(author, ()): # deliver to subscribers
+            core.Person.coll.update({'_id':personID},
+                {'$addToSet': {'received': 
+                               {'paper':paperID, 'from':author, 'topics':sigs}}})
+        for topic in sigs:
+            for personID in topics.get(topic, ()): # deliver to subscribers
+                if personID == author: # don't deliver back to author!
+                    continue
                 core.Person.coll.update({'_id':personID},
                     {'$addToSet': {'received': 
-                                   {'paper':paperID, 'from':author, 'topics':sigs}}})
-            for topic in sigs:
-                for personID in topics.get(topic, ()): # deliver to subscribers
-                    if personID == author: # don't deliver back to author!
-                        continue
-                    core.Person.coll.update({'_id':personID},
-                        {'$addToSet': {'received': 
-                                  {'paper':paperID, 'from':author, 'topics':sigs}}})
+                              {'paper':paperID, 'from':author, 'topics':sigs}}})
