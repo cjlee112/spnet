@@ -15,20 +15,21 @@ class ArrayDocCollection(rest.Collection):
 
 class InterestCollection(ArrayDocCollection):
     '/papers/PAPER/likes/PERSON REST interface for AJAX calls'
+    def check_permission(self, method, personID, *args, **kwargs):
+        if method == 'GET': # permitted
+            return False
+        try:
+            if personID != get_session()['person']._id:
+                return view.report_error('TRAP set_interest by different user!', 403,
+                                      "You cannot change someone else's settings!")
+        except (KeyError,AttributeError):
+            return view.report_error('TRAP set_interest, not logged in!', 401,
+                                     'You must log in to access this interface')
     def _POST(self, personID, topic, state, parents, topic2=''):
         'add or remove topic from PaperInterest depending on state'
         topic = topic or topic2 # use whichever is non-empty
         topic = core.SIG.standardize_id(topic) # must follow hashtag rules
         personID = ObjectId(personID)
-        try:
-            if personID != get_session()['person']._id:
-                s = view.report_error('TRAP set_interest by different user!', 403,
-                                      "You cannot change someone else's settings!")
-                return rest.Response(s)
-        except KeyError:
-            s = view.report_error('TRAP set_interest, not logged in!', 401,
-                                  'You must log in to access this interface')
-            return rest.Response(s)
         state = int(state)
         if state: # make sure topic exists
             sig = core.SIG.find_or_insert(topic)
@@ -211,7 +212,21 @@ class PersonCollection(rest.Collection):
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
 
-class ReadingList(rest.Collection):
+class PersonAuthBase(rest.Collection):
+    'only allow logged-in user to POST his own settings'
+    def check_permission(self, method, *args, **kwargs):
+        if method == 'GET': # permitted
+            return False
+        user = get_session().get('person', None)
+        if not user:
+            return view.report_error('TRAP set_interest, not logged in!', 401,
+                                     'You must log in to access this interface')
+        person = kwargs['parents'].values()[0]
+        if person != user:
+            return view.report_error('TRAP set_interest by different user!', 403,
+                                     "You cannot change someone else's settings!")
+
+class ReadingList(PersonAuthBase):
     '/people/PERSON/reading/PAPER REST interface for AJAX calls'
     def _POST(self, paperID, state, parents):
         person = parents.values()[0]
@@ -231,7 +246,7 @@ class ReadingList(rest.Collection):
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
 
-class PersonTopics(rest.Collection):
+class PersonTopics(PersonAuthBase):
     '/people/PERSON/topics/TOPIC REST interface for AJAX calls'
     def _POST(self, topic, field, state, parents):
         person = parents.values()[0]
@@ -246,7 +261,7 @@ class PersonTopics(rest.Collection):
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
 
-class PersonSubscriptions(rest.Collection):
+class PersonSubscriptions(PersonAuthBase):
     '/people/PERSON/subscriptions/PERSON REST interface for AJAX calls'
     def _POST(self, author, field, state, parents):
         person = parents.values()[0]

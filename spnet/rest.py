@@ -56,6 +56,10 @@ class Collection(object):
             method, mimeType = request_tuple()
             if docID: # a specific document from this collection
                 docID = IdString(docID) # implements proper cmp() vs. ObjectId
+                invalidResponse = self.check_permission(method, docID, *args, 
+                                                        **kwargs)
+                if invalidResponse:
+                    return invalidResponse
                 if not args: # perform the request
                     return self._request(method, mimeType, docID, **kwargs)
                 else: # pass request on to subcollection
@@ -134,5 +138,6 @@ Please check whether you have the correct ID or spelling.""")
             v = view.TemplateView(template, self.name, **kwargs)
             setattr(self, methodName, v)
             
-
-    
+    def check_permission(self, method, docID, *args, **kwargs):
+        'this authentication stub allows all requests'
+        return False
