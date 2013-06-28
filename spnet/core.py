@@ -111,7 +111,10 @@ def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
     except KeyError:
         pass
     else:
-        personID = d[personAttr]
+        try:
+            personID = d[personAttr]
+        except KeyError:
+            personID = self._dbDocDict[personAttr]
         Person.coll.update({'_id': personID},
                            {'$addToSet': {'topics': {'$each':topics}}})
     return getattr(super(self.__class__, self), method)(d)
