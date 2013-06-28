@@ -249,17 +249,10 @@ class SIG(Document):
         return '/topics/' + str(self._id)
 
 
-# current unused
-class SIGLink(ArrayDocument):
-    _dbfield = 'sigs.sig' # dot.name for updating
-    sig = LinkDescriptor('sig', fetch_sig)
-    parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
 
-    def _add_merge(self, other):
-        try:
-            self._mergeLinks.append(other)
-        except AttributeError:
-            self._mergeLinks = [other]
+class TopicOptions(ArrayDocument):
+    _dbfield = 'topicOptions.topic' # dot.name for updating
+    topic = LinkDescriptor('topic', fetch_sig)
 
 class GplusPersonData(EmbeddedDocument):
     'store Google+ data for a user as subdocument of Person'
@@ -383,7 +376,7 @@ class Person(Document):
         email=SaveAttrList(EmailAddress, insertNew=False),
         gplus=SaveAttr(GplusPersonData, insertNew=False),
         subscriptions = SaveAttrList(Subscription, insertNew=False),
-        ## sigs=SaveAttrList(SIGLink, postprocess=merge_sigs, insertNew=False),
+        topicOptions = SaveAttrList(TopicOptions, insertNew=False),
         )
 
     def authenticate(self, password):
@@ -416,6 +409,23 @@ class Person(Document):
                 personID = p['_id']
                 Subscription((personID, self._id), docData=docData,
                              parent=personID, insertNew='findOrInsert')
+    def get_topics(self):
+        topicOptions = {}
+        for tOpt in self.topicOptions:
+            topicOptions[tOpt._dbDocDict['topic']] = tOpt
+        l = []
+        for topic in getattr(self, 'topics', ()):
+            try:
+                tOpt = topicOptions[topic]
+                l.append((topic, getattr(tOpt, 'fromMySubs', 'low'),
+                         getattr(tOpt, 'fromOthers', 'low')))
+            except KeyError:
+                l.append((topic, 'low', 'low'))
+        order = dict(hide=0, low=1, medium=2, high=3)
+        l.sort(lambda x,y:cmp(order.get(x[1], -1), order.get(y[1], -1)), 
+               reverse=True)
+        return l
+            
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
