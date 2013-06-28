@@ -14,6 +14,7 @@ class ArrayDocCollection(rest.Collection):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
 
 class InterestCollection(ArrayDocCollection):
+    '/papers/PAPER/likes/PERSON REST interface for AJAX calls'
     def _POST(self, personID, topic, state, parents, topic2=''):
         'add or remove topic from PaperInterest depending on state'
         topic = topic or topic2 # use whichever is non-empty
@@ -211,6 +212,7 @@ class PersonCollection(rest.Collection):
         return person
 
 class ReadingList(rest.Collection):
+    '/people/PERSON/reading/PAPER REST interface for AJAX calls'
     def _POST(self, paperID, state, parents):
         person = parents.values()[0]
         paperID = ObjectId(paperID)
@@ -228,6 +230,38 @@ class ReadingList(rest.Collection):
         return result
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
+
+class PersonTopics(rest.Collection):
+    '/people/PERSON/topics/TOPIC REST interface for AJAX calls'
+    def _POST(self, topic, field, state, parents):
+        person = parents.values()[0]
+        try:
+            tOpt = core.TopicOptions.find_obj_in_parent(person, topic)
+        except KeyError:
+            tOpt = core.TopicOptions(docData={'topic':topic, field:state}, 
+                                     parent=person)
+        else:
+            tOpt.update({field:state})
+        return 1
+    def post_json(self, status, **kwargs):
+        return json.dumps(dict(status=status))
+
+class PersonSubscriptions(rest.Collection):
+    '/people/PERSON/subscriptions/PERSON REST interface for AJAX calls'
+    def _POST(self, author, field, state, parents):
+        person = parents.values()[0]
+        author = ObjectId(author)
+        try:
+            sub = core.Subscription.find_obj_in_parent(person, author)
+        except KeyError:
+            sub = core.Subscription(docData={'author':author, field:state}, 
+                                     parent=person)
+        else:
+            sub.update({field:state})
+        return 1
+    def post_json(self, status, **kwargs):
+        return json.dumps(dict(status=status))
+
     
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_id'] # most templates need this
@@ -265,6 +299,13 @@ def get_collections(templateDir='_templates'):
     readingList = ReadingList('reading', core.Paper, templateEnv, templateDir,
                               gplusClientID=gplusClientID)
     people.reading = readingList
+    personTopics = PersonTopics('topics', core.SIG, templateEnv, templateDir,
+                                gplusClientID=gplusClientID)
+    people.topics = personTopics
+    personSubs = PersonSubscriptions('subscriptions', core.Subscription, 
+                                     templateEnv, templateDir,
+                                     gplusClientID=gplusClientID)
+    people.subscriptions = personSubs
     topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 
