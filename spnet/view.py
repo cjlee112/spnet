@@ -4,6 +4,7 @@ import urllib
 from datetime import datetime, timedelta
 import collections
 from sessioninfo import get_session
+import webui
 
 def redirect(path='/', body=None, delay=0):
     'redirect browser, if desired after showing a message'
@@ -121,7 +122,8 @@ class TemplateView(object):
                  urlencode=urllib.urlencode, list_people=people_link_list,
                  getattr=getattr, str=str, map=map_helper, user=user,
                  display_datetime=display_datetime, timesort=timesort,
-                 recentEvents=recentEventsDeque, **kwargs) # apply template
+                 recentEvents=recentEventsDeque, 
+                 Selection=webui.Selection, **kwargs) # apply template
 
 def get_view_options():
     'get dict of session kwargs passed to view templates'
