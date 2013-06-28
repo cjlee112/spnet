@@ -122,7 +122,7 @@ class TemplateView(object):
                  urlencode=urllib.urlencode, list_people=people_link_list,
                  getattr=getattr, str=str, map=map_helper, user=user,
                  display_datetime=display_datetime, timesort=timesort,
-                 recentEvents=recentEventsDeque, 
+                 recentEvents=recentEventsDeque, len=len,
                  Selection=webui.Selection, **kwargs) # apply template
 
 def get_view_options():
