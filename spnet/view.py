@@ -115,7 +115,7 @@ class TemplateView(object):
             user = session['person']
         except KeyError:
             user = session['person'] = None
-        if getattr(user, '_forceReload', False):
+        if user and user.force_reload():
             user = user.__class__(user._id) # reload from DB
             session['person'] = user # save on session
         return f(kwargs=kwargs, hasattr=hasattr, enumerate=enumerate,

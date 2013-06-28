@@ -466,6 +466,10 @@ class Person(Document):
                 l.append(r)
         l.sort(lambda x,y:cmp(x['priority'], y['priority']), reverse=True)
         return l
+    def force_reload(self, state=None):
+        if state is not None:
+            self._forceReload = state
+        return getattr(self, '_forceReload', False)
                 
                     
 
