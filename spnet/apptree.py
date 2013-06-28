@@ -34,7 +34,7 @@ class InterestCollection(ArrayDocCollection):
         if state: # make sure topic exists
             sig = core.SIG.find_or_insert(topic)
         interest = self.set_interest(personID, topic, state, parents)
-        get_session()['person'] = core.Person(personID) # refresh user
+        get_session()['person'].force_reload(True) # refresh user
         return interest
     def set_interest(self, personID, topic, state, parents):
         try:
@@ -197,7 +197,11 @@ paste it in the search box on this page.'''
 
 class PersonCollection(rest.Collection):
     def _GET(self, docID, getUpdates=False, timeframe=None, **kwargs):
-        person = rest.Collection._GET(self, docID, **kwargs)
+        user = get_session().get('person', None)
+        if user and docID == user._id:
+            person = user # use cached Person object so we can mark it for refresh
+        else:
+            person = rest.Collection._GET(self, docID, **kwargs)
         if getUpdates:
             try:
                 gpd = person.gplus
@@ -241,7 +245,7 @@ class ReadingList(PersonAuthBase):
         else:
             person.array_del('readingList', paperID)
             result = -1
-        get_session()['person'] = core.Person(person._id) # refresh user
+        person.force_reload(True) # refresh user
         return result
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
@@ -257,6 +261,7 @@ class PersonTopics(PersonAuthBase):
                                      parent=person)
         else:
             tOpt.update({field:state})
+        person.force_reload(True) # refresh user
         return 1
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
@@ -273,6 +278,7 @@ class PersonSubscriptions(PersonAuthBase):
                                      parent=person)
         else:
             sub.update({field:state})
+        person.force_reload(True) # refresh user
         return 1
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
