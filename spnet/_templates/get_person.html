@@ -3,10 +3,22 @@
 <head>
 <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
 <title> {{- person.name -}} </title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+</script>
 
 <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
 </script>
 
+<script type="text/javascript">
+function setPriority(subcoll, topicID, field, state)
+{
+  $.post("/people/ {{- person._id -}}" + subcoll + topicID,
+  {
+    field:field,
+    state:state
+  });
+}
+</script>
 </head>
 
 <body>
@@ -82,6 +94,33 @@ them an invitation post).<br>
   title="Click to recommend this paper on Google+">
   Post Invitation
 </button>
+
+<h3>Your Subscription Settings</h3>
+<TABLE BORDER=1>
+<TR><TH>Your Topics</TH><TH>From Your Subscriptions</TH><TH>From Others</TH></TR>
+{% for i,t in enumerate(person.get_topics()) %}
+<TR><TD><A HREF="/topics/{{- t[0] -}}">
+{{ '#' + t[0] }}
+</A></TD><TD>
+{{ Selection('mine%d' % i, [('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=t[1], onchange="setPriority('/topics/', '%s', 'fromMySubs', this.value)" % t[0]) }}
+</TD><TD>
+{{ Selection('other%d' % i, [('same', 'Same Priority'), ('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=t[2], onchange="setPriority('/topics/', '%s', 'fromOthers', this.value)" % t[0]) }}
+</TD></TR>
+{% endfor %}
+</TABLE>
+<BR>
+<TABLE BORDER=1>
+<TR><TH>Your Subscriptions</TH><TH>On Your Topics</TH><TH>On Other Topics</TH></TR>
+{% for i,sub in enumerate(person.subscriptions) %}
+<TR><TD><A HREF="{{- sub.author.get_value('local_url') -}}">
+{{ sub.author.name }}
+</A></TD><TD>
+{{ Selection('sub%d' % i, [('topic', 'Topic Priority'), ('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=getattr(sub, 'onMyTopics', 'topic'), onchange="setPriority('/subscriptions/', '%s', 'onMyTopics', this.value)" % sub.author._id) }}
+</TD><TD>
+{{ Selection('subother%d' % i, [('same', 'Same Priority'), ('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=getattr(sub, 'onOthers', 'same'), onchange="setPriority('/subscriptions/', '%s', 'onOthers', this.value)" % sub.author._id) }}
+</TD></TR>
+{% endfor %}
+</TABLE>
 
 {% endif %}
 {% endif %}
