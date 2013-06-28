@@ -117,7 +117,7 @@ them an invitation post).<br>
 </A></TD><TD>
 {{ Selection('sub%d' % i, [('topic', 'Topic Priority'), ('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=getattr(sub, 'onMyTopics', 'topic'), onchange="setPriority('/subscriptions/', '%s', 'onMyTopics', this.value)" % sub.author._id) }}
 </TD><TD>
-{{ Selection('subother%d' % i, [('same', 'Same Priority'), ('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=getattr(sub, 'onOthers', 'same'), onchange="setPriority('/subscriptions/', '%s', 'onOthers', this.value)" % sub.author._id) }}
+{{ Selection('subother%d' % i, [('high', 'High Priority'), ('medium', 'Medium Priority'), ('low', 'Lower Priority'), ('hide', "Don't Show"), ], selected=getattr(sub, 'onOthers', 'low'), onchange="setPriority('/subscriptions/', '%s', 'onOthers', this.value)" % sub.author._id) }}
 </TD></TR>
 {% endfor %}
 </TABLE>
