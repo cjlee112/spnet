@@ -420,10 +420,10 @@ class Person(Document):
         for topic in getattr(self, 'topics', ()):
             try:
                 tOpt = topicOptions[topic]
-                l.append((topic, getattr(tOpt, 'fromMySubs', 'low'),
+                l.append((topic, getattr(tOpt, 'fromMySubs', 'medium'),
                          getattr(tOpt, 'fromOthers', 'low')))
             except KeyError:
-                l.append((topic, 'low', 'low'))
+                l.append((topic, 'medium', 'low'))
         l.sort(lambda x,y:cmp(order.get(x[1], -1), order.get(y[1], -1)), 
                reverse=True)
         return l
