@@ -60,8 +60,24 @@ People &gt;
 </h1>
 
 {% if hasattr(person, 'gplus') %}
+{% if user == person %}
+<a href=" {{- person.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view your settings on Google+">
+<img src=" {{- person.gplus['image']['url'] -}} "></a>
+<button
+  class="g-interactivepost"
+  data-contenturl=" {{- user.get_spnet_url() -}} "
+  data-clientid=" {{- gplusClientID -}} "
+  data-cookiepolicy="single_host_origin"
+  data-prefilltext="I've subscribed to get your recommendations and comments on research papers via SelectedPapers.net.  To use this, just include hashtags in your posts (e.g. #spnetwork arXiv:1301.4176, for details see http://docs.selectedpapers.net/tags.html) or simply have SelectedPapers.net insert the appropriate hashtags in your posts for you.  It works automatically with your Google+ sign-in.  You can also use this to find and filter paper recommendations from others who share your interests."
+  data-calltoactionlabel="VIEW"
+  data-calltoactionurl=" {{- user.get_spnet_url() -}} "
+  title="Click here to invite your contacts on Google+ to share their comments and recommendations on papers with you via SelectedPapers.net">
+  Invite your contacts
+</button>
+{% else %}
 <a href=" {{- person.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
 <img src=" {{- person.gplus['image']['url'] -}} ">Subscribe</a>
+{% endif %}
 <form id="updater" method="GET" action=" {{- person.get_local_url() -}} ">
 <input type="hidden" name="getUpdates" value="1"/>
 Check
@@ -78,24 +94,23 @@ title="retrieve latest posts and recommendations from this person via Google+" /
 </form>
 
 {% if user == person %}
-<h3>Invitations</h3>
-Would you like to invite your contacts on Google+ to share
-their comments and recommendations on papers with you via SelectedPapers.net?
-(This will simply bring up a Google+ window where you can send
-them an invitation post).<br>
-<button
-  class="g-interactivepost"
-  data-contenturl=" {{- user.get_spnet_url() -}} "
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="I've subscribed to get your recommendations and comments on research papers via SelectedPapers.net.  To use this, just include hashtags in your posts (e.g. #spnetwork arXiv:1301.4176, for details see http://docs.selectedpapers.net/tags.html) or simply have SelectedPapers.net insert the appropriate hashtags in your posts for you.  It works automatically with your Google+ sign-in.  You can also use this to find and filter paper recommendations from others who share your interests."
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- user.get_spnet_url() -}} "
-  title="Click to recommend this paper on Google+">
-  Post Invitation
-</button>
-
 <h3>Your Subscription Settings</h3>
+The paper recommendations shown for you when you login
+provide an intersection of people and ideas.
+SelectedPapers.net lets you filter paper recommendations based on both 
+what they're about (<B>topics</B> that interest you)
+and who they're from (<B>people</B> whose judgment you trust).
+It lets you combine these filters in flexible ways. 
+For example, for a very general topic (only some of whose posts are
+of interest to you), you could filter it to only show recommendations
+from people you've subscribed to (set its <B>From Others -> Don't Show</B>).
+Similarly, if you're subscribed to someone who also writes on topics
+that don't excite you, filter those out (set that person's 
+<B>On Other Topics -> Don't Show</B>).  
+Priority settings determine whether a recommendation is
+shown higher or lower in the list.
+<B>Your Topics</B> include topics you've posted on or tagged as interesting.
+<BR/>
 <TABLE BORDER=1>
 <TR><TH>Your Topics</TH><TH>From Your Subscriptions</TH><TH>From Others</TH></TR>
 {% for i,t in enumerate(person.get_topics()) %}
@@ -108,7 +123,7 @@ them an invitation post).<br>
 </TD></TR>
 {% endfor %}
 </TABLE>
-<BR>
+<BR/>
 <TABLE BORDER=1>
 <TR><TH>Your Subscriptions</TH><TH>On Your Topics</TH><TH>On Other Topics</TH></TR>
 {% for i,sub in enumerate(person.subscriptions) %}
@@ -121,6 +136,16 @@ them an invitation post).<br>
 </TD></TR>
 {% endfor %}
 </TABLE>
+<BR/>
+Your subscriptions above are based on your Google+ Circles
+(but only include people who have used or posted to selectedpapers.net).
+Note: you can add or remove people from your Google+ Circles on 
+<A HREF="https://plus.google.com/{{- user.gplus.id -}}/about"
+title="Edit your settings on Google+">
+your Google+ settings</A> (in the usual way).
+You can also invite your contacts on Google+ to share
+their comments and recommendations on papers with you via SelectedPapers.net,
+by clicking the <B>Invite your contacts</B> button at the top.
 
 {% endif %}
 {% endif %}
