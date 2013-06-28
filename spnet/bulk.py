@@ -1,4 +1,5 @@
 import core
+from datetime import datetime
 
 def find_people_topics():
     'construct dict of person:topics from Recs, Posts, PaperInterests'
@@ -62,14 +63,16 @@ def deliver_recs(topics, subs):
     for paperID, r in core.Recommendation.find(idOnly=False, parentID=True):
         author = r['author']
         sigs = r.get('sigs', ())
+        docData = {'paper':paperID, 'from':author, 'topics':sigs,
+                   'name':r.get('actor', {}).get('displayName', 'Unknown'),
+                   'published':r.get('published', datetime.utcnow()),
+                   'title':r.get('title', 'Paper Recommendation')}
         for personID in subs.get(author, ()): # deliver to subscribers
             core.Person.coll.update({'_id':personID},
-                {'$addToSet': {'received': 
-                               {'paper':paperID, 'from':author, 'topics':sigs}}})
+                                    {'$addToSet': {'received': docData}})
         for topic in sigs:
             for personID in topics.get(topic, ()): # deliver to subscribers
                 if personID == author: # don't deliver back to author!
                     continue
                 core.Person.coll.update({'_id':personID},
-                    {'$addToSet': {'received': 
-                              {'paper':paperID, 'from':author, 'topics':sigs}}})
+                                        {'$addToSet': {'received': docData}})
