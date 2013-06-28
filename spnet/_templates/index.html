@@ -51,39 +51,77 @@ Please give us your feedback</I>: either
 <A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
 specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
 or feature suggestions</A>.</p>
-{% if getattr(user, 'subscriptions', False) %}
 
-<h3>Your Subscriptions</h3>
+{% set recs = user.get_deliveries() %}
+{% if recs %}
+
+<h3 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
+Recommended For You</h3>
 
 <dl>
-{% for i,subscr in enumerate(user.subscriptions) %}
+{% for i,r in enumerate(recs) %}
 <dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- subscr.author.get_value('local_url') -}}">
-{{ subscr.author.name }}
-</A>
-{% if hasattr(subscr.author, 'gplus') %}
-<a href=" {{- subscr.author.get_local_url() -}} ?getUpdates=1" 
-title="retrieve latest posts and recommendations from this person via Google+">
-<button>Check Google+ for Updates</button></a>
-{% endif %}
+<A HREF="/people/{{- r['from'] -}}" 
+title="Click to view the person who wrote this recommendation">
+{{ r['name'] }}
+</A>: <A HREF="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
+title="Click to view this paper recommendation">
+{{ r['title'] }}</A> 
 </dt>
 <dd>
-{% for i,rec in enumerate(timesort(subscr.author.recommendations)) %}
-<li><A HREF="{{- rec.get_local_url() -}} ">{{ rec.title }}</A>:
 Recommended for:
-{% for topic in rec.sigs %}
-<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% for topic in r['topics'] %}
+<A HREF="/topics/{{- topic -}}"> {{ '#' + topic }} </A>
 {% endfor %}
-( {{- display_datetime(rec.published) -}} )
-</li>
-{% endfor %}
+( {{- display_datetime(r['published']) -}} )
 </dd>
 {% endfor %}
 </dl>
-{% else %}
+{% endif %}
 
+
+{% if user.interests %}
+<h3>Papers You Tagged as Interesting</h3>
+
+<dl>
+{% for i,interest in enumerate(user.interests) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="{{- interest.parent.get_value('local_url') -}}">
+{{ interest.parent.title }}
+</A>
+</dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(interest.parent.authorNames) }} 
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% endif %}
+
+
+{% if user.readingList %}
+<h3>Your Reading List</h3>
+
+<dl>
+{% for i,paper in enumerate(user.readingList[-1::-1]) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="{{- paper.get_value('local_url') -}}">
+{{ paper.title }}
+</A>
+</dt>
+<dd>
+<div class="list-authors">
+{{ ', '.join(paper.authorNames) }} 
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% endif %}
+
+{% if len(user.subscriptions) < 5 %}
 <h3>Invitations</h3>
-None of the people you're subscribed to on Google+ are using
+Few of the people you're subscribed to on Google+ are using
 SelectedPapers.net yet.  Would you like to invite them to share
 their comments and recommendations on papers with you this way?
 (This will simply bring up a Google+ window where you can send
@@ -101,40 +139,6 @@ them an invitation post).<br>
 </button>
 
 {% endif %}
-
-<h3>Papers You Tagged as Interesting</h3>
-
-<dl>
-{% for i,interest in enumerate(user.interests) %}
-<dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- interest.parent.get_value('local_url') -}}">
-{{ interest.parent.title }}
-</A>
-</dt>
-<dd>
-<div class="list-authors">
-{{ ', '.join(interest.parent.authorNames) }} 
-</div>
-</dd>
-{% endfor %}
-</dl>
-
-<h3>Your Reading List</h3>
-
-<dl>
-{% for i,paper in enumerate(user.readingList[-1::-1]) %}
-<dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- paper.get_value('local_url') -}}">
-{{ paper.title }}
-</A>
-</dt>
-<dd>
-<div class="list-authors">
-{{ ', '.join(paper.authorNames) }} 
-</div>
-</dd>
-{% endfor %}
-</dl>
 
 {% else %}
 <p>SelectedPapers.net is a free, open-source project aimed
