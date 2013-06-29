@@ -270,7 +270,10 @@ subscriptions = core.Person(mrID).subscriptions
 assert len(subscriptions) == 1
 assert subscriptions[0].author == gpd2.parent
 
-gpd2.update_posts() # retrieve some recs
+cjlposts = gpd2.update_posts(999) # retrieve some recs
+assert len(cjlposts) > 0 # got some
+assert len(core.Person(mrID).received) > 0 # and they were delivered
+assert len(core.Person(mrID).get_deliveries()) > 0 # and UI can retrieve them
 
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, thanks for your comments!  Your insights are really helpful.'),
