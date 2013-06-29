@@ -22,6 +22,11 @@ lorem = '''Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eius
 
 jojo = core.Person(docData=dict(name='jojo', age=37))
 assert jojo != None
+assert jojo.force_reload(delay=1) is False # set timer
+assert jojo.force_reload() is False # timer still waiting
+time.sleep(2)
+assert jojo.force_reload() # timer done
+
 a1 = core.EmailAddress(docData=dict(address='jojo@nowhere.edu', current=True),
                        parent=jojo)
 fred = core.Person(docData=dict(name='fred', age=56))

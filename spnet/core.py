@@ -5,6 +5,7 @@ from datetime import datetime
 import errors
 import thread
 import latex
+import time
 
 
 ##########################################################
@@ -466,9 +467,15 @@ class Person(Document):
                 l.append(r)
         l.sort(lambda x,y:cmp(x['priority'], y['priority']), reverse=True)
         return l
-    def force_reload(self, state=None):
+    def force_reload(self, state=None, delay=300):
         if state is not None:
             self._forceReload = state
+        else:
+            try: # check if timer has expired
+                if time.time() > self._reloadTime:
+                    return True # force reload
+            except AttributeError: # start the timer
+                self._reloadTime = time.time() + delay
         return getattr(self, '_forceReload', False)
                 
                     
