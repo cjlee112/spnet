@@ -439,7 +439,7 @@ class Person(Document):
             if fromMySubs > 0:
                 topics[topic] = (fromMySubs, fromOthers)
         subs = {}
-        for s in self.subscriptions:
+        for s in getattr(self, 'subscriptions', ()):
             subs[s._get_id()] = s
         priority = 0
         l = []
