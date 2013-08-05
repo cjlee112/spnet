@@ -105,6 +105,7 @@ def get_auth_user(auth, api):
     return api.get_user(username)
     
 def get_person(u, access_token):
+    import core
     try:
         p = core.Person.find_obj({'twitter.id_str':u.id_str}).next()
     except StopIteration: # no matching record

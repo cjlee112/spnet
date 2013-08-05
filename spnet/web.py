@@ -55,8 +55,8 @@ class Server(object):
         auth = twitter.complete_oauth(t[0], t[1], oauth_verifier)
         p, user, api = twitter.get_auth_person(auth)
         get_session()['person'] = p
-        get_session()['twitter_user'] = user
-        get_session()['twitter_api'] = api
+        self._twitter_user = user # just for hand testing
+        self._twitter_api = api # just for hand testing
         self.twitter_auth = auth # just for hand testing
         return 'Logged in to twitter'
     twitter_oauth.exposed = True
