@@ -2,6 +2,16 @@
 Ways to Get Involved
 ####################
 
+* write posts tagged #spnetwork and use the selectedpapers.net website (and if it won't do what you need, tell us).
+* spread the word whenever (and to whomever) this is relevant.  For example if you want to discuss a paper online with someone, why not do it including #spnetwork tags?
+* tell us how you want selectedpapers.net to work, e.g. right now there are 14 issues marked "needsInput" waiting for recommendations from users on various questions.
+* test our latest features and fixes as part of our ongoing release cycles.
+* be an ambassador: increasingly, selectedpapers.net needs to link up with organizations such as arXiv and MathOverflow to share data, work together etc.  This requires contacting the right people and discussing specific proposals (already we have a number such ideas in our issue tracker).  Other examples: should we write a Kickstarter funding proposal, or apply for foundation or agency funding?  Connect with other Open Science groups and projects?
+* identify aspects of the site that are confusing or poorly explained; write website text, documentation, FAQs.
+* start working with the spnet HTML, AJAX and Python code (easy example: look at the latest error logs and propose simple fixes to prevent those errors).
+* release cycle, website and database work: run test suites and user tests prior to release; deploy new release to the website.  Website security.  Mongodb database optimization, backup, security.
+* design and implement new features, using AJAX and Python code.
+
 By Using SelectedPapers.net
 ---------------------------
 
