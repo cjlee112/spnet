@@ -32,7 +32,7 @@ def init_connection(spnetUrlBase='https://selectedpapers.net', **kwargs):
         dbconn = DBConnection(connectDict, **kwargs)
     except ConnectionFailure:
         try:
-            with open('../data.json') as ifile:
+            with open('../mongodb/access.json') as ifile:
                 dbconfig = json.load(ifile)
         except IOError:
             print '''ERROR: default database connection failed and 
