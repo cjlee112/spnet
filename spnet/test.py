@@ -8,6 +8,8 @@ import apptree
 import incoming
 from datetime import datetime
 import time
+import sessioninfo
+import bulk
 
 # start test from a blank slate
 dbconn = connect.init_connection()
@@ -20,6 +22,11 @@ lorem = '''Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eius
 
 jojo = core.Person(docData=dict(name='jojo', age=37))
 assert jojo != None
+assert jojo.force_reload(delay=1) is False # set timer
+assert jojo.force_reload() is False # timer still waiting
+time.sleep(2)
+assert jojo.force_reload() # timer done
+
 a1 = core.EmailAddress(docData=dict(address='jojo@nowhere.edu', current=True),
                        parent=jojo)
 fred = core.Person(docData=dict(name='fred', age=56))
@@ -56,6 +63,7 @@ int1 = core.PaperInterest(docData=dict(author=jojo._id, topics=[sig1._id]),
 assert core.Paper(paper1._id).interests == [int1]
 assert core.Paper(paper1._id).get_interests() == {sig1._id:[jojo]}
 assert core.Person(jojo._id).interests == [int1]
+assert core.Person(jojo._id).topics == [sig1._id]
 assert core.SIG(sig1._id).interests == [int1]
 assert core.SIG(sig1._id).get_interests() == {paper1:[jojo]}
 
@@ -72,6 +80,7 @@ assert core.Paper(paper1._id).interests == []
 
 # test creation via POST
 paperLikes = rootColl['papers'].likes
+sessioninfo.get_session.sessionDict = dict(person=fred)
 int2 = paperLikes._POST(fred._id, sig2._id, '1',
                         parents=dict(paper=paper2))
 assert int2.parent == paper2
@@ -79,6 +88,7 @@ assert int2.author == fred
 assert int2.topics == [sig2]
 assert core.Paper(paper2._id).interests == [int2]
 assert core.Person(fred._id).interests == [int2]
+assert core.Person(fred._id).topics == [sig2._id]
 assert core.SIG(sig2._id).interests == [int2]
 try:
     paperLikes._POST(fred._id, 'this is not allowed', '1',
@@ -95,6 +105,7 @@ assert core.Paper(paper2._id).interests == []
 int3 = paperLikes._POST(fred._id, '#silicene', '1',
                         parents=dict(paper=paper2))
 assert core.SIG('silicene').interests == [int3]
+assert set(core.Person(fred._id).topics) == set([sig2._id, 'silicene'])
 
 
 gplus2 = core.GplusPersonData(docData=dict(id=1234, displayName='Joseph Nye'),
@@ -113,9 +124,11 @@ rec1 = core.Recommendation(docData=dict(author=fred._id,
 rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
                                         sigs=[sig1._id, sig2._id]),
                            parent=paper2._id)
+assert set(core.Person(jojo._id).topics) == set([sig1._id, sig2._id])
 
 post1 = core.Post(docData=dict(author=fred._id, text='interesting paper!',
                                id=98765, sigs=[sig1._id]), parent=paper1)
+assert set(core.Person(fred._id).topics) == set([sig1._id, sig2._id, 'silicene'])
 reply1 = core.Reply(docData=dict(author=jojo._id, text='I disagree with Fred.',
                                  id=7890, replyTo=98765), parent=paper1)
 
@@ -262,7 +275,10 @@ subscriptions = core.Person(mrID).subscriptions
 assert len(subscriptions) == 1
 assert subscriptions[0].author == gpd2.parent
 
-gpd2.update_posts() # retrieve some recs
+cjlposts = gpd2.update_posts(999) # retrieve some recs
+assert len(cjlposts) > 0 # got some
+assert len(core.Person(mrID).received) > 0 # and they were delivered
+assert len(core.Person(mrID).get_deliveries()) > 0 # and UI can retrieve them
 
 recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       text='Fred, thanks for your comments!  Your insights are really helpful.'),
@@ -324,3 +340,8 @@ assert incoming.get_hashtag_dict(txt)['paper'] == [spnetPaper]
 t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
 d = incoming.get_hashtag_dict(t)
 assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [spnetPaper], 'rec': ['recommend']}
+
+topics, subs = bulk.get_people_subs()
+bulk.deliver_recs(topics, subs)
+assert len(core.Person(jojo._id).received) == 2
+assert len(core.Person(fred._id).received) == 1

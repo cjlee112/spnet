@@ -5,6 +5,7 @@ from datetime import datetime
 import errors
 import thread
 import latex
+import time
 
 
 ##########################################################
@@ -104,6 +105,21 @@ def get_replies(self):
         if r._dbDocDict['replyTo'] == docID:
             yield r
 
+def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
+    'wrap insert() or update() to insert topics into author Person record'
+    try:
+        topics = d[attr]
+    except KeyError:
+        pass
+    else:
+        try:
+            personID = d[personAttr]
+        except KeyError:
+            personID = self._dbDocDict[personAttr]
+        Person.coll.update({'_id': personID},
+                           {'$addToSet': {'topics': {'$each':topics}}})
+    return getattr(super(self.__class__, self), method)(d)
+
 class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
@@ -115,6 +131,8 @@ class Recommendation(ArrayDocument, AuthorInfo):
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
 
     get_replies = get_replies
+    insert = lambda self,d:report_topics(self, d)
+    update = lambda self,d:report_topics(self, d, method='update')
     def get_local_url(self):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
@@ -127,12 +145,14 @@ class Post(UniqueArrayDocument, AuthorInfo):
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     get_replies = get_replies
+    insert = lambda self,d:report_topics(self, d)
+    update = lambda self,d:report_topics(self, d, method='update')
 
 def fetch_post_or_rec(obj, fetchID):
-    for post in obj.parent.posts:
+    for post in getattr(obj.parent, 'posts', ()):
         if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
             return post
-    for rec in obj.parent.recommendations:
+    for rec in getattr(obj.parent, 'recommendations', ()):
         if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
             return rec
     raise KeyError('No post or rec found with id=' + str(fetchID))
@@ -152,6 +172,8 @@ class PaperInterest(ArrayDocument):
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     topics = LinkDescriptor('topics', fetch_sigs, missingData=())
+    insert = lambda self,d:report_topics(self, d, 'topics')
+    update = lambda self,d:report_topics(self, d, 'topics', method='update')
     def add_topic(self, topic):
         topics = set(self._dbDocDict.get('topics', ()))
         topics.add(topic)
@@ -231,17 +253,10 @@ class SIG(Document):
         return '/topics/' + str(self._id)
 
 
-# current unused
-class SIGLink(ArrayDocument):
-    _dbfield = 'sigs.sig' # dot.name for updating
-    sig = LinkDescriptor('sig', fetch_sig)
-    parent = LinkDescriptor('parent', fetch_parent_person, noData=True)
 
-    def _add_merge(self, other):
-        try:
-            self._mergeLinks.append(other)
-        except AttributeError:
-            self._mergeLinks = [other]
+class TopicOptions(ArrayDocument):
+    _dbfield = 'topicOptions.topic' # dot.name for updating
+    topic = LinkDescriptor('topic', fetch_sig)
 
 class GplusPersonData(EmbeddedDocument):
     'store Google+ data for a user as subdocument of Person'
@@ -365,7 +380,7 @@ class Person(Document):
         email=SaveAttrList(EmailAddress, insertNew=False),
         gplus=SaveAttr(GplusPersonData, insertNew=False),
         subscriptions = SaveAttrList(Subscription, insertNew=False),
-        ## sigs=SaveAttrList(SIGLink, postprocess=merge_sigs, insertNew=False),
+        topicOptions = SaveAttrList(TopicOptions, insertNew=False),
         )
 
     def authenticate(self, password):
@@ -398,6 +413,72 @@ class Person(Document):
                 personID = p['_id']
                 Subscription((personID, self._id), docData=docData,
                              parent=personID, insertNew='findOrInsert')
+    def get_topics(self, order = dict(hide=0, low=1, medium=2, high=3)):
+        topicOptions = {}
+        for tOpt in getattr(self, 'topicOptions', ()):
+            topicOptions[tOpt._dbDocDict['topic']] = tOpt
+        l = []
+        for topic in getattr(self, 'topics', ()):
+            try:
+                tOpt = topicOptions[topic]
+                l.append((topic, getattr(tOpt, 'fromMySubs', 'medium'),
+                         getattr(tOpt, 'fromOthers', 'low')))
+            except KeyError:
+                l.append((topic, 'medium', 'low'))
+        l.sort(lambda x,y:cmp(order.get(x[1], -1), order.get(y[1], -1)), 
+               reverse=True)
+        return l
+    def get_deliveries(self, order = dict(hide=0, low=1, medium=2, high=3)):
+        topics = {}
+        for topic, fromMySubs, fromOthers in self.get_topics():
+            fromMySubs = order[fromMySubs]
+            if fromOthers == 'same':
+                fromOthers = fromMySubs
+            else:
+                fromOthers = order[fromOthers]
+            if fromMySubs > 0:
+                topics[topic] = (fromMySubs, fromOthers)
+        subs = {}
+        for s in getattr(self, 'subscriptions', ()):
+            subs[s._get_id()] = s
+        priority = 0
+        l = []
+        for r in getattr(self, 'received', ()):
+            try:
+                sub = subs[r['from']]
+                i = 0
+            except KeyError:
+                sub = None
+                i = 1
+            for topic in r['topics']:
+                try:
+                    priority = max(priority, topics[topic][i])
+                except KeyError:
+                    pass
+            if sub:
+                if priority > 0:
+                    level = getattr(sub, 'onMyTopics', 'topic')
+                else:
+                    level = getattr(sub, 'onOthers', 'low')
+                if level != 'topic':
+                    priority = max(priority, order[level])
+            if priority > 0:
+                r['priority'] = priority
+                l.append(r)
+        l.sort(lambda x,y:cmp(x['priority'], y['priority']), reverse=True)
+        return l
+    def force_reload(self, state=None, delay=300):
+        if state is not None:
+            self._forceReload = state
+        else:
+            try: # check if timer has expired
+                if time.time() > self._reloadTime:
+                    return True # force reload
+            except AttributeError: # start the timer
+                self._reloadTime = time.time() + delay
+        return getattr(self, '_forceReload', False)
+                
+                    
 
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'

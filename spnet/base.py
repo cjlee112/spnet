@@ -426,12 +426,16 @@ class ArrayDocument(EmbeddedDocBase):
         if idOnly:
             fields = {klass._dbfield:1}
         arrayField, keyField = klass._dbfield.split('.')
+        if not fields: # get this array
+            fields = {arrayField:1}
         filters = []
         for k,v in queryDict.items():
             queryFields = k.split('.')
             if queryFields[0] == arrayField:
                 filters.append((queryFields[1], v))
-        for d in klass.coll.find(queryDict, fields, **kwargs):
+        if not queryDict: # get docs containing this array
+            queryDict = {arrayField: {'$exists':True}}
+        for d in klass.coll.find(queryDict, fields, **kwargs): # query db
             try:
                 array = d[arrayField]
             except KeyError:
@@ -450,8 +454,7 @@ class ArrayDocument(EmbeddedDocBase):
     def find_obj(klass, queryDict={}, **kwargs):
         'same as find() but returns objects'
         arrayField = klass._dbfield.split('.')[0]
-        for parentID, d in klass.find(queryDict, {arrayField:1},
-                                      False, True, **kwargs):
+        for parentID, d in klass.find(queryDict, None, False, True, **kwargs):
             yield klass(docData=d, parent=parentID, insertNew=False)
 
     @classmethod

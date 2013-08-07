@@ -5,7 +5,7 @@ import gplus
 import errors
 from bson import ObjectId
 import json
-import cherrypy
+from sessioninfo import get_session
 from urllib import urlencode
 
 
@@ -14,25 +14,27 @@ class ArrayDocCollection(rest.Collection):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
 
 class InterestCollection(ArrayDocCollection):
+    '/papers/PAPER/likes/PERSON REST interface for AJAX calls'
+    def check_permission(self, method, personID, *args, **kwargs):
+        if method == 'GET': # permitted
+            return False
+        try:
+            if personID != get_session()['person']._id:
+                return view.report_error('TRAP set_interest by different user!', 403,
+                                      "You cannot change someone else's settings!")
+        except (KeyError,AttributeError):
+            return view.report_error('TRAP set_interest, not logged in!', 401,
+                                     'You must log in to access this interface')
     def _POST(self, personID, topic, state, parents, topic2=''):
         'add or remove topic from PaperInterest depending on state'
         topic = topic or topic2 # use whichever is non-empty
         topic = core.SIG.standardize_id(topic) # must follow hashtag rules
         personID = ObjectId(personID)
-        try:
-            if personID != cherrypy.session['person']._id:
-                s = view.report_error('TRAP set_interest by different user!', 403,
-                                      "You cannot change someone else's settings!")
-                return rest.Response(s)
-        except KeyError:
-            s = view.report_error('TRAP set_interest, not logged in!', 401,
-                                  'You must log in to access this interface')
-            return rest.Response(s)
         state = int(state)
         if state: # make sure topic exists
             sig = core.SIG.find_or_insert(topic)
         interest = self.set_interest(personID, topic, state, parents)
-        cherrypy.session['person'] = core.Person(personID) # refresh user
+        get_session()['person'].force_reload(True) # refresh user
         return interest
     def set_interest(self, personID, topic, state, parents):
         try:
@@ -94,7 +96,7 @@ class PaperCollection(rest.Collection):
 class ParentCollection(rest.Collection):
     def _GET(self, docID, parents=None):
         try: # use cached query results if present
-            queryResults = cherrypy.session['queryResults']
+            queryResults = get_session()['queryResults']
         except (AttributeError, KeyError):
             pass
         else:
@@ -128,7 +130,7 @@ class ArxivCollection(ParentCollection):
         ipage = int(ipage)
         block_size = int(block_size)
         if session is None:
-            session = cherrypy.session
+            session = get_session()
         if searchID: # just get this ID
             return ParentCollection._search(self, searchID)
         if not searchString:
@@ -164,7 +166,7 @@ class PubmedCollection(ParentCollection):
         ipage = int(ipage)
         block_size = int(block_size)
         try: # get from existing query results
-            queryResults = cherrypy.session['queryResults']
+            queryResults = get_session()['queryResults']
             if queryResults.get_page(ipage, self.collectionArgs['uri'],
                                      searchString=searchString):
                 return queryResults
@@ -188,14 +190,18 @@ paste it in the search box on this page.'''
                                   % urlencode(dict(searchType='ncbipubmed',
                                                    searchString=searchString)))
             return rest.Response(s)
-        cherrypy.session['queryResults'] = queryResults # keep for this user
+        get_session()['queryResults'] = queryResults # keep for this user
         return queryResults
         
 
 
 class PersonCollection(rest.Collection):
     def _GET(self, docID, getUpdates=False, timeframe=None, **kwargs):
-        person = rest.Collection._GET(self, docID, **kwargs)
+        user = get_session().get('person', None)
+        if user and docID == user._id:
+            person = user # use cached Person object so we can mark it for refresh
+        else:
+            person = rest.Collection._GET(self, docID, **kwargs)
         if getUpdates:
             try:
                 gpd = person.gplus
@@ -210,7 +216,22 @@ class PersonCollection(rest.Collection):
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
 
-class ReadingList(rest.Collection):
+class PersonAuthBase(rest.Collection):
+    'only allow logged-in user to POST his own settings'
+    def check_permission(self, method, *args, **kwargs):
+        if method == 'GET': # permitted
+            return False
+        user = get_session().get('person', None)
+        if not user:
+            return view.report_error('TRAP set_interest, not logged in!', 401,
+                                     'You must log in to access this interface')
+        person = kwargs['parents'].values()[0]
+        if person != user:
+            return view.report_error('TRAP set_interest by different user!', 403,
+                                     "You cannot change someone else's settings!")
+
+class ReadingList(PersonAuthBase):
+    '/people/PERSON/reading/PAPER REST interface for AJAX calls'
     def _POST(self, paperID, state, parents):
         person = parents.values()[0]
         paperID = ObjectId(paperID)
@@ -224,13 +245,47 @@ class ReadingList(rest.Collection):
         else:
             person.array_del('readingList', paperID)
             result = -1
-        cherrypy.session['person'] = core.Person(person._id) # refresh user
+        person.force_reload(True) # refresh user
         return result
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
+
+class PersonTopics(PersonAuthBase):
+    '/people/PERSON/topics/TOPIC REST interface for AJAX calls'
+    def _POST(self, topic, field, state, parents):
+        person = parents.values()[0]
+        try:
+            tOpt = core.TopicOptions.find_obj_in_parent(person, topic)
+        except KeyError:
+            tOpt = core.TopicOptions(docData={'topic':topic, field:state}, 
+                                     parent=person)
+        else:
+            tOpt.update({field:state})
+        person.force_reload(True) # refresh user
+        return 1
+    def post_json(self, status, **kwargs):
+        return json.dumps(dict(status=status))
+
+class PersonSubscriptions(PersonAuthBase):
+    '/people/PERSON/subscriptions/PERSON REST interface for AJAX calls'
+    def _POST(self, author, field, state, parents):
+        person = parents.values()[0]
+        author = ObjectId(author)
+        try:
+            sub = core.Subscription.find_obj_in_parent(person, author)
+        except KeyError:
+            sub = core.Subscription(docData={'author':author, field:state}, 
+                                     parent=person)
+        else:
+            sub.update({field:state})
+        person.force_reload(True) # refresh user
+        return 1
+    def post_json(self, status, **kwargs):
+        return json.dumps(dict(status=status))
+
     
 def get_collections(templateDir='_templates'):
-    gplusClientID = gplus.get_keys()['client_ID'] # most templates need this
+    gplusClientID = gplus.get_keys()['client_id'] # most templates need this
     templateEnv = view.get_template_env(templateDir)
     view.report_error.bind_template(templateEnv, 'error.html') # error page
 
@@ -265,6 +320,13 @@ def get_collections(templateDir='_templates'):
     readingList = ReadingList('reading', core.Paper, templateEnv, templateDir,
                               gplusClientID=gplusClientID)
     people.reading = readingList
+    personTopics = PersonTopics('topics', core.SIG, templateEnv, templateDir,
+                                gplusClientID=gplusClientID)
+    people.topics = personTopics
+    personSubs = PersonSubscriptions('subscriptions', core.Subscription, 
+                                     templateEnv, templateDir,
+                                     gplusClientID=gplusClientID)
+    people.subscriptions = personSubs
     topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 

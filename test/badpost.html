@@ -1,0 +1,20 @@
+<html>
+<body>
+<h1>test illegal subscription settings
+<form method="POST" action="http://localhost:8000/people/51cdd80c67e92c3129ecc6bf/topics/silicene">
+<input type="hidden" name="field" value="fromMySubs"/>
+<input type="hidden" name="state" value="high"/>
+<input type="submit" value="Test!" /><br />
+</form>
+
+
+<h1>test illegal PaperInterest
+<form method="POST" action="http://localhost:8000/papers/51cdd80c67e92c3129ecc6be/likes/51cdd80c67e92c3129ecc6bf">
+<input type="hidden" name="topic" value="silicene"/>
+<input type="hidden" name="state" value="1"/>
+<input type="submit" value="Test!" /><br />
+</form>
+
+
+</body>
+</html>

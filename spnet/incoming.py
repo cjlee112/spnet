@@ -2,6 +2,7 @@ import re
 import core
 import errors
 from datetime import datetime
+import bulk
 
 #################################################################
 # hashtag processors
@@ -175,6 +176,12 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                                  timeStamp, source)
         if post is None: # save to DB
             post = klass(docData=d, parent=paper)
+            if isRec:
+                try:
+                    topicsDict
+                except NameError:
+                    topicsDict, subsDict = bulk.get_people_subs()
+                bulk.deliver_rec(paper._id, d, topicsDict, subsDict)
             if recentEvents is not None: # add to monitor deque
                 saveEvents.append(post)
         else: # update DB with new data and etag
