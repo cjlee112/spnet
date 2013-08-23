@@ -4,6 +4,13 @@
     <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
     <title>SelectedPapers.net</title>
     <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
+    <script type="text/javascript">
+    (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/client:plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+    </script>
 </head>
 
 <body>
@@ -14,7 +21,7 @@
     Welcome,
     <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
     {% else %}
-    <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
+    <a href="/gplus_login"><img SRC="/images/White-signin_Long_base_20dp.png"/></a>
     {% endif %}
     </h1>
     <form id="search" method="GET" action="/papers">
@@ -44,13 +51,13 @@
 
 <div id="content">
     {% if user %}
-    <p>Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
-    LaTeX equations are now supported.</A>
-    <I>This is an initial, alpha release of SelectedPapers.net.
-    Please give us your feedback</I>: either 
-    <A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
-    specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
-    or feature suggestions</A>.</p>
+    <p>Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
+    LaTeX equations are now supported.</a>
+    <i>This is an initial, alpha release of SelectedPapers.net.
+    Please give us your feedback</i>: either 
+    <a href="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</a> or 
+    specific <a href="https://github.com/cjlee112/spnet/issues">new bug reports
+    or feature suggestions</a>.</p>
 
     {% set recs = user.get_deliveries() %}
     {% if recs %}
@@ -62,17 +69,17 @@
         {% for i,r in enumerate(recs) %}
         <dt>
             [ {{- i + 1 -}} ]:
-            <A HREF="/people/{{- r['from'] -}}" 
+            <a href="/people/{{- r['from'] -}}" 
             title="Click to view the person who wrote this recommendation">
             {{ r['name'] }}
-            </A>: <A HREF="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
+            </a>: <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
             title="Click to view this paper recommendation">
-            {{ r['title'] }}</A> 
+            {{ r['title'] }}</a> 
         </dt>
         <dd>
             Recommended for:
             {% for topic in r['topics'] %}
-            <A HREF="/topics/{{- topic -}}"> {{ '#' + topic }} </A>
+            <a href="/topics/{{- topic -}}"> {{ '#' + topic }} </a>
             {% endfor %}
             ( {{- display_datetime(r['published']) -}} )
         </dd>
@@ -86,9 +93,9 @@
     <dl>
         {% for i,interest in enumerate(user.interests) %}
         <dt>[ {{- i + 1 -}} ]:
-            <A HREF="{{- interest.parent.get_value('local_url') -}}">
+            <a href="{{- interest.parent.get_value('local_url') -}}">
             {{ interest.parent.title }}
-            </A>
+            </a>
         </dt>
         <dd>
             <div class="list-authors">
@@ -105,9 +112,9 @@
     <dl>
         {% for i,paper in enumerate(user.readingList[-1::-1]) %}
         <dt>[ {{- i + 1 -}} ]:
-            <A HREF="{{- paper.get_value('local_url') -}}">
+            <a href="{{- paper.get_value('local_url') -}}">
             {{ paper.title }}
-            </A>
+            </a>
         </dt>
         <dd>
             <div class="list-authors">
@@ -146,25 +153,25 @@
     <p>By looking at the intersection of <strong>people</strong> and <strong>ideas</strong>,
     we can help deliver content specifically tuned to your interests.  But we're just getting started, 
     and we can use your help.
-    <I>This is an initial, alpha release of SelectedPapers.net.
-    Please give us your feedback</I>: either 
-    <A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
-    specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
-    or feature suggestions</A>.
-    Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
-    LaTeX equations are now supported.</A>
+    <i>This is an initial, alpha release of SelectedPapers.net.
+    Please give us your feedback</i>: either 
+    <a href="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</a> or 
+    specific <a href="https://github.com/cjlee112/spnet/issues">new bug reports
+    or feature suggestions</a>.
+    Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
+    LaTeX equations are now supported.</a>
     </p>
 
     <p>Give it a try by signing in below,
     or learn more about how it works.</p>
 
-    <A HREF="/gplus_login"><IMG SRC="/images/Red-signin_Long_base_20dp.png"></A>
+    <a href="/gplus_login"><img SRC="/images/Red-signin_Long_base_20dp.png"></a>
 
     <P>More details:
     <UL>
-        <LI><A HREF="http://docs.selectedpapers.net/intro.html">How it works.</A></LI>
-        <LI><A HREF="http://www.huffingtonpost.com/travis-korte/elsevier-boycott-mathematicians-network_b_1346365.html">The Huffington Post article.</A></LI>
-        <LI><A HREF="/shortDOI/fzkjw8">The theory behind it.</A></LI>
+        <li><a href="http://docs.selectedpapers.net/intro.html">How it works.</a></li>
+        <li><a href="http://www.huffingtonpost.com/travis-korte/elsevier-boycott-mathematicians-network_b_1346365.html">The Huffington Post article.</a></li>
+        <li><a href="/shortDOI/fzkjw8">The theory behind it.</a></li>
     </UL></P>
     {% endif %}
 
@@ -173,10 +180,10 @@
         {% for e in recentEvents %}
         {% if e.__class__.__name__ == 'Post' %}
         <dt>
-            <A HREF="{{- e.author.get_local_url() -}}">
+            <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
-            </A> commented on
-            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            </a> commented on
+            <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
         </dt>
         <dd>
@@ -191,10 +198,10 @@
 
         {% elif e.__class__.__name__ == 'Reply' %}
         <dt>
-            <A HREF="{{- e.author.get_local_url() -}}">
+            <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
-            </A> replied RE: 
-            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            </a> replied RE: 
+            <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
         </dt>
         <dd>
@@ -205,10 +212,10 @@
 
         {% elif e.__class__.__name__ == 'Recommendation' %}
         <dt>
-            <A HREF="{{- e.author.get_local_url() -}}">
+            <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
-            </A>: <A HREF="{{- e.get_local_url() -}} ">
-            {{ e.title or 'Paper Recommendation' }}</A> 
+            </a>: <a href="{{- e.get_local_url() -}} ">
+            {{ e.title or 'Paper Recommendation' }}</a> 
             ( {{- display_datetime(e.published) -}} )
             <a href="https://plus.google.com/share? {{- urlencode(dict(url=e.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
             <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
@@ -219,13 +226,13 @@
         </dt>
         <dd>
             <span class="list-identifier">Recommended 
-            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             {% if e.sigs %}
-            <LI>Recommended for topics:
+            <li>Recommended for topics:
             {% for topic in e.sigs %}
-            <A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+            <a href="{{- topic.get_local_url() -}}"> {{ topic.name }} </a>
             {% endfor %}
-            </LI>
+            </li>
             {% endif %}
             </span>
             <div class="list-comments">
@@ -236,7 +243,7 @@
 
         {% elif e.__class__.__name__ == 'SIG' %}
         <dt>
-            <A href="{{- e.get_local_url() -}}">{{- e.name -}} </A>
+            <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>
         </dt>
         <dd>
             <div class="list-comments">
@@ -248,14 +255,5 @@
     </dl>
 </div>
 
-
-
-<script type="text/javascript">
-  (function() {
-   var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
-   po.src = 'https://apis.google.com/js/client:plusone.js';
-   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
- })();
-</script>
 </body>
 </html>
