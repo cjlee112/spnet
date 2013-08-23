@@ -1,249 +1,251 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
-<title>SelectedPapers.net</title>
-
-<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
-</script>
-
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
+    <title>SelectedPapers.net</title>
+    <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 </head>
 
 <body>
 
 <div id="header">
-<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
-{% if user %}
-Welcome,
-<a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
-{% else %}
-<A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
-{% endif %}
-</h1>
-<form id="search" method="GET" action="/papers">
-<div class="search-for">Search or Article-id</div>
-<div class="links">(<a href="http://docs.selectedpapers.net">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
-{% if user %}
- | <a href="/signout">Signout</a>
-{% endif %}
-</div>
-<input type="text" name="searchString" size="24" maxlength="256" />
-&nbsp;
-<select name="searchType">
-<option value="arxiv" selected="selected">arXiv</option>
-<option value="arxivID">arXiv ID</option>
-<option value="DOI">DOI</option>
-<option value="shortDOI">Short DOI</option>
-<option value="PMID">Pubmed ID</option>
-<option value="pubmed">Pubmed</option>
-<option value="ncbipubmed">Pubmed (ncbi)</option>
-</select>
-<input type="submit" value="Go!" /><br />
-</form>
+    <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+    {% if user %}
+    Welcome,
+    <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
+    {% else %}
+    <A HREF="/gplus_login"><IMG SRC="/images/White-signin_Long_base_20dp.png"></A>
+    {% endif %}
+    </h1>
+    <form id="search" method="GET" action="/papers">
+        <div class="search-for">
+            Search or Article-id
+        </div>
+        <div class="links">
+            (<a href="http://docs.selectedpapers.net">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
+            {% if user %}
+            | <a href="/signout">Signout</a>
+            {% endif %}
+        </div>
+        <input type="text" name="searchString" size="24" maxlength="256" />
+        &nbsp;
+        <select name="searchType">
+        <option value="arxiv" selected="selected">arXiv</option>
+        <option value="arxivID">arXiv ID</option>
+        <option value="DOI">DOI</option>
+        <option value="shortDOI">Short DOI</option>
+        <option value="PMID">Pubmed ID</option>
+        <option value="pubmed">Pubmed</option>
+        <option value="ncbipubmed">Pubmed (ncbi)</option>
+        </select>
+        <input type="submit" value="Go!" /><br />
+    </form>
 </div>
 
 <div id="content">
-{% if user %}
-<p>Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
-LaTeX equations are now supported.</A>
-<I>This is an initial, alpha release of SelectedPapers.net.
-Please give us your feedback</I>: either 
-<A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
-specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
-or feature suggestions</A>.</p>
+    {% if user %}
+    <p>Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
+    LaTeX equations are now supported.</A>
+    <I>This is an initial, alpha release of SelectedPapers.net.
+    Please give us your feedback</I>: either 
+    <A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
+    specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
+    or feature suggestions</A>.</p>
 
-{% set recs = user.get_deliveries() %}
-{% if recs %}
+    {% set recs = user.get_deliveries() %}
+    {% if recs %}
 
-<h3 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
-Recommended For You</h3>
+    <h3 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
+    Recommended For You</h3>
 
-<dl>
-{% for i,r in enumerate(recs) %}
-<dt>[ {{- i + 1 -}} ]:
-<A HREF="/people/{{- r['from'] -}}" 
-title="Click to view the person who wrote this recommendation">
-{{ r['name'] }}
-</A>: <A HREF="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
-title="Click to view this paper recommendation">
-{{ r['title'] }}</A> 
-</dt>
-<dd>
-Recommended for:
-{% for topic in r['topics'] %}
-<A HREF="/topics/{{- topic -}}"> {{ '#' + topic }} </A>
-{% endfor %}
-( {{- display_datetime(r['published']) -}} )
-</dd>
-{% endfor %}
-</dl>
-{% endif %}
+    <dl>
+        {% for i,r in enumerate(recs) %}
+        <dt>
+            [ {{- i + 1 -}} ]:
+            <A HREF="/people/{{- r['from'] -}}" 
+            title="Click to view the person who wrote this recommendation">
+            {{ r['name'] }}
+            </A>: <A HREF="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
+            title="Click to view this paper recommendation">
+            {{ r['title'] }}</A> 
+        </dt>
+        <dd>
+            Recommended for:
+            {% for topic in r['topics'] %}
+            <A HREF="/topics/{{- topic -}}"> {{ '#' + topic }} </A>
+            {% endfor %}
+            ( {{- display_datetime(r['published']) -}} )
+        </dd>
+        {% endfor %}
+    </dl>
+    {% endif %}
 
+    {% if user.interests %}
+    <h3>Papers You Tagged as Interesting</h3>
 
-{% if user.interests %}
-<h3>Papers You Tagged as Interesting</h3>
+    <dl>
+        {% for i,interest in enumerate(user.interests) %}
+        <dt>[ {{- i + 1 -}} ]:
+            <A HREF="{{- interest.parent.get_value('local_url') -}}">
+            {{ interest.parent.title }}
+            </A>
+        </dt>
+        <dd>
+            <div class="list-authors">
+                {{ ', '.join(interest.parent.authorNames) }} 
+            </div>
+        </dd>
+        {% endfor %}
+    </dl>
+    {% endif %}
 
-<dl>
-{% for i,interest in enumerate(user.interests) %}
-<dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- interest.parent.get_value('local_url') -}}">
-{{ interest.parent.title }}
-</A>
-</dt>
-<dd>
-<div class="list-authors">
-{{ ', '.join(interest.parent.authorNames) }} 
-</div>
-</dd>
-{% endfor %}
-</dl>
-{% endif %}
+    {% if user.readingList %}
+    <h3>Your Reading List</h3>
 
+    <dl>
+        {% for i,paper in enumerate(user.readingList[-1::-1]) %}
+        <dt>[ {{- i + 1 -}} ]:
+            <A HREF="{{- paper.get_value('local_url') -}}">
+            {{ paper.title }}
+            </A>
+        </dt>
+        <dd>
+            <div class="list-authors">
+            {{ ', '.join(paper.authorNames) }} 
+            </div>
+        </dd>
+        {% endfor %}
+    </dl>
+    {% endif %}
 
-{% if user.readingList %}
-<h3>Your Reading List</h3>
+    {% if len(user.subscriptions) < 5 %}
+    <h3>Invitations</h3>
+    Few of the people you're subscribed to on Google+ are using
+    SelectedPapers.net yet.  Would you like to invite them to share
+    their comments and recommendations on papers with you this way?
+    (This will simply bring up a Google+ window where you can send
+    them an invitation post).<br>
+    <button
+    class="g-interactivepost"
+    data-contenturl=" {{- user.get_spnet_url() -}} "
+    data-clientid=" {{- gplusClientID -}} "
+    data-cookiepolicy="single_host_origin"
+    data-prefilltext="I've subscribed to get your recommendations and comments on research papers via SelectedPapers.net.  To use this, just include hashtags in your posts (e.g. #spnetwork arXiv:1301.4176, for details see http://docs.selectedpapers.net/hashtags.html) or simply have SelectedPapers.net insert the appropriate hashtags in your posts for you.  It works automatically with your Google+ sign-in.  You can also use this to find and filter paper recommendations from others who share your interests."
+    data-calltoactionlabel="VIEW"
+    data-calltoactionurl=" {{- user.get_spnet_url() -}} "
+    title="Click to recommend this paper on Google+">
+    Post Invitation
+    </button>
 
-<dl>
-{% for i,paper in enumerate(user.readingList[-1::-1]) %}
-<dt>[ {{- i + 1 -}} ]:
-<A HREF="{{- paper.get_value('local_url') -}}">
-{{ paper.title }}
-</A>
-</dt>
-<dd>
-<div class="list-authors">
-{{ ', '.join(paper.authorNames) }} 
-</div>
-</dd>
-{% endfor %}
-</dl>
-{% endif %}
+    {% endif %}
 
-{% if len(user.subscriptions) < 5 %}
-<h3>Invitations</h3>
-Few of the people you're subscribed to on Google+ are using
-SelectedPapers.net yet.  Would you like to invite them to share
-their comments and recommendations on papers with you this way?
-(This will simply bring up a Google+ window where you can send
-them an invitation post).<br>
-<button
-  class="g-interactivepost"
-  data-contenturl=" {{- user.get_spnet_url() -}} "
-  data-clientid=" {{- gplusClientID -}} "
-  data-cookiepolicy="single_host_origin"
-  data-prefilltext="I've subscribed to get your recommendations and comments on research papers via SelectedPapers.net.  To use this, just include hashtags in your posts (e.g. #spnetwork arXiv:1301.4176, for details see http://docs.selectedpapers.net/hashtags.html) or simply have SelectedPapers.net insert the appropriate hashtags in your posts for you.  It works automatically with your Google+ sign-in.  You can also use this to find and filter paper recommendations from others who share your interests."
-  data-calltoactionlabel="VIEW"
-  data-calltoactionurl=" {{- user.get_spnet_url() -}} "
-  title="Click to recommend this paper on Google+">
-  Post Invitation
-</button>
+    {% else %}
+    <p>SelectedPapers.net is a free, open-source project aimed
+    at improving the way people find, read, and share academic papers. </p>
 
-{% endif %}
+    <p>By looking at the intersection of <strong>people</strong> and <strong>ideas</strong>,
+    we can help deliver content specifically tuned to your interests.  But we're just getting started, 
+    and we can use your help.
+    <I>This is an initial, alpha release of SelectedPapers.net.
+    Please give us your feedback</I>: either 
+    <A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
+    specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
+    or feature suggestions</A>.
+    Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
+    LaTeX equations are now supported.</A>
+    </p>
 
-{% else %}
-<p>SelectedPapers.net is a free, open-source project aimed
-at improving the way people find, read, and share academic papers. </p>
+    <p>Give it a try by signing in below,
+    or learn more about how it works.</p>
 
-<p>By looking at the intersection of <strong>people</strong> and <strong>ideas</strong>,
-we can help deliver content specifically tuned to your interests.  But we're just getting started, 
-and we can use your help.
-<I>This is an initial, alpha release of SelectedPapers.net.
-Please give us your feedback</I>: either 
-<A HREF="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</A> or 
-specific <A HREF="https://github.com/cjlee112/spnet/issues">new bug reports
-or feature suggestions</A>.
-Note: <A HREF="http://docs.selectedpapers.net/intro.html#latex">
-LaTeX equations are now supported.</A>
-</p>
+    <A HREF="/gplus_login"><IMG SRC="/images/Red-signin_Long_base_20dp.png"></A>
 
-<p>Give it a try by signing in below,
-or learn more about how it works.</p>
+    <P>More details:
+    <UL>
+        <LI><A HREF="http://docs.selectedpapers.net/intro.html">How it works.</A></LI>
+        <LI><A HREF="http://www.huffingtonpost.com/travis-korte/elsevier-boycott-mathematicians-network_b_1346365.html">The Huffington Post article.</A></LI>
+        <LI><A HREF="/shortDOI/fzkjw8">The theory behind it.</A></LI>
+    </UL></P>
+    {% endif %}
 
-<A HREF="/gplus_login"><IMG SRC="/images/Red-signin_Long_base_20dp.png"></A>
+    <h3>Recent Activity on SelectedPapers.net</h3>
+    <dl>
+        {% for e in recentEvents %}
+        {% if e.__class__.__name__ == 'Post' %}
+        <dt>
+            <A HREF="{{- e.author.get_local_url() -}}">
+            {{ e.author.name }}
+            </A> commented on
+            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            ( {{- display_datetime(e.published) -}} )
+        </dt>
+        <dd>
+            <div class="list-comments">
+                {{ e.get_text() }}
+                {% if hasattr(post, 'url') %}
+                <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+                <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+                {% endif %}
+            </div>
+        </dd>
 
-<P>More details:
-<UL>
-<LI><A HREF="http://docs.selectedpapers.net/intro.html">How it works.</A></LI>
-<LI><A HREF="http://www.huffingtonpost.com/travis-korte/elsevier-boycott-mathematicians-network_b_1346365.html">The Huffington Post article.</A></LI>
-<LI><A HREF="/shortDOI/fzkjw8">The theory behind it.</A></LI>
-</UL></P>
-{% endif %}
-
-<h3>Recent Activity on SelectedPapers.net</h3>
-<dl>
-{% for e in recentEvents %}
-{% if e.__class__.__name__ == 'Post' %}
-<dt>
-<A HREF="{{- e.author.get_local_url() -}}">
-{{ e.author.name }}
-</A> commented on
-<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
-( {{- display_datetime(e.published) -}} )
-</dt>
-<dd>
-<div class="list-comments">{{ e.get_text() }}
-{% if hasattr(post, 'url') %}
-<a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
-<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
-{% endif %}
-</div>
-</dd>
-
-{% elif e.__class__.__name__ == 'Reply' %}
-<dt>
-<A HREF="{{- e.author.get_local_url() -}}">
-{{ e.author.name }}
-</A> replied RE: 
-<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
-( {{- display_datetime(e.published) -}} )
-</dt>
-<dd>
-<div class="list-comments">{{ e.get_text() }}
-</div>
-</dd>
-
-
-{% elif e.__class__.__name__ == 'Recommendation' %}
-<dt>
-<A HREF="{{- e.author.get_local_url() -}}">
-{{ e.author.name }}
-</A>: <A HREF="{{- e.get_local_url() -}} ">
-{{ e.title or 'Paper Recommendation' }}</A> 
-( {{- display_datetime(e.published) -}} )
-<a href="https://plus.google.com/share? {{- urlencode(dict(url=e.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
-<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
-{% if hasattr(rec, 'url') %}
-<a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
-<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
-{% endif %}
-</dt>
-<dd>
-<span class="list-identifier">Recommended 
-<A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
-{% if e.sigs %}
-<LI>Recommended for topics:
-{% for topic in e.sigs %}
-<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
-{% endfor %}
-</LI>
-{% endif %}
-</span>
-<div class="list-comments">
-{{ e.get_text() }}
-</div>
-</dd>
+        {% elif e.__class__.__name__ == 'Reply' %}
+        <dt>
+            <A HREF="{{- e.author.get_local_url() -}}">
+            {{ e.author.name }}
+            </A> replied RE: 
+            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            ( {{- display_datetime(e.published) -}} )
+        </dt>
+        <dd>
+            <div class="list-comments">{{ e.get_text() }}
+            </div>
+        </dd>
 
 
-{% elif e.__class__.__name__ == 'SIG' %}
-<dt><A href="{{- e.get_local_url() -}}">{{- e.name -}} </A></dt>
-<dd>
-<div class="list-comments">
-new topic created ( {{- display_datetime(e.published) -}} )
-</div>
-</dd>
-{% endif %}
-{% endfor %}
-</dl>
+        {% elif e.__class__.__name__ == 'Recommendation' %}
+        <dt>
+            <A HREF="{{- e.author.get_local_url() -}}">
+            {{ e.author.name }}
+            </A>: <A HREF="{{- e.get_local_url() -}} ">
+            {{ e.title or 'Paper Recommendation' }}</A> 
+            ( {{- display_datetime(e.published) -}} )
+            <a href="https://plus.google.com/share? {{- urlencode(dict(url=e.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+            <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
+            {% if hasattr(rec, 'url') %}
+            <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+            <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+            {% endif %}
+        </dt>
+        <dd>
+            <span class="list-identifier">Recommended 
+            <A HREF="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</A>
+            {% if e.sigs %}
+            <LI>Recommended for topics:
+            {% for topic in e.sigs %}
+            <A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+            {% endfor %}
+            </LI>
+            {% endif %}
+            </span>
+            <div class="list-comments">
+            {{ e.get_text() }}
+            </div>
+        </dd>
+
+
+        {% elif e.__class__.__name__ == 'SIG' %}
+        <dt>
+            <A href="{{- e.get_local_url() -}}">{{- e.name -}} </A>
+        </dt>
+        <dd>
+            <div class="list-comments">
+            new topic created ( {{- display_datetime(e.published) -}} )
+            </div>
+        </dd>
+        {% endif %}
+        {% endfor %}
+    </dl>
 </div>
 
 
