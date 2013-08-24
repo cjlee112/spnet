@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
     <title>SelectedPapers.net</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/spnet.css" />
     <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
     <script type="text/javascript">
     (function() {
@@ -15,7 +16,7 @@
 
 <body>
 <div id="header">
-    <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> | 
+    <h1><img src="/favicon.ico"/> <a href="/">SelectedPapers.net</a> | 
     {% if user %}
     Welcome,
     <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>!
@@ -62,6 +63,7 @@
     
 <div class="bounded">
     {% if user %}
+    <h2>Your Selected Papers Network</h2>
     <!-- User is logged in -->
     {% set recs = user.get_deliveries() %}
     {% if recs %}
@@ -70,7 +72,7 @@
     <ol>
         {% for r in recs %}
         <li><a href="/people/{{- r['from'] -}}" title="Click to view the person who wrote this recommendation"> {{ r['name'] }}</a>:
-        <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}" title="Click to view this paper recommendation"> {{ r['title'] }}</a>  for:
+        <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}" title="Click to view this paper recommendation"> {{ r['title'] }}</a> for:
         {% for topic in r['topics'] %}<a href="/topics/{{- topic -}}"> {{ '#' + topic }}</a> {% endfor %}
         ( {{- display_datetime(r['published']) -}} )
         </li>
@@ -79,7 +81,7 @@
     {% endif %}
 
     {% if user.interests %}
-    <h2>Papers You Tagged as Interesting</h2>
+    <h3>Papers You Tagged as Interesting</h3>
     <ol>
         {% for interest in user.interests %}
         <li>
@@ -91,19 +93,19 @@
     {% endif %}
 
     {% if user.readingList %}
-    <h2>Your Reading List</h2>
+    <h3>Your Reading List</h3>
     <ol>
         {% for paper in user.readingList[-1::-1] %}
         <li>
             <a href="{{- paper.get_value('local_url') -}}">{{ paper.title }}</a>
-            <span class="list-authors">{{ ', '.join(interest.parent.authorNames) }}</span>
+            <span class="list-authors">{{ ', '.join(paper.authorNames) }}</span>
         </li>
         {% endfor %}
     </ol>
     {% endif %}
 
     {% if len(user.subscriptions) < 5 %}
-    <h2>Invitations</h2>
+    <h3>Invitations</h3>
     Few of the people you're subscribed to on Google+ are using
     SelectedPapers.net yet.  Would you like to invite them to share
     their comments and recommendations on papers with you this way?
@@ -124,6 +126,7 @@
 
     {% else %}
     <!-- User is NOT logged in -->
+    <h2>Introduction</h2>
     <p>SelectedPapers.net is a free, open-source project aimed
     at improving the way people find, read, and share academic papers. </p>
     <p>By looking at the intersection of <strong>people</strong> and <strong>ideas</strong>,
@@ -176,7 +179,7 @@
             </a> replied RE: 
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
-            <div class="list-comments">
+            <div class="list-comments indent">
                 {{ e.get_text() }}
             </div>
         </div>
@@ -200,14 +203,15 @@
             <span class="list-identifier">Recommended 
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             {% if e.sigs %}
-            
-            {% for topic in r['topics'] %}<a href="/topics/{{- topic -}}"> {{ '#' + topic }}</a> {% endfor %}
-            ( {{- display_datetime(r['published']) -}} )
-                        </span>
+            {% for topic in e.sigs %}
+            <a href="{{- topic.get_local_url() -}}"> {{ topic.name }} </a>
+            {% endfor %}            
+            </span>
             
             <div class="list-comments">
             {{ e.get_text() }}
             </div>
+            {% endif %}
         </div>
 
 
@@ -216,6 +220,7 @@
             <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>new topic created ( {{- display_datetime(e.published) -}} )
             </div>
         {% endif %}
+        
         {% endfor %}
         </div>
     </div>
