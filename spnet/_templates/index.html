@@ -50,7 +50,7 @@
 
 <div id="body_container">
 
-<div id="content">
+<div class="bounded">
     <p>Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
     LaTeX equations are now supported.</a>
     <i>This is an initial, alpha release of SelectedPapers.net.
@@ -60,15 +60,13 @@
     or feature suggestions</a>.</p>
 </div>
     
-<div>    
+<div class="bounded">
     {% if user %}
-
+    <!-- User is logged in -->
     {% set recs = user.get_deliveries() %}
     {% if recs %}
-
-    <h3 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
-    Recommended For You</h3>
-
+    <h2 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
+    Recommended For You</h2>
     <ol>
         {% for r in recs %}
         <li><a href="/people/{{- r['from'] -}}" title="Click to view the person who wrote this recommendation"> {{ r['name'] }}</a>:
@@ -81,8 +79,7 @@
     {% endif %}
 
     {% if user.interests %}
-    <h3>Papers You Tagged as Interesting</h3>
-
+    <h2>Papers You Tagged as Interesting</h2>
     <ol>
         {% for interest in user.interests %}
         <li>
@@ -94,8 +91,7 @@
     {% endif %}
 
     {% if user.readingList %}
-    <h3>Your Reading List</h3>
-
+    <h2>Your Reading List</h2>
     <ol>
         {% for paper in user.readingList[-1::-1] %}
         <li>
@@ -107,7 +103,7 @@
     {% endif %}
 
     {% if len(user.subscriptions) < 5 %}
-    <h3>Invitations</h3>
+    <h2>Invitations</h2>
     Few of the people you're subscribed to on Google+ are using
     SelectedPapers.net yet.  Would you like to invite them to share
     their comments and recommendations on papers with you this way?
@@ -124,13 +120,12 @@
     title="Click to recommend this paper on Google+">
     Post Invitation
     </button>
-
     {% endif %}
 
     {% else %}
+    <!-- User is NOT logged in -->
     <p>SelectedPapers.net is a free, open-source project aimed
     at improving the way people find, read, and share academic papers. </p>
-
     <p>By looking at the intersection of <strong>people</strong> and <strong>ideas</strong>,
     we can help deliver content specifically tuned to your interests.  But we're just getting started, 
     and we can use your help.
@@ -142,33 +137,30 @@
     Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
     LaTeX equations are now supported.</a>
     </p>
-
     <p>Give it a try by signing in below,
     or learn more about how it works.</p>
-
     <a href="/gplus_login"><img src="/images/Red-signin_Long_base_20dp.png"></a>
-
-    <P>More details:
-    <UL>
+    <p>More details:
+    <ul>
         <li><a href="http://docs.selectedpapers.net/intro.html">How it works.</a></li>
         <li><a href="http://www.huffingtonpost.com/travis-korte/elsevier-boycott-mathematicians-network_b_1346365.html">The Huffington Post article.</a></li>
         <li><a href="/shortDOI/fzkjw8">The theory behind it.</a></li>
-    </UL></P>
+    </ul></p>
     {% endif %}
 </div>
 
 <div>
-    <h3>Recent Activity on SelectedPapers.net</h3>
+    <h2>Recent Activity on SelectedPapers.net</h2>
     <dl>
         {% for e in recentEvents %}
         {% if e.__class__.__name__ == 'Post' %}
-        <div>
+        <div class="recent_activity_item">
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a> commented on
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
-            <div class="list-comments">
+            <div class="list-comments indent">
                 {{ e.get_text() }}
                 {% if hasattr(post, 'url') %}
                 <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
@@ -178,7 +170,7 @@
         </div>
 
         {% elif e.__class__.__name__ == 'Reply' %}
-        <div>
+        <div class="recent_activity_item">
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a> replied RE: 
@@ -191,7 +183,7 @@
 
 
         {% elif e.__class__.__name__ == 'Recommendation' %}
-        <div>
+        <div class="recent_activity_item">
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a>: <a href="{{- e.get_local_url() -}} ">
@@ -220,7 +212,7 @@
 
 
         {% elif e.__class__.__name__ == 'SIG' %}
-        <div>
+        <div class="recent_activity_item">
             <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>new topic created ( {{- display_datetime(e.published) -}} )
             </div>
         {% endif %}
