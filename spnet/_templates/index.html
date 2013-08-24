@@ -210,7 +210,7 @@
 
         {% elif e.__class__.__name__ == 'SIG' %}
         <div class="recent_activity_item">
-            <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>new topic created ( {{- display_datetime(e.published) -}} )
+            <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a> new topic created ( {{- display_datetime(e.published) -}} )
             </div>
         {% endif %}
         
