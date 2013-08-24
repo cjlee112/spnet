@@ -14,14 +14,13 @@
 </head>
 
 <body>
-
 <div id="header">
-    <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+    <h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> | 
     {% if user %}
     Welcome,
-    <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>
+    <a href=" {{- user.get_local_url() -}} "> {{- user.name -}} </a>!
     {% else %}
-    <a href="/gplus_login"><img SRC="/images/White-signin_Long_base_20dp.png"/></a>
+    <a href="/gplus_login"><img src="/images/White-signin_Long_base_20dp.png"/></a>
     {% endif %}
     </h1>
     <form id="search" method="GET" action="/papers">
@@ -49,8 +48,9 @@
     </form>
 </div>
 
+<div id="body_container">
+
 <div id="content">
-    {% if user %}
     <p>Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
     LaTeX equations are now supported.</a>
     <i>This is an initial, alpha release of SelectedPapers.net.
@@ -58,6 +58,10 @@
     <a href="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</a> or 
     specific <a href="https://github.com/cjlee112/spnet/issues">new bug reports
     or feature suggestions</a>.</p>
+</div>
+    
+<div>    
+    {% if user %}
 
     {% set recs = user.get_deliveries() %}
     {% if recs %}
@@ -65,64 +69,41 @@
     <h3 title="A list of paper recommendations based on your topics and subscriptions.  To adjust these settings, click on your name on the top bar.">
     Recommended For You</h3>
 
-    <dl>
-        {% for i,r in enumerate(recs) %}
-        <dt>
-            [ {{- i + 1 -}} ]:
-            <a href="/people/{{- r['from'] -}}" 
-            title="Click to view the person who wrote this recommendation">
-            {{ r['name'] }}
-            </a>: <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}"
-            title="Click to view this paper recommendation">
-            {{ r['title'] }}</a> 
-        </dt>
-        <dd>
-            Recommended for:
-            {% for topic in r['topics'] %}
-            <a href="/topics/{{- topic -}}"> {{ '#' + topic }} </a>
-            {% endfor %}
-            ( {{- display_datetime(r['published']) -}} )
-        </dd>
+    <ol>
+        {% for r in recs %}
+        <li><a href="/people/{{- r['from'] -}}" title="Click to view the person who wrote this recommendation"> {{ r['name'] }}</a>:
+        <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}" title="Click to view this paper recommendation"> {{ r['title'] }}</a>  for:
+        {% for topic in r['topics'] %}<a href="/topics/{{- topic -}}"> {{ '#' + topic }}</a> {% endfor %}
+        ( {{- display_datetime(r['published']) -}} )
+        </li>
         {% endfor %}
-    </dl>
+    </ol>
     {% endif %}
 
     {% if user.interests %}
     <h3>Papers You Tagged as Interesting</h3>
 
-    <dl>
-        {% for i,interest in enumerate(user.interests) %}
-        <dt>[ {{- i + 1 -}} ]:
-            <a href="{{- interest.parent.get_value('local_url') -}}">
-            {{ interest.parent.title }}
-            </a>
-        </dt>
-        <dd>
-            <div class="list-authors">
-                {{ ', '.join(interest.parent.authorNames) }} 
-            </div>
-        </dd>
+    <ol>
+        {% for interest in user.interests %}
+        <li>
+            <a href="{{- interest.parent.get_value('local_url') -}}">{{ interest.parent.title }}</a>
+            <span class="list-authors">{{ ', '.join(interest.parent.authorNames) }}</span>
+        </li>
         {% endfor %}
-    </dl>
+    </ol>
     {% endif %}
 
     {% if user.readingList %}
     <h3>Your Reading List</h3>
 
-    <dl>
-        {% for i,paper in enumerate(user.readingList[-1::-1]) %}
-        <dt>[ {{- i + 1 -}} ]:
-            <a href="{{- paper.get_value('local_url') -}}">
-            {{ paper.title }}
-            </a>
-        </dt>
-        <dd>
-            <div class="list-authors">
-            {{ ', '.join(paper.authorNames) }} 
-            </div>
-        </dd>
+    <ol>
+        {% for paper in user.readingList[-1::-1] %}
+        <li>
+            <a href="{{- paper.get_value('local_url') -}}">{{ paper.title }}</a>
+            <span class="list-authors">{{ ', '.join(interest.parent.authorNames) }}</span>
+        </li>
         {% endfor %}
-    </dl>
+    </ol>
     {% endif %}
 
     {% if len(user.subscriptions) < 5 %}
@@ -165,7 +146,7 @@
     <p>Give it a try by signing in below,
     or learn more about how it works.</p>
 
-    <a href="/gplus_login"><img SRC="/images/Red-signin_Long_base_20dp.png"></a>
+    <a href="/gplus_login"><img src="/images/Red-signin_Long_base_20dp.png"></a>
 
     <P>More details:
     <UL>
@@ -174,19 +155,19 @@
         <li><a href="/shortDOI/fzkjw8">The theory behind it.</a></li>
     </UL></P>
     {% endif %}
+</div>
 
+<div>
     <h3>Recent Activity on SelectedPapers.net</h3>
     <dl>
         {% for e in recentEvents %}
         {% if e.__class__.__name__ == 'Post' %}
-        <dt>
+        <div>
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a> commented on
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
-        </dt>
-        <dd>
             <div class="list-comments">
                 {{ e.get_text() }}
                 {% if hasattr(post, 'url') %}
@@ -194,24 +175,23 @@
                 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
                 {% endif %}
             </div>
-        </dd>
+        </div>
 
         {% elif e.__class__.__name__ == 'Reply' %}
-        <dt>
+        <div>
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a> replied RE: 
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             ( {{- display_datetime(e.published) -}} )
-        </dt>
-        <dd>
-            <div class="list-comments">{{ e.get_text() }}
+            <div class="list-comments">
+                {{ e.get_text() }}
             </div>
-        </dd>
+        </div>
 
 
         {% elif e.__class__.__name__ == 'Recommendation' %}
-        <dt>
+        <div>
             <a href="{{- e.author.get_local_url() -}}">
             {{ e.author.name }}
             </a>: <a href="{{- e.get_local_url() -}} ">
@@ -223,37 +203,30 @@
             <a href=" {{- e.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
             <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
             {% endif %}
-        </dt>
-        <dd>
+            <div>
+            
             <span class="list-identifier">Recommended 
             <a href="{{- e.parent.get_value('local_url') -}}">{{- e.parent.title -}}</a>
             {% if e.sigs %}
-            <li>Recommended for topics:
-            {% for topic in e.sigs %}
-            <a href="{{- topic.get_local_url() -}}"> {{ topic.name }} </a>
-            {% endfor %}
-            </li>
-            {% endif %}
-            </span>
+            
+            {% for topic in r['topics'] %}<a href="/topics/{{- topic -}}"> {{ '#' + topic }}</a> {% endfor %}
+            ( {{- display_datetime(r['published']) -}} )
+                        </span>
+            
             <div class="list-comments">
             {{ e.get_text() }}
             </div>
-        </dd>
+        </div>
 
 
         {% elif e.__class__.__name__ == 'SIG' %}
-        <dt>
-            <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>
-        </dt>
-        <dd>
-            <div class="list-comments">
-            new topic created ( {{- display_datetime(e.published) -}} )
+        <div>
+            <a href="{{- e.get_local_url() -}}">{{- e.name -}} </a>new topic created ( {{- display_datetime(e.published) -}} )
             </div>
-        </dd>
         {% endif %}
         {% endfor %}
-    </dl>
+        </div>
+    </div>
 </div>
-
 </body>
 </html>
