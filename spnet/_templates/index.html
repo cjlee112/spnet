@@ -45,6 +45,7 @@
 <div id="body_container">
 
 <div class="bounded">
+    {% if user %}
     <p>Note: <a href="http://docs.selectedpapers.net/intro.html#latex">
     LaTeX equations are now supported.</a>
     <i>This is an initial, alpha release of SelectedPapers.net.
@@ -52,10 +53,7 @@
     <a href="http://johncarlosbaez.wordpress.com/2013/06/14/the-selected-papers-network-part-2/">general comments</a> or 
     specific <a href="https://github.com/cjlee112/spnet/issues">new bug reports
     or feature suggestions</a>.</p>
-</div>
-    
-<div class="bounded">
-    {% if user %}
+
     <h2>Your Selected Papers Network</h2>
     <!-- User is logged in -->
     {% set recs = user.get_deliveries() %}
