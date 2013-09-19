@@ -88,6 +88,8 @@ class PaperCollection(rest.Collection):
         elif searchType == 'DOI':
             dpd = core.DoiPaperData(DOI=searchString, insertNew='findOrInsert')
             return rest.Redirect('/shortDOI/%s' % dpd.id)
+        elif searchType == 'spnetPerson':
+            return rest.Redirect('/people?' + urlencode(dict(searchString=searchString)))
         else:
             raise KeyError('unknown searchType ' + searchType)
                                  
@@ -215,6 +217,13 @@ class PersonCollection(rest.Collection):
                 if l: # need to update our object representation to see them
                     person = rest.Collection._GET(self, docID, **kwargs)
         return person
+    def _search(self, searchString):
+        if not searchString:
+            raise KeyError('empty query')
+        l = list(core.Person.find_obj({'name': {'$regex': searchString}}))
+        if not l:
+            raise KeyError('no matches')
+        return l
 
 class PersonAuthBase(rest.Collection):
     'only allow logged-in user to POST his own settings'
