@@ -90,6 +90,8 @@ class PaperCollection(rest.Collection):
             return rest.Redirect('/shortDOI/%s' % dpd.id)
         elif searchType == 'spnetPerson':
             return rest.Redirect('/people?' + urlencode(dict(searchString=searchString)))
+        elif searchType == 'topic':
+            return rest.Redirect('/topics?' + urlencode(dict(searchString=searchString)))
         else:
             raise KeyError('unknown searchType ' + searchType)
                                  
@@ -220,7 +222,7 @@ class PersonCollection(rest.Collection):
     def _search(self, searchString):
         if not searchString:
             raise KeyError('empty query')
-        l = list(core.Person.find_obj({'name': {'$regex': searchString}}))
+        l = list(self.klass.find_obj({'name': {'$regex': searchString}}))
         if not l:
             raise KeyError('no matches')
         return l
@@ -293,7 +295,16 @@ class PersonSubscriptions(PersonAuthBase):
         return json.dumps(dict(status=status))
 
 class TopicCollection(rest.Collection):
-    def _search(self, stem): # return list of topics beginning with stem
+    def _search(self, searchString=None, stem=None):
+        if stem:
+            return self.stem_search(stem)
+        if not searchString:
+            raise KeyError('empty query')
+        l = list(self.klass.find_obj({'_id': {'$regex': searchString}}))
+        if not l:
+            raise KeyError('no matches')
+        return l
+    def stem_search(self, stem): # return list of topics beginning with stem
         if not stem:
             return []
         return list(self.klass.find({'_id': {'$regex': '^' + stem}}))
