@@ -157,7 +157,7 @@ class ArxivCollection(ParentCollection):
 
 class PubmedCollection(ParentCollection):
     def _search(self, searchString=None, searchID=None, ipage=0,
-                block_size=20, session=None):
+                block_size=20):
         import pubmed
         if not searchString:
             s = view.report_error('empty searchString', 400,
@@ -283,6 +283,13 @@ class PersonSubscriptions(PersonAuthBase):
     def post_json(self, status, **kwargs):
         return json.dumps(dict(status=status))
 
+class TopicCollection(rest.Collection):
+    def _search(self, stem): # return list of topics beginning with stem
+        if not stem:
+            return []
+        return list(self.klass.find({'_id': {'$regex': '^' + stem}}))
+    def search_json(self, data, **kwargs):
+        return json.dumps(data)
     
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_id'] # most templates need this
@@ -327,7 +334,7 @@ def get_collections(templateDir='_templates'):
                                      templateEnv, templateDir,
                                      gplusClientID=gplusClientID)
     people.subscriptions = personSubs
-    topics = rest.Collection('topic', core.SIG, templateEnv, templateDir,
+    topics = TopicCollection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 
     # load homepage template
