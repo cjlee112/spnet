@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
+<title>SelectedPapers.net</title>
+</head>
+
+<body>
+
+<div id="header">
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+search
+</h1>
+<form id="search" method="GET" action="/papers">
+<div class="search-for">Search or Article-id</div>
+<div class="links">(<a href="http://docs.selectedpapers.net">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
+{% if user %}
+ | <a href="/signout">Signout</a>
+{% endif %}
+</div>
+<input type="text" name="searchString" size="24" maxlength="256" />
+&nbsp;
+<select name="searchType">
+<option value="arxiv" selected="selected">arXiv</option>
+<option value="arxivID">arXiv ID</option>
+<option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
+<option value="pubmed">Pubmed</option>
+<option value="ncbipubmed">Pubmed (ncbi)</option>
+<option value="spnetPerson">People on spnet</option>
+<option value="topic">Topics on spnet</option>
+</select>
+<input type="submit" value="Go!" /><br />
+</form>
+</div>
+
+<div id="content">
+
+{% if topic %}
+<h2>
+{{ len(topic) }} Topics matching your query
+</h2>
+
+<dl>
+{% for i,topic1 in enumerate(topic) %}
+<dt>[ {{- i + 1 -}} ]:
+<A HREF="{{- topic1.get_value('local_url') -}}">
+{{ topic1.name }}
+</A>
+</dt>
+{% endfor %}
+</dl>
+{% else %}
+No matches.
+{% endif %}
+</div>
+
+</body>
+</html>
