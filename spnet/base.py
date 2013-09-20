@@ -2,6 +2,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from time import mktime, struct_time
 from datetime import datetime
+import re
 
 
 class IdString(str):
@@ -307,6 +308,13 @@ def filter_array_docs(array, keyField, subID):
                 yield record
         elif v == subID: # regular field
             yield record
+        elif isinstance(subID, dict):
+            subquery = subID.items()
+            if len(subquery) == 1 and subquery[0][0] == '$regex':
+                if re.search(subquery[0][1], v):
+                    yield record
+            else:
+                raise ValueError('non-regex query ops not implemented')
         
 class ArrayDocument(EmbeddedDocBase):
     '''stores a document inside an array in mongoDB.
