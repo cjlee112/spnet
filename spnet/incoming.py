@@ -206,6 +206,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 c['author'] = author._id
                 c['text'] =  get_content(c)
                 c['replyTo'] = d['id']
+                if isRec: # record the type of post
+                    c['sourcetype'] = 'rec'
+                else:
+                    c['sourcetype'] = 'post'
                 r = core.Reply(docData=c, parent=post._parent_link)
                 if recentEvents is not None: # add to monitor deque
                     saveEvents.append(r)
