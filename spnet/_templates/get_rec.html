@@ -36,6 +36,7 @@
 <option value="ncbipubmed">Pubmed (ncbi)</option>
 <option value="spnetPerson">People on spnet</option>
 <option value="topic">Topics on spnet</option>
+<option value="comment">Comments on spnet</option>
 </select>
 <input type="submit" value="Go!" /><br />
 </form>
@@ -47,6 +48,10 @@
 {{ rec.title }}
 </h1>
 <div class="authors">
+{% if hasattr(rec.author, 'gplus') %}
+<a href=" {{- rec.author.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
+<img src=" {{- rec.author.gplus['image']['url'] -}} "></a>
+{% endif %}
 <A HREF="{{- rec.author.get_local_url() -}}">
 {{ rec.author.name }}
 </A> ( {{- display_datetime(rec.published) -}} )
@@ -54,19 +59,25 @@
 
 <h3>Recommendation for <A HREF="{{- rec.parent.get_value('local_url') -}}">
 {{ rec.parent.title }}
-</a></h3>
+</a>
+<a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
+<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
+</h3>
 
 <blockquote class="abstract">
 {{ rec.get_text() }}
 </blockquote>
 
-<a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
-<img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
+{% for reply in timesort(rec.get_replies(), reverse=False) %}
+<li><A HREF="{{- reply.get_author_url() -}}">
+{{ reply.get_author_name() }}
+</A> replies ( {{- display_datetime(reply.published) -}} ):
+<blockquote class="abstract">
+{{ reply.get_text() }}
+</blockquote>
+</li>
+{% endfor %}
 
-{% if hasattr(rec.author, 'gplus') %}
-<a href=" {{- rec.author.gplus['url'] -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;" title="Click here to view or subscribe to this person on Google+">
-<img src=" {{- rec.author.gplus['image']['url'] -}} ">Subscribe</a>
-{% endif %}
 </div>
 
 </body>
