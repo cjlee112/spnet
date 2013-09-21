@@ -13,6 +13,13 @@ class ArrayDocCollection(rest.Collection):
     def _GET(self, docID, parents):
         return self.klass.find_obj_in_parent(parents.values()[0], docID)
 
+class RootRecsCollection(rest.Collection):
+    def _GET(self, docID):
+        try:
+            return self.klass.find_obj({'recommendations.id': docID}).next()
+        except StopIteration:
+            raise KeyError('rec not found')
+
 class InterestCollection(ArrayDocCollection):
     '/papers/PAPER/likes/PERSON REST interface for AJAX calls'
     def check_permission(self, method, personID, *args, **kwargs):
@@ -92,6 +99,8 @@ class PaperCollection(rest.Collection):
             return rest.Redirect('/people?' + urlencode(dict(searchString=searchString)))
         elif searchType == 'topic':
             return rest.Redirect('/topics?' + urlencode(dict(searchString=searchString)))
+        elif searchType == 'comment':
+            return rest.Redirect('/posts?' + urlencode(dict(searchAll=searchString)))
         else:
             raise KeyError('unknown searchType ' + searchType)
                                  
@@ -310,6 +319,19 @@ class TopicCollection(rest.Collection):
         return list(self.klass.find({'_id': {'$regex': '^' + stem}}))
     def search_json(self, data, **kwargs):
         return json.dumps(data)
+
+class PostCollection(rest.Collection):
+    def _search(self, searchAll=None):
+        if not searchAll:
+            raise KeyError('empty query')
+        l = list(core.Recommendation.find_obj({'recommendations.text': 
+                                                {'$regex': searchAll}}))
+        l += list(core.Post.find_obj({'posts.text': {'$regex': searchAll}}))
+        l += list(core.Reply.find_obj({'replies.text': {'$regex': searchAll}}))
+        if not l:
+            raise KeyError('no matches')
+        return l
+
     
 def get_collections(templateDir='_templates'):
     gplusClientID = gplus.get_keys()['client_id'] # most templates need this
@@ -357,6 +379,14 @@ def get_collections(templateDir='_templates'):
     topics = TopicCollection('topic', core.SIG, templateEnv, templateDir,
                              gplusClientID=gplusClientID)
 
+    posts = PostCollection('post', core.Post, templateEnv, templateDir,
+                           gplusClientID=gplusClientID)
+    replies = PostCollection('reply', core.Reply, templateEnv, templateDir,
+                             gplusClientID=gplusClientID)
+    rootRecs = RootRecsCollection('rec', core.Recommendation,
+                                  templateEnv, templateDir,
+                                  gplusClientID=gplusClientID)
+
     # load homepage template
     homePage = view.TemplateView(templateEnv.get_template('index.html'),
                                  gplusClientID=gplusClientID)
@@ -368,4 +398,7 @@ def get_collections(templateDir='_templates'):
                 pubmed=pubmedPapers,
                 people=people,
                 topics=topics,
+                posts=posts,
+                replies=replies,
+                recommendations=rootRecs,
                 index=homePage)
