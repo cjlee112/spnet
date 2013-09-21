@@ -232,6 +232,8 @@ class EmbeddedDocBase(Document):
             self.__dict__['parent'] = parent # bypass LinkDescriptor mech
         else:
             self._parent_link = parent
+    def get_parent_url(self):
+        return self._parent_url % self._parent_link
 
 class EmbeddedDocument(EmbeddedDocBase):
     'stores a document inside another document in mongoDB'
