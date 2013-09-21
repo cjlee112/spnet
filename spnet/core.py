@@ -105,6 +105,13 @@ def get_replies(self):
         if r._dbDocDict['replyTo'] == docID:
             yield r
 
+def get_topics_noquery(self):
+    l = []
+    for topicID in self._dbDocDict.get('sigs', ()):
+        l.append(SIG(docData=dict(_id=topicID, name='#' + topicID), 
+                     insertNew=False))
+    return l
+
 def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
     'wrap insert() or update() to insert topics into author Person record'
     try:
@@ -124,6 +131,7 @@ class Recommendation(ArrayDocument, AuthorInfo):
     _dbfield = 'recommendations.author' # dot.name for updating
     useObjectId = False # input data will supply _id
     _timeStampField = 'published' # auto-add timestamp if missing
+    _parent_url = '/papers/%s' # link for full paper record
     # attrs that will only be fetched if accessed by user
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
@@ -136,10 +144,12 @@ class Recommendation(ArrayDocument, AuthorInfo):
     def get_local_url(self):
         return '/papers/' + str(self._parent_link) + '/recs/' + \
                str(self._dbDocDict['author'])
+    get_topics = get_topics_noquery
 
 class Post(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'posts.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
+    _parent_url = '/papers/%s' # link for full paper record
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
@@ -147,11 +157,16 @@ class Post(UniqueArrayDocument, AuthorInfo):
     get_replies = get_replies
     insert = lambda self,d:report_topics(self, d)
     update = lambda self,d:report_topics(self, d, method='update')
+    get_topics = get_topics_noquery
+    def get_local_url(self):
+        return '/posts/' + self.id
 
 def fetch_post_or_rec(obj, fetchID):
-    for post in getattr(obj.parent, 'posts', ()):
-        if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
-            return post
+    if getattr(obj, 'sourcetype', 'post') == 'post':
+        for post in getattr(obj.parent, 'posts', ()):
+            if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
+                return post
+
     for rec in getattr(obj.parent, 'recommendations', ()):
         if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
             return rec
@@ -161,10 +176,18 @@ def fetch_post_or_rec(obj, fetchID):
 class Reply(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'replies.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
+    _parent_url = '/papers/%s' # link for full paper record
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
     replyTo = LinkDescriptor('replyTo', fetch_post_or_rec)
+    def get_local_url(self):
+        return '/replies/' + self.id
+    def get_post_url(self):
+        if getattr(self, 'sourcetype', 'post') == 'post':
+            return '/posts/' + self._dbDocDict['replyTo']
+        else:
+            return '/recommendations/' + self._dbDocDict['replyTo']
 
 class PaperInterest(ArrayDocument):
     _dbfield = 'interests.author' # dot.name for updating

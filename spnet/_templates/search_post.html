@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
+<title>SelectedPapers.net</title>
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
+</head>
+
+<body>
+
+<div id="header">
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a> &gt; 
+search
+</h1>
+<form id="search" method="GET" action="/papers">
+<div class="search-for">Search or Article-id</div>
+<div class="links">(<a href="http://docs.selectedpapers.net">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
+{% if user %}
+ | <a href="/signout">Signout</a>
+{% endif %}
+</div>
+<input type="text" name="searchString" size="24" maxlength="256" />
+&nbsp;
+<select name="searchType">
+<option value="arxiv" selected="selected">arXiv</option>
+<option value="arxivID">arXiv ID</option>
+<option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
+<option value="pubmed">Pubmed</option>
+<option value="ncbipubmed">Pubmed (ncbi)</option>
+<option value="spnetPerson">People on spnet</option>
+<option value="topic">Topics on spnet</option>
+<option value="comment">Comments on spnet</option>
+</select>
+<input type="submit" value="Go!" /><br />
+</form>
+</div>
+
+<div id="content">
+
+{% if post %}
+<h2>
+{{ len(post) }} Posts matching your query
+</h2>
+
+<dl>
+{% for i,post1 in enumerate(post) %}
+<dt>[ {{- i + 1 -}} ]
+<A HREF="{{- post1.get_author_url() -}}">
+{{ post1.get_author_name() }}
+</A>:
+<A HREF="{{- post1.get_value('local_url') -}}">
+{{ getattr(post1, 'title', 'Comment') }}
+</A>
+( {{- display_datetime(post1.published) -}} )
+{% if hasattr(post1, 'url') %}
+<a href=" {{- post1.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
+<img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+<br>
+{% if post1.get_value('topics') %}
+For topics:
+{% for topic in post1.get_value('topics') %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }}  </A>
+{% endfor %}
+{% endif %}
+about <A HREF="{{- post1.get_value('parent_url') -}}">this paper</A>
+{% else %}
+<br>
+In reply to a <A HREF="{{- post1.get_value('post_url') -}}">previous post</A>
+about <A HREF="{{- post1.get_value('parent_url') -}}">this paper</A>
+{% endif %}
+</dt>
+<dd>
+<div class="list-comments">
+{{ post1.get_text() }}
+</div>
+</dd>
+{% endfor %}
+</dl>
+{% else %}
+No matches.
+{% endif %}
+</div>
+
+</body>
+</html>
