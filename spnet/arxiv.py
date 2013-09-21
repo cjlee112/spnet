@@ -40,7 +40,9 @@ def lookup_papers(id_list, **kwargs):
         url = arxivApiUrl + urllib.urlencode(d)
         f = feedparser.parse(url)
         for e in f.entries:
-            yield normalize_arxiv_dict(e)
+            paper = normalize_arxiv_dict(e)
+            if not paper['id'].startswith('error'):
+                yield paper
 
 def search_arxiv(searchString, start=0, block_size=25):
     'retrieve list of block_size results for specified search'
