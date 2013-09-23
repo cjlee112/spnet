@@ -9,6 +9,23 @@ def add_reply_sourcetype():
         for r in p.get_replies():
             r.update(dict(sourcetype='rec'))
 
+def delete_papers(query={'arxiv.id': {'$regex':'error'}},
+                  paperColl=core.Paper.coll, personColl=core.Person.coll):
+    '''delete papers matching query from both paper collection
+    and Person reading lists'''
+    n = 0
+    for d in paperColl.find(query, {'_id':1}):
+        paperID = d['_id']
+        personColl.update({'readingList': paperID}, 
+                          {'$pull': {'readingList': paperID}}, 
+                          multi=True) # delete from readingLists
+        personColl.update({'received.paper': paperID}, 
+                          {'$pull': {'received': {'paper': paperID}}}, 
+                          multi=True) # update readingLists
+        n += 1
+    paperColl.remove(query) # delete papers
+    print 'deleted %d papers.' % n
+
 def check_papers_unique():
     '''Search for duplicate paper records with same arxiv.id
     (or pubmed.id, or doi.id).  '''
@@ -65,6 +82,19 @@ def update_paper_array(p, attr, pleaseUpdate, docs, pid):
         p.update({attr: data})
         print 'unified %d %s on paper %s' % (len(docs), attr, pid)
 
+def replace_paper(p, newID, savecoll=None, personColl=core.Person.coll):
+    '''delete paper and update reading lists to repliace ir with newID'''
+    personColl.update({'readingList': p._id}, 
+                      {'$set': {'readingList.$': newID}}, 
+                      multi=True) # update readingLists
+    personColl.update({'received.paper': p._id}, 
+                      {'$set': {'received.$.paper': newID}}, 
+                      multi=True) # update readingLists
+    if savecoll: # backup to another collection
+        savecoll.insert(p._dbDocDict)
+    p.delete() # delete from papers collection
+    print 'deleted paper %s' % p._id
+
 def merge_duplicate_papers(d, savecoll=None):
     '''Merge duplicate paper records found by check_papers_unique(),
     combining recs, posts, replies, interests onto a unique paper
@@ -99,8 +129,5 @@ def merge_duplicate_papers(d, savecoll=None):
         update_paper_array(p0, 'replies', newReplies, replies, pid)
         update_paper_array(p0, 'interests', newInterests, interests, pid)
 
-        for p in papers[1:]:
-            if savecoll: # backup to another collection
-                savecoll.insert(p._dbDocDict)
-            p.delete() # delete from papers collection
-            print 'deleted paper %s' % p._id
+        for p in papers[1:]: # finally, delete duplicate papers
+            replace_paper(p, p0._id, savecoll)
