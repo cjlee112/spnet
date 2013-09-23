@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="screen" href="/css/arXiv.css" />
+<title> {{- Comment -}} </title>
+
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
+</script>
+
+</head>
+
+<body>
+
+<div id="header">
+<h1><img src="/favicon.ico"/><a href="/">SelectedPapers.net</a>
+| Posts
+</h1>
+<form id="search" method="GET" action="/papers">
+<div class="search-for">Search or Article-id</div>
+<div class="links">(<a href="http://docs.selectedpapers.net">Help</a> | <a href="http://arxiv.org/find">Advanced search</a>)
+{% if user %}
+ | <a href="/signout">Signout</a>
+{% endif %}
+</div>
+<input type="text" name="searchString" size="24" maxlength="256" />
+&nbsp;
+<select name="searchType">
+<option value="arxiv" selected="selected">arXiv</option>
+<option value="arxivID">arXiv ID</option>
+<option value="DOI">DOI</option>
+<option value="shortDOI">Short DOI</option>
+<option value="PMID">Pubmed ID</option>
+<option value="pubmed">Pubmed</option>
+<option value="ncbipubmed">Pubmed (ncbi)</option>
+<option value="spnetPerson">People on spnet</option>
+<option value="topic">Topics on spnet</option>
+<option value="comment">Comments on spnet</option>
+</select>
+<input type="submit" value="Go!" /><br />
+</form>
+</div>
+
+
+<div id="content">
+<h1 class="title">
+{{ reply.title }}
+</h1>
+<div class="authors">
+<A HREF="{{- reply.get_value('author_url') -}}">
+{{ reply.get_value('author_name') }}
+</A> ( {{- display_datetime(reply.published) -}} )
+</div>
+
+<h3>Comment on a <A HREF="{{- reply.get_value('post_url') -}}">previous post</A>
+about <A HREF="{{- reply.get_value('parent_url') -}}">
+{{ reply.parent.title }}
+</a></h3>
+
+<blockquote class="abstract">
+{{ reply.get_text() }}
+</blockquote>
+
+</div>
+
+</body>
+</html>
