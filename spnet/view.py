@@ -123,6 +123,7 @@ class TemplateView(object):
                  getattr=getattr, str=str, map=map_helper, user=user,
                  display_datetime=display_datetime, timesort=timesort,
                  recentEvents=recentEventsDeque, len=len,
+                 messageOfTheDay=messageOfTheDay,
                  Selection=webui.Selection, **kwargs) # apply template
 
 def get_view_options():
@@ -246,17 +247,22 @@ def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
     l.sort(lambda x,y:cmp(x.published, y.published)) # oldest first
     for r in l:
         dq.appendleft(r)
-        
+
+
+messageOfTheDay = 'Welcome!'        
         
 def poll_recent_events(paperClass, topicClass, interval=300):
     'update recentEventsDeque every interval; run in separate thread'
     import time
     import gc
+    global messageOfTheDay
     dq = collections.deque(maxlen=20)
     while True:
         load_recent_events(paperClass, topicClass, dq)
         recentEventsDeque.clear()
         recentEventsDeque.extend(dq)
         dq.clear()
+        with open('_templates/motd.html') as ifile:
+            messageOfTheDay = ifile.read()
         gc.collect() # frequent GC seems to keep RSS from growing unsustainably
         time.sleep(interval)
