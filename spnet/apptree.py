@@ -231,6 +231,7 @@ class PersonCollection(rest.Collection):
     def _search(self, searchString):
         if not searchString:
             raise KeyError('empty query')
+        searchString = '(?i)' + searchString # default: case-insensitive
         l = list(self.klass.find_obj({'name': {'$regex': searchString}}))
         if not l:
             raise KeyError('no matches')
@@ -309,6 +310,7 @@ class TopicCollection(rest.Collection):
             return self.stem_search(stem)
         if not searchString:
             raise KeyError('empty query')
+        searchString = '(?i)' + searchString # default: case-insensitive
         l = list(self.klass.find_obj({'_id': {'$regex': searchString}}))
         if not l:
             raise KeyError('no matches')
@@ -324,6 +326,7 @@ class PostCollection(rest.Collection):
     def _search(self, searchAll=None):
         if not searchAll:
             raise KeyError('empty query')
+        searchAll = '(?i)' + searchAll # default: case-insensitive
         l = list(core.Recommendation.find_obj({'recommendations.text': 
                                                 {'$regex': searchAll}}))
         l += list(core.Post.find_obj({'posts.text': {'$regex': searchAll}}))
