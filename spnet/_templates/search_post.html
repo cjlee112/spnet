@@ -52,7 +52,7 @@ search
 <A HREF="{{- post1.get_author_url() -}}" title="Click here to see this person's posts, topics, and other information">
 {{ post1.get_author_name() }}
 </A>:
-<A HREF="{{- post1.get_value('local_url') -}}" title="Click here to view this post">
+<A HREF="{{- post1.get_value('local_url') -}}" title="Click here to view this post in the context of its discussion thread">
 {{ getattr(post1, 'title', 'Comment') }}
 </A>
 ( {{- display_datetime(post1.published) -}} )
