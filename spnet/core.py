@@ -182,7 +182,7 @@ class Reply(UniqueArrayDocument, AuthorInfo):
     author = LinkDescriptor('author', fetch_person)
     replyTo = LinkDescriptor('replyTo', fetch_post_or_rec)
     def get_local_url(self):
-        return '/replies/' + self.id
+        return self.get_post_url() + '#' + self.id
     def get_post_url(self):
         if getattr(self, 'sourcetype', 'post') == 'post':
             return '/posts/' + self._dbDocDict['replyTo']

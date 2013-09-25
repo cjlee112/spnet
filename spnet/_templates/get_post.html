@@ -73,6 +73,7 @@ For topics:
 </blockquote>
 
 {% for reply in timesort(post.get_replies(), reverse=False) %}
+<A NAME="{{- reply.id -}}"></A>
 <li><A HREF="{{- reply.get_author_url() -}}">
 {{ reply.get_author_name() }}
 </A> replies ( {{- display_datetime(reply.published) -}} ):
