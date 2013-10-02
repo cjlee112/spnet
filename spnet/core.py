@@ -45,6 +45,7 @@ def merge_sigs(person, attr, sigLinks):
 # forward declarations to avoid circular ref problem
 fetch_paper = FetchObj(None)
 fetch_person = FetchObj(None)
+fetch_post = FetchObj(None)
 fetch_sig = FetchObj(None)
 fetch_sigs = FetchList(None)
 fetch_people = FetchList(None)
@@ -57,6 +58,7 @@ fetch_subscribers = FetchQuery(None, lambda person:
                                {'subscriptions.author':person._id})
 fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
+fetch_post_papers = FetchQuery(None, lambda post: {'citations.post':post.id})
 fetch_sig_recs = FetchQuery(None, lambda sig:
                             {'recommendations.sigs':sig._id})
 fetch_sig_posts = FetchQuery(None, lambda sig:
@@ -152,6 +154,7 @@ class Post(UniqueArrayDocument, AuthorInfo):
     _parent_url = '/papers/%s' # link for full paper record
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
+    papers = LinkDescriptor('papers', fetch_post_papers, noData=True)
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     get_replies = get_replies
@@ -188,6 +191,12 @@ class Reply(UniqueArrayDocument, AuthorInfo):
             return '/posts/' + self._dbDocDict['replyTo']
         else:
             return '/recommendations/' + self._dbDocDict['replyTo']
+
+class Citation(ArrayDocument):
+    _dbfield = 'citations.post' # dot.name for updating
+    _timeStampField = 'published' # auto-add timestamp if missing
+    post = LinkDescriptor('post', fetch_post)
+
 
 class PaperInterest(ArrayDocument):
     _dbfield = 'interests.author' # dot.name for updating
@@ -657,6 +666,7 @@ class Paper(Document):
     _attrHandler = dict(
         recommendations=SaveAttrList(Recommendation, insertNew=False),
         posts=SaveAttrList(Post, insertNew=False),
+        citations=SaveAttrList(Citation, insertNew=False),
         replies=SaveAttrList(Reply, insertNew=False),
         interests=SaveAttrList(PaperInterest, insertNew=False),
         arxiv=SaveAttr(ArxivPaperData, insertNew=False),
@@ -706,6 +716,7 @@ fetch_parent_issue.klass = Issue
 fetch_sig.klass = SIG
 fetch_sigs.klass = SIG
 fetch_person.klass = Person
+fetch_post.klass = Post
 fetch_papers.klass = Paper
 fetch_people.klass = Person
 fetch_parent_person.klass = Person
@@ -714,6 +725,7 @@ fetch_author_papers.klass = Paper
 fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
+fetch_post_papers.klass = Paper
 fetch_sig_recs.klass = Recommendation
 fetch_sig_posts.klass = Post
 fetch_sig_interests.klass = PaperInterest
