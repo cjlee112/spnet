@@ -72,11 +72,20 @@ class CategoryList(object):
         l = self.d.items()
         l.sort()
         d = {}
+        primaryPaper = False
         for pos, (k, v) in l:
+            if v == 'spnetwork': # 1st paper after tag is primary paper
+                primaryPaper = True
             try:
-                d[k].append(v)
+                if primaryPaper and k == 'paper':
+                    d.setdefault(k, []).insert(0, v) # make it 1st entry
+                    primaryPaper = False
+                else:
+                    d[k].append(v)
             except KeyError:
                 d[k] = [v]
+        for k,l in d.items(): # filter out any duplicate entries
+            d[k] = [v for (i,v) in enumerate(l) if v not in l[:i]]
         return d
     
 
@@ -128,7 +137,9 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          get_content, get_user, get_replycount,
                          get_id, get_timestamp, is_reshare, source,
                          process_post=None, process_reply=None,
-                         recentEvents=None, maxDays=None):
+                         recentEvents=None, maxDays=None,
+                         citationType='discuss', citationType2='discuss',
+                         get_title=lambda x:x['title']):
     'generate each post that has a paper hashtag, adding to DB if needed'
     now = datetime.utcnow()
     saveEvents = []
@@ -144,7 +155,7 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 content.find('#mustread') >= 0
         if not isRec:
             try:
-                post = core.Post(d['id'])
+                post = core.Post(get_id(d))
                 if getattr(post, 'etag', None) == d.get('etag', ''):
                     yield post
                     continue # matches DB record, so nothing to do
@@ -153,7 +164,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         hashtagDict = get_hashtag_dict(content) # extract tags and IDs
         if post is None: # extract data for saving post to DB
             try:
-                paper = hashtagDict['paper'][0] # link to first paper
+                papers = hashtagDict['paper']
+                paper = papers[0] # link to first paper
             except KeyError:
                 continue # no link to a paper, so nothing to save.
             userID = get_user(d)
@@ -174,8 +186,17 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             process_post(d)
         d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
                                  timeStamp, source)
+        if isRec: # record rec type
+            d['citationType'] = hashtagDict['rec'][0]
+        else: # use default citation type
+            d['citationType'] = citationType
         if post is None: # save to DB
             post = klass(docData=d, parent=paper)
+            for paper2 in papers[1:]: # save 2ary citations
+                d2 = dict(post=get_id(d), authorName=author.name,
+                          title=get_title(d), published=timeStamp,
+                          citationType=citationType2)
+                core.Citation(docData=d2, parent=paper2) # save citation to db
             if isRec:
                 try:
                     topicsDict
@@ -188,11 +209,11 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             post.update(d)
         yield post
         if get_replycount(d) > 0:
-            for c in get_post_comments(d['id']):
+            for c in get_post_comments(get_id(d)):
                 if process_reply:
                     process_reply(c)
                 try:
-                    r = core.Reply(c['id'])
+                    r = core.Reply(get_id(c))
                     if getattr(r, 'etag', None) != c.get('etag', ''):
                         # update DB record with latest data
                         r.update(dict(etag=c.get('etag', ''),
@@ -205,7 +226,7 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 author = find_or_insert_person(userID)
                 c['author'] = author._id
                 c['text'] =  get_content(c)
-                c['replyTo'] = d['id']
+                c['replyTo'] = get_id(d)
                 if isRec: # record the type of post
                     c['sourcetype'] = 'rec'
                 else:
