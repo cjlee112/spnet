@@ -4,13 +4,6 @@ from datetime import datetime
 def find_people_topics():
     'construct dict of person:topics from Recs, Posts, PaperInterests'
     people = {}
-    for r in core.Recommendation.find_obj():
-        authorID = r._dbDocDict['author']
-        topics = r._dbDocDict.get('sigs', ())
-        try:
-            people[authorID].update(topics)
-        except KeyError:
-            people[authorID] = set(topics)
     for r in core.Post.find_obj():
         authorID = r._dbDocDict['author']
         topics = r._dbDocDict.get('sigs', ())
@@ -62,7 +55,7 @@ def deliver_rec(paperID, r, topics, subs):
     docData = {'paper':paperID, 'from':author, 'topics':sigs,
                'name':r.get('actor', {}).get('displayName', 'Unknown'),
                'published':r.get('published', datetime.utcnow()),
-               'title':r.get('title', 'Paper Recommendation')}
+               'title':r.get('title', 'New Post'), 'post':r['id'],}
     for personID in subs.get(author, ()): # deliver to subscribers
         core.Person.coll.update({'_id':personID},
                                 {'$addToSet': {'received': docData}})
@@ -76,5 +69,5 @@ def deliver_rec(paperID, r, topics, subs):
 
 def deliver_recs(topics, subs):
     'insert appropriate recs to Person.received array records'
-    for paperID, r in core.Recommendation.find(idOnly=False, parentID=True):
+    for paperID, r in core.Post.find(idOnly=False, parentID=True):
         deliver_rec(paperID, r, topics, subs)

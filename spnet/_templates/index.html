@@ -64,7 +64,7 @@
     <ol>
         {% for r in recs %}
         <li><a href="/people/{{- r['from'] -}}" title="Click to view the person who wrote this recommendation"> {{ r['name'] }}</a>:
-        <a href="/papers/{{- str(r['paper']) + '/recs/' + str(r['from']) -}}" title="Click to view this paper recommendation"> {{ r['title'] }}</a> for:
+        <a href="/posts/{{- r['post'] -}}" title="Click to view this post"> {{ r['title'] }}</a> for:
         {% for topic in r['topics'] %}<a href="/topics/{{- topic -}}"> {{ '#' + topic }}</a> {% endfor %}
         ( {{- display_datetime(r['published']) -}} )
         </li>

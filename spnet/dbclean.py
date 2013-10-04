@@ -39,6 +39,19 @@ def delete_recs(q={'recommendations':{'$exists':True}}):
     'delete the old Paper.recommendations storage'
     core.Paper.coll.update(q, {'$unset': {'recommendations':''}}, multi=True)
 
+def add_delivery_post_id():
+    'add postID to each Person.received record'
+    d = {} # construct mapping of (paperID,authorID) to postID
+    for p in core.Post.find_obj():
+        if p.is_rec():
+            d[(p._parent_link,p._dbDocDict['author'])] = p.id
+    for person in core.Person.find_obj({'received':{'$exists':True}}):
+        received = person._dbDocDict['received']
+        for r in received:
+            r['post'] = d[(r['paper'],r['from'])] # add postID
+        person.update(dict(received=received))
+        
+            
 #################################################################
 # make sure all Reply records indicate post vs. rec sourcetype
 

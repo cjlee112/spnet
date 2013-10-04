@@ -153,14 +153,13 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         content = get_content(d)
         isRec = content.find('#recommend') >= 0 or \
                 content.find('#mustread') >= 0
-        if not isRec:
-            try:
-                post = core.Post(get_id(d))
-                if getattr(post, 'etag', None) == d.get('etag', ''):
-                    yield post
-                    continue # matches DB record, so nothing to do
-            except KeyError:
-                pass
+        try:
+            post = core.Post(get_id(d))
+            if getattr(post, 'etag', None) == d.get('etag', ''):
+                yield post
+                continue # matches DB record, so nothing to do
+        except KeyError:
+            pass
         hashtagDict = get_hashtag_dict(content) # extract tags and IDs
         if post is None: # extract data for saving post to DB
             try:
@@ -171,16 +170,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             userID = get_user(d)
             author = find_or_insert_person(userID)
             d['author'] = author._id
-            if isRec: # see if rec already in DB
-                try:
-                    post = core.Recommendation((paper._id, author._id))
-                    if getattr(post, 'etag', None) == d.get('etag', ''):
-                        yield post
-                        continue # matches DB record, so nothing to do
-                except KeyError: # need to save new record to DB
-                    klass = core.Recommendation
-            else:
-                klass = core.Post
         d['text'] =  content
         if process_post:
             process_post(d)
@@ -191,18 +180,17 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         else: # use default citation type
             d['citationType'] = citationType
         if post is None: # save to DB
-            post = klass(docData=d, parent=paper)
+            post = core.Post(docData=d, parent=paper)
             for paper2 in papers[1:]: # save 2ary citations
                 d2 = dict(post=get_id(d), authorName=author.name,
                           title=get_title(d), published=timeStamp,
                           citationType=citationType2)
                 core.Citation(docData=d2, parent=paper2) # save citation to db
-            if isRec:
-                try:
-                    topicsDict
-                except NameError:
-                    topicsDict, subsDict = bulk.get_people_subs()
-                bulk.deliver_rec(paper._id, d, topicsDict, subsDict)
+            try:
+                topicsDict
+            except NameError:
+                topicsDict, subsDict = bulk.get_people_subs()
+            bulk.deliver_rec(paper._id, d, topicsDict, subsDict)
             if recentEvents is not None: # add to monitor deque
                 saveEvents.append(post)
         else: # update DB with new data and etag
