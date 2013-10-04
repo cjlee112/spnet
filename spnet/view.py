@@ -230,10 +230,6 @@ def load_recent_events(paperClass, topicClass, dq=recentEventsDeque,
                        limit=20):
     'obtain list of recent events stored in our database'
     l = []
-    for paper in paperClass.find_obj(sortKeys={'recommendations.published':-1},
-                                     limit=limit):
-        for r in getattr(paper, 'recommendations', ()):
-            l.append(r)
     for paper in paperClass.find_obj(sortKeys={'posts.published':-1},
                                      limit=limit):
         for r in getattr(paper, 'posts', ()):
