@@ -12,20 +12,10 @@ import time
 
 # fetch functions for use with LinkDescriptor 
 
-def fetch_recs(person):
-    'return list of Recommendation objects for specified person'
-    coll = Recommendation.coll
-    results = coll.find({'recommendations.author':person._id},
-                        {'recommendations':1})
-    l = []
-    for r in results:
-        paperID = r['_id']
-        for recDict in r['recommendations']:
-            if recDict['author'] == person._id:
-                l.append(Recommendation(docData=recDict, parent=paperID,
-                                        insertNew=False))
-                break
-    return l
+def fetch_recs(obj):
+    'get subset of posts that are recommendations'
+    return filter(lambda p:p.is_rec(), obj.posts)
+
 
 def merge_sigs(person, attr, sigLinks):
     'postprocess list of SIGLinks to handle mergeIn requests'
@@ -59,8 +49,6 @@ fetch_subscribers = FetchQuery(None, lambda person:
 fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
 fetch_post_papers = FetchQuery(None, lambda post: {'citations.post':post.id})
-fetch_sig_recs = FetchQuery(None, lambda sig:
-                            {'recommendations.sigs':sig._id})
 fetch_sig_posts = FetchQuery(None, lambda sig:
                             {'posts.sigs':sig._id})
 fetch_sig_interests = FetchQuery(None, lambda sig:
@@ -163,17 +151,16 @@ class Post(UniqueArrayDocument, AuthorInfo):
     get_topics = get_topics_noquery
     def get_local_url(self):
         return '/posts/' + self.id
+    def is_rec(self):
+        return getattr(self, 'citationType', 'discuss') \
+            in ('mustread', 'recommend')
 
-def fetch_post_or_rec(obj, fetchID):
-    if getattr(obj, 'sourcetype', 'post') == 'post':
-        for post in getattr(obj.parent, 'posts', ()):
-            if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
-                return post
 
-    for rec in getattr(obj.parent, 'recommendations', ()):
-        if getattr(rec, 'id', ('uNmAtChAbLe',)) == fetchID:
-            return rec
-    raise KeyError('No post or rec found with id=' + str(fetchID))
+def fetch_reply_post(obj, fetchID):
+    for post in getattr(obj.parent, 'posts', ()):
+        if getattr(post, 'id', ('uNmAtChAbLe',)) == fetchID:
+            return post
+    raise KeyError('No post found with id=' + str(fetchID))
 
 
 class Reply(UniqueArrayDocument, AuthorInfo):
@@ -183,14 +170,11 @@ class Reply(UniqueArrayDocument, AuthorInfo):
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     author = LinkDescriptor('author', fetch_person)
-    replyTo = LinkDescriptor('replyTo', fetch_post_or_rec)
+    replyTo = LinkDescriptor('replyTo', fetch_reply_post)
     def get_local_url(self):
         return self.get_post_url() + '#' + self.id
     def get_post_url(self):
-        if getattr(self, 'sourcetype', 'post') == 'post':
-            return '/posts/' + self._dbDocDict['replyTo']
-        else:
-            return '/recommendations/' + self._dbDocDict['replyTo']
+        return '/posts/' + self._dbDocDict['replyTo']
 
 class Citation(ArrayDocument):
     _dbfield = 'citations.post' # dot.name for updating
@@ -250,7 +234,7 @@ class SIG(Document):
     # attrs that will only be fetched if accessed by user
     members = LinkDescriptor('members', fetch_sig_members, noData=True)
     papers = LinkDescriptor('papers', fetch_sig_papers, noData=True)
-    recommendations  = LinkDescriptor('recommendations', fetch_sig_recs,
+    recommendations  = LinkDescriptor('recommendations', fetch_recs,
                                       noData=True)
     posts  = LinkDescriptor('posts', fetch_sig_posts, noData=True)
     interests  = LinkDescriptor('interests', fetch_sig_interests, noData=True)
@@ -651,7 +635,6 @@ class DoiPaperData(EmbeddedDocument):
             return 'Click <A HREF="%s">here</A> for the Abstract' \
                    % self.get_downloader_url()
 
-
 class Paper(Document):
     '''interface to a specific paper '''
     # attrs that will only be fetched if accessed by user
@@ -661,10 +644,11 @@ class Paper(Document):
     issues = LinkDescriptor('issues', fetch_issues,
                             noData=True, missingData=())
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
+    recommendations = LinkDescriptor('recommendations', fetch_recs,
+                                     noData=True)
 
     # custom attr constructors
     _attrHandler = dict(
-        recommendations=SaveAttrList(Recommendation, insertNew=False),
         posts=SaveAttrList(Post, insertNew=False),
         citations=SaveAttrList(Citation, insertNew=False),
         replies=SaveAttrList(Reply, insertNew=False),
@@ -726,7 +710,6 @@ fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
 fetch_post_papers.klass = Paper
-fetch_sig_recs.klass = Recommendation
 fetch_sig_posts.klass = Post
 fetch_sig_interests.klass = PaperInterest
 fetch_issues.klass = Issue
