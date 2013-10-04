@@ -1,5 +1,47 @@
 import core
 
+##############################################################
+# utilities for converting old Paper.recommendations storage
+# to new unified Paper.posts storage
+def convert_recs_to_posts():
+    '''convert all recommendation records to post records
+    with proper citationType'''
+    for p in core.Post.find_obj(): # add citationType to existing posts
+        p.update(dict(citationType='discuss'))
+    for rec in core.Recommendation.find_obj():
+        d = rec._dbDocDict
+        s = rec.get_text()
+        if s.find('#mustread') >= 0: # label with citation type
+            d['citationType'] = 'mustread'
+        else:
+            d['citationType'] = 'recommend'
+        post = core.Post(docData=d, parent=rec._parent_link)
+
+def test_conversion():
+    'move recs to post array and test that new interfaces match old record set'
+    d = {}
+    for p in core.Post.find_obj(): # add citationType to existing posts
+        d.setdefault(p._parent_link, set()).add(p.id)
+    d2 = {}
+    for rec in core.Recommendation.find_obj():
+        d2.setdefault(rec._parent_link, set()).add(rec.id)
+    convert_recs_to_posts()
+    papers = set(d.keys() + d2.keys())
+    for pid in papers:
+        p = core.Paper(pid)
+        posts = set([post.id for post in p.posts if not post.is_rec()])
+        assert posts == d.get(pid, set())
+        recs = set([post.id for post in p.recommendations])
+        assert recs == d2.get(pid, set())
+        
+
+def delete_recs(q={'recommendations':{'$exists':True}}):
+    'delete the old Paper.recommendations storage'
+    core.Paper.coll.update(q, {'$unset': {'recommendations':''}}, multi=True)
+
+#################################################################
+# make sure all Reply records indicate post vs. rec sourcetype
+
 def add_reply_sourcetype():
     '''Mark all Reply records as coming from a post or rec'''
     for p in core.Post.find_obj():
@@ -8,6 +50,9 @@ def add_reply_sourcetype():
     for p in core.Recommendation.find_obj():
         for r in p.get_replies():
             r.update(dict(sourcetype='rec'))
+
+################################################################
+# utilities for cleaning up / merging Paper records
 
 def delete_papers(query={'arxiv.id': {'$regex':'error'}},
                   paperColl=core.Paper.coll, personColl=core.Person.coll):
