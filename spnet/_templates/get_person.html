@@ -158,12 +158,17 @@ by clicking the <B>Invite your contacts</B> button at the top.
 <h3>Recommendations</h3>
 <dl>
 {% for i,rec in enumerate(timesort(person.recommendations)) %}
-<dt>[ 
-<A HREF="{{- rec.get_local_url() -}}">
-{{- i + 1 -}} </A> ]
-<A HREF="{{- rec.author.get_local_url() -}}">
-{{ rec.author.name }}
-</A>: <B>{{ rec.title }}</B> ( {{- display_datetime(rec.published) -}} )
+<dt>[ {{- i + 1 -}} ]
+<B><A HREF="{{- rec.get_local_url() -}}">Recommendation</A> for</B>
+<A HREF="{{- rec.parent.get_value('local_url') -}}"> 
+{{ rec.parent.title }} </A> 
+{% if rec.sigs %}
+RE: topics:
+{% for topic in rec.sigs %}
+<A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
+{% endfor %}
+{% endif %}
+( {{- display_datetime(rec.published) -}} )
 <a href="https://plus.google.com/share? {{- urlencode(dict(url=rec.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 {% if hasattr(rec, 'url') %}
@@ -172,10 +177,6 @@ by clicking the <B>Invite your contacts</B> button at the top.
 {% endif %}
 </dt>
 <dd>
-<span class="list-identifier">Recommended:
-<A HREF="{{- rec.parent.get_value('local_url') -}}"> 
-{{ rec.parent.title }} </A>
-</span>
 <div class="list-comments">
 {{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies(), reverse=False) %}
@@ -209,12 +210,16 @@ by clicking the <B>Invite your contacts</B> button at the top.
 {% endif %}
 
 
-{% if person.posts %}
+{% if len(person.posts) > len(person.recommendations) %}
+{% set i = 0 %}
 <h3>Discussion</h3>
 
 <dl>
-{% for i,post in enumerate(timesort(person.posts)) %}
-<dt>[ {{- i + 1 -}} ] Comment on
+{% for post in timesort(person.posts) %}
+{% if not post.is_rec() %}
+{% set i = i + 1 %}
+<dt>[ {{- i -}} ]
+<B><A HREF="{{- post.get_local_url() -}}">Comment</A> on</B>
 <A HREF="{{- post.parent.get_value('local_url') -}}">
 {{ post.parent.title }}
 </a> 
@@ -240,6 +245,7 @@ RE: topics:
 {% endfor %}
 </div>
 </dd>
+{% endif %}
 {% endfor %}
 </dl>
 {% endif %}

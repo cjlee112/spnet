@@ -301,8 +301,11 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 </h2>
 
 <dl>
-{% for i,post in enumerate(timesort(paper.posts)) %}
-<dt>[ {{- i + 1 -}} ]
+{% set i = 0 %}
+{% for post in timesort(paper.posts) %}
+{% if not post.is_rec() %}
+{% set i = i + 1 %}
+<dt>[ {{- i -}} ]
 <A HREF="{{- post.get_author_url() -}}">
 {{ post.get_author_name() }}
 </A> 
@@ -329,6 +332,7 @@ on topics:
 {% endfor %}
 </div>
 </dd>
+{% endif %}
 {% endfor %}
 </dl>
 

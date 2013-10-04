@@ -79,11 +79,14 @@
 {% endif %}
 
 
-{% if topic.posts %}
+{% if len(topic.posts) > len(topic.recommendations) %}
 <h3>Discussion</h3>
 <dl>
-{% for i,post in enumerate(timesort(topic.posts)) %}
-<dt>[ {{- i + 1 -}} ]
+{% set i = 0 %}
+{% for post in timesort(topic.posts) %}
+{% if not post.is_rec() %}
+{% set i = i + 1 %}
+<dt>[ {{- i -}} ]
 <A HREF="{{- post.author.get_local_url() -}}">
 {{ post.author.name }}
 </A> 
@@ -101,6 +104,7 @@ RE: topics:
 <div class="list-comments">{{ post.get_text() }}
 </div>
 </dd>
+{% endif %}
 {% endfor %}
 </dl>
 {% endif %}
