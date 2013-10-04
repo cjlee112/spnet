@@ -98,11 +98,12 @@ def get_index(p, attr, keyAttr='id'):
         d[r._dbDocDict[keyAttr]] = r
     return d
 
-def update_index(p, attr, d):
+def update_index(p, attr, d, keyAttr='id'):
     changed = 0
     for r in getattr(p, attr, ()):
-        if r.id not in d or r.updated > d[r.id].updated:
-            d[r.id] = r
+        rid = getattr(r, keyAttr)
+        if rid not in d or r.updated > d[rid].updated:
+            d[rid] = r
             changed = 1
     return changed
 
@@ -159,17 +160,17 @@ def merge_duplicate_papers(d, savecoll=None):
         if len(papers) == 1:
             continue # no duplicates to merge
         p0 = papers[0]
-        recs = get_index(p0, 'recommendations')
+        citations = get_index(p0, 'citations', 'post')
         posts = get_index(p0, 'posts')
         replies = get_index(p0, 'replies')
         interests = get_index(p0, 'interests', 'author')
-        newRecs = newPosts = newReplies = newInterests = 0
+        newCits = newPosts = newReplies = newInterests = 0
         for p in papers[1:]:
-            newRecs |= update_index(p, 'recommendations', recs)
+            newCits |= update_index(p, 'citations', citations, 'post')
             newPosts |= update_index(p, 'posts', posts)
             newReplies |= update_index(p, 'replies', replies)
             newInterests |= update_interests(p, 'interests', interests)
-        update_paper_array(p0, 'recommendations', newRecs, recs, pid)
+        update_paper_array(p0, 'citations', newCits, citations, pid)
         update_paper_array(p0, 'posts', newPosts, posts, pid)
         update_paper_array(p0, 'replies', newReplies, replies, pid)
         update_paper_array(p0, 'interests', newInterests, interests, pid)
