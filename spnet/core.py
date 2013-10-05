@@ -500,6 +500,14 @@ class Person(Document):
 class ArxivPaperData(EmbeddedDocument):
     'store arxiv data for a paper as subdocument of Paper'
     _dbfield = 'arxiv.id'
+    def __init__(self, fetchID=None, docData=None, parent=None,
+                 insertNew=True):
+        if fetchID:
+            s = fetchID.lower()
+            i = s.rfind('v')
+            if i > 0 and fetchID[i + 1:].isdigit():
+                fetchID = fetchID[:i] # remove version suffix
+        EmbeddedDocument.__init__(self, fetchID, docData, parent, insertNew)
     def _query_external(self, arxivID):
         'obtain arxiv data from arxiv.org'
         import arxiv
