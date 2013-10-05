@@ -32,3 +32,12 @@ def test1():
     post.papers[0].citations[0].delete()
     post.delete()
     print 'tests passed'
+
+def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
+    l = [core.ArxivPaperData(s, insertNew='findOrInsert').parent
+         for s in arxivIDs]
+    for p in l[1:]:
+        if p._id != l[0]._id:
+            raise AssertionError('arxiv versions map to different Paper records!')
+    print 'tests passed.'
+
