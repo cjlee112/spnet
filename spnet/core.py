@@ -154,6 +154,17 @@ class Post(UniqueArrayDocument, AuthorInfo):
     def is_rec(self):
         return getattr(self, 'citationType', 'discuss') \
             in ('mustread', 'recommend')
+    def add_citations(self, papers, citationType='discuss'):
+        'save paper citations to db'
+        if not getattr(self, 'hasCitations', False):
+            self.update(dict(hasCitations=True))
+        l = []
+        for paper in papers:
+            d = dict(post=self.id, authorName=self.author.name,
+                     title=self.title, published=self.published,
+                     citationType=citationType)
+            l.append(Citation(docData=d, parent=paper))
+        return l
 
 
 def fetch_reply_post(obj, fetchID):

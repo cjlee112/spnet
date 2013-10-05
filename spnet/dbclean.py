@@ -67,12 +67,8 @@ def add_post_citations(citationType2='discuss'):
                 data = p._dbDocDict
                 p.delete() # delete Post record from p.parent paper
                 p = core.Post(docData=data, parent=papers[0])
-            for paper2 in papers[1:]: # save 2ary citations
-                d2 = dict(post=p.id, authorName=p.author.name,
-                          title=p.title, published=p.published,
-                          citationType=citationType2)
-                core.Citation(docData=d2, parent=paper2) # save citation to db
-                print '  added citation to %s' % paper2.get_value('local_url')
+            for c in p.add_citations(papers[1:], citationType2):
+                print '  added citation to %s' % c.parent.get_value('local_url')
             
 #################################################################
 # make sure all Reply records indicate post vs. rec sourcetype

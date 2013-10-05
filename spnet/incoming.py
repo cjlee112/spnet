@@ -181,11 +181,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             d['citationType'] = citationType
         if post is None: # save to DB
             post = core.Post(docData=d, parent=paper)
-            for paper2 in papers[1:]: # save 2ary citations
-                d2 = dict(post=get_id(d), authorName=author.name,
-                          title=get_title(d), published=timeStamp,
-                          citationType=citationType2)
-                core.Citation(docData=d2, parent=paper2) # save citation to db
+            if len(papers) > 1: # save 2ary citations
+                post.add_citations(papers[1:], citationType2)
             try:
                 topicsDict
             except NameError:
