@@ -1,4 +1,5 @@
 import core
+import incoming
 
 ##############################################################
 # utilities for converting old Paper.recommendations storage
@@ -50,7 +51,28 @@ def add_delivery_post_id():
         for r in received:
             r['post'] = d[(r['paper'],r['from'])] # add postID
         person.update(dict(received=received))
-        
+
+def add_post_citations(citationType2='discuss'):
+    for p in core.Post.find_obj(): # add citationType to existing posts
+        content = p.get_text()
+        hashtagDict = incoming.get_hashtag_dict(content) # extract tags and IDs
+        papers = hashtagDict['paper']
+        if len(papers) > 1:
+            print 'multiple citations for %s: primary %s' \
+                % (p.id, papers[0].get_value('local_url'))
+            if papers[0] != p.parent:
+                print 'fixing primary paper mismatch %s -> %s' \
+                    % (p.parent.get_value('local_url'), 
+                       papers[0].get_value('local_url'))
+                data = p._dbDocDict
+                p.delete() # delete Post record from p.parent paper
+                p = core.Post(docData=data, parent=papers[0])
+            for paper2 in papers[1:]: # save 2ary citations
+                d2 = dict(post=p.id, authorName=p.author.name,
+                          title=p.title, published=p.published,
+                          citationType=citationType2)
+                core.Citation(docData=d2, parent=paper2) # save citation to db
+                print '  added citation to %s' % paper2.get_value('local_url')
             
 #################################################################
 # make sure all Reply records indicate post vs. rec sourcetype
