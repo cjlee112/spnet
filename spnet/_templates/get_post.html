@@ -55,12 +55,27 @@
 </A> ( {{- display_datetime(post.published) -}} )
 </div>
 
-<h3>Comment on <A HREF="{{- post.get_value('parent_url') -}}">
+<h3>
+{% if post.is_rec() %}
+Recommendation for
+{% else %}
+Comment on 
+{% endif %}
+<A HREF="{{- post.get_value('parent_url') -}}">
 {{ post.parent.title }}
 </a>
 <a href="https://plus.google.com/share? {{- urlencode(dict(url=post.get_spnet_url())) -}}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');return false;">
 <img src="https://www.gstatic.com/images/icons/gplus-32.png" alt="Share on Google+" title="Share this recommendation on Google+"/></a>
 </h3>
+{% if getattr(post, 'citations', False) %}
+Also discusses:
+{% for c in post.citations %}
+<A HREF="{{- c.parent.get_value('local_url') -}}">
+{{ c.parent.title }}
+</A>;
+{% endfor %}
+<BR>
+{% endif %}
 {% if post.get_value('topics') %}
 For topics:
 {% for topic in post.get_value('topics') %}
