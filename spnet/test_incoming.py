@@ -24,12 +24,12 @@ def test1():
     assert len(l) == 1
     post = l[0]
     assert post.parent.arxiv.id == '0804.2682'
-    assert len(post.papers) == 1
-    assert post.papers[0].arxiv.id == '0910.4103'
-    assert len(post.papers[0].citations) == 1
-    assert post.papers[0].citations[0].title == 'Such an interesting Post!'
+    assert len(post.citations) == 1
+    assert post.citations[0].parent.arxiv.id == '0910.4103'
+    assert len(post.citations[0].parent.citations) == 1
+    assert post.citations[0].title == 'Such an interesting Post!'
     # finally clean up by deleting our test post
-    post.papers[0].citations[0].delete()
+    post.citations[0].delete()
     post.delete()
     print 'tests passed'
 

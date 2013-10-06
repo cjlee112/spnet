@@ -48,7 +48,7 @@ fetch_subscribers = FetchQuery(None, lambda person:
                                {'subscriptions.author':person._id})
 fetch_sig_members = FetchQuery(None, lambda sig: {'sigs.sig':sig._id})
 fetch_sig_papers = FetchQuery(None, lambda sig: {'sigs':sig._id})
-fetch_post_papers = FetchQuery(None, lambda post: {'citations.post':post.id})
+fetch_post_citations = FetchQuery(None, lambda post: {'citations.post':post.id})
 fetch_sig_posts = FetchQuery(None, lambda sig:
                             {'posts.sigs':sig._id})
 fetch_sig_interests = FetchQuery(None, lambda sig:
@@ -142,7 +142,7 @@ class Post(UniqueArrayDocument, AuthorInfo):
     _parent_url = '/papers/%s' # link for full paper record
     # attrs that will only be fetched if accessed by getattr
     parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
-    papers = LinkDescriptor('papers', fetch_post_papers, noData=True)
+    citations = LinkDescriptor('citations', fetch_post_citations, noData=True)
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
     get_replies = get_replies
@@ -190,6 +190,8 @@ class Reply(UniqueArrayDocument, AuthorInfo):
 class Citation(ArrayDocument):
     _dbfield = 'citations.post' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
+    # attrs that will only be fetched if accessed by getattr
+    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
     post = LinkDescriptor('post', fetch_post)
 
 
@@ -697,8 +699,15 @@ class Paper(Document):
         return d
     def get_local_url(self):
         return '/paper/' + str(self._id)
-                
-
+    def get_all_posts(self, isRec=False):
+        l = getattr(self, 'posts', [])
+        if isRec is not None:
+            l = filter(lambda p:p.is_rec() == isRec, l)
+        for c in getattr(self, 'citations', ()):
+            if isRec is None or (c.citationType in ('mustread', 'recommend')) \
+                    == isRec:
+                l.append(c.post)
+        return l
 
 
 class Tag(Document):
@@ -728,7 +737,7 @@ fetch_author_papers.klass = Paper
 fetch_subscribers.klass = Person
 fetch_sig_members.klass = Person
 fetch_sig_papers.klass = Paper
-fetch_post_papers.klass = Paper
+fetch_post_citations.klass = Citation
 fetch_sig_posts.klass = Post
 fetch_sig_interests.klass = PaperInterest
 fetch_issues.klass = Issue
