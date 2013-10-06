@@ -69,6 +69,16 @@ def add_post_citations(citationType2='discuss'):
                 p = core.Post(docData=data, parent=papers[0])
             for c in p.add_citations(papers[1:], citationType2):
                 print '  added citation to %s' % c.parent.get_value('local_url')
+
+def unified_posts():
+    print 'converting recs to posts...'
+    test_conversion()
+    print 'deleting old rec records...'
+    delete_recs()
+    print 'updating deliveries received...'
+    add_delivery_post_id()
+    print 'adding multiple citations...'
+    add_post_citations()
             
 #################################################################
 # make sure all Reply records indicate post vs. rec sourcetype
