@@ -249,6 +249,13 @@ class EmbeddedDocument(EmbeddedDocBase):
             except KeyError: # insert new record in database
                 if not docData: # get data from external query
                     docData = self._query_external(fetchID)
+                fetchID2 = docData[self._dbfield.split('.')[-1]]
+                if fetchID2 != fetchID:
+                    try:
+                        Document.__init__(self, fetchID2)
+                        return # already have this doc, don't duplicate!
+                    except KeyError:
+                        pass
                 if parent is None:
                     self._set_parent(self._insert_parent(docData))
                     subdocField = self._dbfield.split('.')[0]
