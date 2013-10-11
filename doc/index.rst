@@ -14,6 +14,7 @@ For Users:
    intro
    hashtags
    contribute
+   troubleshooting
 
 For Developers:
 
