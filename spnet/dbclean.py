@@ -53,7 +53,8 @@ def add_delivery_post_id():
         person.update(dict(received=received))
 
 def add_post_citations(citationType2='discuss'):
-    for p in core.Post.find_obj(): # add citationType to existing posts
+    posts = list(core.Post.find_obj()) # get full list before changing db!
+    for p in posts: # add citationType to existing posts
         content = p.get_text()
         hashtagDict = incoming.get_hashtag_dict(content) # extract tags and IDs
         papers = hashtagDict['paper']
