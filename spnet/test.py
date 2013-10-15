@@ -117,12 +117,13 @@ gplus3 = core.GplusPersonData(docData=dict(id=5678, displayName='Fred Eiserling'
                               insertNew='findOrInsert')
 assert gplus3.parent.name == 'Fred Eiserling'
 
-rec1 = core.Recommendation(docData=dict(author=fred._id,
-                                        title='Why You Need to Read This Important Extension of the CDM Model',
-                                        text=lorem),
+rec1 = core.Post(docData=dict(author=fred._id, citationType='recommend', id='1',
+                              title='Why You Need to Read This Important Extension of the CDM Model',
+                              text=lorem),
                            parent=paper1)
-rec2 = core.Recommendation(docData=dict(author=jojo._id, text='must read!',
-                                        sigs=[sig1._id, sig2._id]),
+rec2 = core.Post(docData=dict(author=jojo._id, text='must read!',
+                              citationType='mustread', id='2',
+                              sigs=[sig1._id, sig2._id]),
                            parent=paper2._id)
 assert set(core.Person(jojo._id).topics) == set([sig1._id, sig2._id])
 
@@ -159,15 +160,16 @@ assert len(paper2.authors[0].email) == 2
 assert issue1.author == jojo
 p = core.Paper(paper1._id)
 assert len(p.issues) == 1
-assert len(p.posts) == 1
-assert p.posts == [post1]
-assert p.posts[0].text == 'interesting paper!'
-assert list(p.posts[0].get_replies()) == [reply1]
+posts1 = p.get_all_posts()
+assert len(posts1) == 1
+assert posts1 == [post1]
+assert posts1[0].text == 'interesting paper!'
+assert list(posts1[0].get_replies()) == [reply1]
 assert core.Post(98765).author == fred
 assert core.Reply(7890).replyTo == post1
 assert core.Reply(7890).parent == paper1
-assert core.Person(fred._id).posts == [post1]
-assert core.SIG(sig1._id).posts == [post1]
+assert filter(lambda x:not x.is_rec(), core.Person(fred._id).posts) == [post1]
+assert filter(lambda x:not x.is_rec(), core.SIG(sig1._id).posts) == [post1]
 assert core.Post(98765).sigs == [sig1]
 
 replyAgain = core.Reply(docData=dict(author=fred._id, text='interesting paper!',
@@ -192,10 +194,10 @@ assert sig1.recommendations == [rec2]
 rec1.array_append('sigs', sig2)
 
 assert len(sig2.recommendations) == 2
-assert core.Recommendation((rec1.parent._id, rec1._get_id())).sigs == [sig2]
+assert core.Post(rec1.id).sigs == [sig2]
 
 rec2.update(dict(text='totally fascinating!', score=27))
-rec3 = core.Recommendation((paper2._id, jojo._id))
+rec3 = core.Post(rec2.id)
 assert rec3.score == 27
 
 a4 = core.EmailAddress('fred@dotzler.com')
@@ -237,9 +239,9 @@ assert core.EmailAddress(a4.address).numbers == [17, 6]
 a4.array_del('numbers', 17)
 assert core.EmailAddress(a4.address).numbers == [6]
 
-rec3 = core.Recommendation(docData=dict(author=fred._id,
-                         text='I think this is a major breakthrough.',
-                                        sigs=[sig2._id], id=3456),
+rec3 = core.Post(docData=dict(author=fred._id, citationType='recommend',
+                              text='I think this is a major breakthrough.',
+                              sigs=[sig2._id], id=3456),
                            parent=paper2._id)
 
 assert core.SIG(sig1._id).recommendations == [rec2]
@@ -285,7 +287,6 @@ recReply = core.Reply(docData=dict(author=jojo._id, id=78901, replyTo=3456,
                       parent=paper2._id)
 
 # make sure timestamps present on all recs
-l = [r.published for r in core.Recommendation.find_obj()]
 l = [r.published for r in core.Post.find_obj()]
 l = [r.published for r in core.Reply.find_obj()]
 
@@ -343,5 +344,10 @@ assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [spnetPap
 
 topics, subs = bulk.get_people_subs()
 bulk.deliver_recs(topics, subs)
-assert len(core.Person(jojo._id).received) == 2
-assert len(core.Person(fred._id).received) == 1
+assert len(core.Person(jojo._id).received) == 4
+assert len(core.Person(fred._id).received) == 2
+
+import test_incoming
+test_incoming.test1()
+test_incoming.test_arxiv_versions()
+test_incoming.test_arxiv_versions2()
