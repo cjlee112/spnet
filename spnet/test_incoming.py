@@ -26,9 +26,9 @@ def submit_post(d=post1):
         lambda x:False, 'gplusPost')
     return list(it)
 
-def test_multiple_citations():
+def test_multiple_citations(d=post1):
     'add post with multiple citations, redundancy, ordering issues'
-    l = submit_post(post1) # create test post
+    l = submit_post(d) # create test post
     assert len(l) == 1
     post = l[0]
     assert post.parent.arxiv.id == '0804.2682'
@@ -42,6 +42,21 @@ def test_multiple_citations():
     post.citations[0].delete()
     post.citations[1].delete()
     post.delete()
+
+def test_bad_tag():
+    'check if #recommended crashes incoming'
+    postDict = dict(
+        id='temporaryPost',
+        content='''this is my post.
+    It talks about three papers including  arXiv:0910.4103
+    and http://arxiv.org/abs/1310.2239
+    #spnetwork #recommended arXiv:0804.2682 #gt  arXiv:0910.4103 arXiv:0804.2682 #gt''',
+        user='114744049040264263224',
+        title='Such an interesting Post!',
+    )
+    test_multiple_citations(postDict)
+
+    
 
 def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
     'check if versioned arxiv IDs create duplicate records'
