@@ -1,6 +1,12 @@
+import connect
 import incoming
 import core
 from datetime import datetime
+
+def setup():
+    'get a db connection prior to running tests'
+    connect.init_connection()
+
 
 post1 = dict(
     id='temporaryPost',
@@ -20,7 +26,8 @@ def submit_post(d=post1):
         lambda x:False, 'gplusPost')
     return list(it)
 
-def test1():
+def test_multiple_citations():
+    'add post with multiple citations, redundancy, ordering issues'
     l = submit_post(post1) # create test post
     assert len(l) == 1
     post = l[0]
@@ -35,15 +42,15 @@ def test1():
     post.citations[0].delete()
     post.citations[1].delete()
     post.delete()
-    print 'tests passed'
 
 def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
+    'check if versioned arxiv IDs create duplicate records'
     l = [core.ArxivPaperData(s, insertNew='findOrInsert').parent
          for s in arxivIDs]
     for p in l[1:]:
         if p._id != l[0]._id:
             raise AssertionError('arxiv versions map to different Paper records!')
-    print 'tests passed.'
 
 def test_arxiv_versions2(arxivIDs=('math.HO_9404236', 'math.HO_9404236')):
+    'check if math.HO/9404236 style arxiv IDs create duplicate records'
     test_arxiv_versions(arxivIDs)
