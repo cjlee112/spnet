@@ -145,7 +145,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                          process_post=None, process_reply=None,
                          recentEvents=None, maxDays=None,
                          citationType='discuss', citationType2='discuss',
-                         get_title=lambda x:x['title']):
+                         get_title=lambda x:x['title'],
+                         spnetworkOnly=True):
     'generate each post that has a paper hashtag, adding to DB if needed'
     now = datetime.utcnow()
     saveEvents = []
@@ -157,6 +158,8 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         if is_reshare(d): # just a duplicate (reshared) post, so skip
             continue
         content = get_content(d)
+        if spnetworkOnly and content.find('#spnetwork') < 0:
+            continue # ignore posts lacking our spnetwork hashtag
         isRec = content.find('#recommend') >= 0 or \
                 content.find('#mustread') >= 0
         try:
@@ -182,7 +185,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
                                  timeStamp, source)
         if isRec: # record rec type
-            d['citationType'] = hashtagDict['rec'][0]
+            try:
+                d['citationType'] = hashtagDict['rec'][0]
+            except KeyError: # handle bad rec hashtag
+                d['citationType'] = 'recommend'
         else: # use default citation type
             d['citationType'] = citationType
         if post is None: # save to DB
