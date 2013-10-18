@@ -15,6 +15,7 @@ It talks about three papers including  arXiv:0910.4103
 and http://arxiv.org/abs/1310.2239
 #spnetwork arXiv:0804.2682 #gt  arXiv:0910.4103 arXiv:0804.2682 #gt''',
     user='114744049040264263224',
+    etag='old data',
     title='Such an interesting Post!',
 )
 
@@ -25,6 +26,11 @@ def submit_post(d=post1):
         lambda x:x['id'], lambda x:datetime.now(),
         lambda x:False, 'gplusPost')
     return list(it)
+
+def cleanup_post(post):
+    for c in post.citations:
+        c.delete()
+    post.delete()
 
 def test_multiple_citations(d=post1):
     'add post with multiple citations, redundancy, ordering issues'
@@ -39,9 +45,24 @@ def test_multiple_citations(d=post1):
     assert post.citations[0].title == 'Such an interesting Post!'
     assert len(post.citations[1].parent.citations) == 1
     # finally clean up by deleting our test post
-    post.citations[0].delete()
-    post.citations[1].delete()
-    post.delete()
+    cleanup_post(post)
+
+def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
+    'check that etag value will force updating'
+    submit_post(post1)
+    d = post1.copy()
+    d['content'] = newText
+    submit_post(d)
+    p = core.Post(d['id']) # retrieve from DB
+    assert p.get_text() == post1['content'] # no update b/c etag unchanged!
+    d = post1.copy()
+    d['content'] = newText
+    d['etag'] = 'new and improved'
+    submit_post(d)
+    p = core.Post(d['id']) # retrieve from DB
+    assert p.etag == 'new and improved'
+    assert p.get_text() == newText
+    cleanup_post(p)
 
 def test_bad_tag():
     'check if #recommended crashes incoming'
