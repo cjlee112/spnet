@@ -19,8 +19,8 @@ and http://arxiv.org/abs/1310.2239
     title='Such an interesting Post!',
 )
 
-def submit_post(d=post1):
-    it = incoming.find_or_insert_posts([d], None, 
+def submit_posts(posts):
+    it = incoming.find_or_insert_posts([d.copy() for d in posts], None, 
         lambda x:core.GplusPersonData(x, insertNew='findOrInsert').parent,
         lambda x:x['content'], lambda x:x['user'], lambda x:0,
         lambda x:x['id'], lambda x:datetime.now(),
@@ -32,12 +32,13 @@ def cleanup_post(post):
         c.delete()
     post.delete()
 
-def test_multiple_citations(d=post1):
+def test_multiple_citations(d=post1, citationType='discuss'):
     'add post with multiple citations, redundancy, ordering issues'
-    l = submit_post(d) # create test post
+    l = submit_posts([d]) # create test post
     assert len(l) == 1
     post = l[0]
     assert post.parent.arxiv.id == '0804.2682'
+    assert post.citationType == citationType
     assert len(post.citations) == 2
     ids = [c.parent.arxiv.id for c in post.citations]
     assert '0910.4103' in ids and '1310.2239' in ids
@@ -49,16 +50,16 @@ def test_multiple_citations(d=post1):
 
 def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
     'check that etag value will force updating'
-    submit_post(post1)
+    submit_posts([post1])
     d = post1.copy()
     d['content'] = newText
-    submit_post(d)
+    submit_posts([d])
     p = core.Post(d['id']) # retrieve from DB
     assert p.get_text() == post1['content'] # no update b/c etag unchanged!
     d = post1.copy()
     d['content'] = newText
     d['etag'] = 'new and improved'
-    submit_post(d)
+    submit_posts([d])
     p = core.Post(d['id']) # retrieve from DB
     assert p.etag == 'new and improved'
     assert p.get_text() == newText
@@ -77,6 +78,32 @@ def test_bad_tag():
     )
     test_multiple_citations(postDict)
 
+def test_arxiv_href():
+    'check handling of arxiv URL in HTML <A HREF>'
+    content = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+#spnetwork
+'''
+    check_parse(content)
+
+def test_no_spnetwork():
+    'check proper handling of post lacking #spnetwork tag'
+    d = post1.copy()
+    d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+'''
+    l = submit_posts([d, post1])
+    assert len(l) == 1
+    cleanup_post(l[0])
+    
+
+def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
+                primaryRole='discuss', tags=[]):
+    refs, topics, primary = incoming.get_references_and_tags(t)
+    assert (topics == tags)
+    assert primary == primaryID
+    assert refs[primary][1] == primaryType
+    assert refs[primary][0] == primaryRole
     
 
 def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
