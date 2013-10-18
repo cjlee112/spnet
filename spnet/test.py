@@ -53,7 +53,7 @@ def monolithic_test():
     sig1 = core.SIG.find_or_insert('cosmology')
     sig2 = core.SIG.find_or_insert('lambdaCDMmodel')
 
-    topicWords = incoming.get_topicIDs(dict(topic=['cosmology', 'astrophysics']),
+    topicWords = incoming.get_topicIDs(['cosmology', 'astrophysics'],
                                        1, datetime.utcnow(), 'test')
     assert topicWords == ['cosmology', 'astrophysics']
     astroSIG = core.SIG('astrophysics')
@@ -325,13 +325,15 @@ def monolithic_test():
     assert paper4 == paper5
     assert rootColl['shortDOI']._GET(s) == paper4
     txt = 'some text ' + paper4.doi.get_hashtag()
-    assert incoming.get_hashtag_dict(txt)['paper'] == [paper4]
+    refs, topics, primary = incoming.get_references_and_tags(txt,spnetworkOnly=False)
+    assert incoming.get_paper(primary,refs[primary][1]) == paper4
 
     spnetPaper = core.DoiPaperData(DOI='10.3389/fncom.2012.00001',
                                    insertNew='findOrInsert').parent
     assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'
     txt = 'a long comment ' + spnetPaper.doi.get_doctag() + ', some more text'
-    assert incoming.get_hashtag_dict(txt)['paper'] == [spnetPaper]
+    refs, topics, primary = incoming.get_references_and_tags(txt,spnetworkOnly=False)
+    assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
 
     ## t = 'this is text #spnetwork #recommend #arxiv_1302_4871 #pubmed_22291635 #cosmology'
     ## d = incoming.get_hashtag_dict(t)
@@ -342,8 +344,10 @@ def monolithic_test():
     ## assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
 
     t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
-    d = incoming.get_hashtag_dict(t)
-    assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [spnetPaper], 'rec': ['recommend']}
+    refs, topics, primary = incoming.get_references_and_tags(t)
+    assert (topics == ['cosmology'])
+    assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
+    assert (refs[primary][0] == 'recommend')
 
     topics, subs = bulk.get_people_subs()
     bulk.deliver_recs(topics, subs)
