@@ -6,6 +6,22 @@ import bulk
 
 #################################################################
 # hashtag processors
+def get_paper(ID, paperType):
+    if paperType == 'arxiv':
+        return core.ArxivPaperData(ID, insertNew='findOrInsert').parent
+    elif paperType == 'pubmed':
+        try: # eutils horribly unreliable, handle its failure gracefully
+            return core.PubmedPaperData(ID, insertNew='findOrInsert').parent
+        except errors.TimeoutError:
+            raise KeyError('eutils timed out, unable to retrive pubmedID')
+    elif paperType == 'DOI':
+        return core.DoiPaperData(DOI=ID, insertNew='findOrInsert').parent
+    elif paperType == 'shortDOI':
+        return core.DoiPaperData(ID, insertNew='findOrInsert').parent
+    else:
+        raise Exception('Unrecognized paperType')
+
+
 def hashtag_to_spnetID(s, subs=((re.compile('([a-z])_([a-z])'), r'\1-\2'),
                                 (re.compile('([0-9])_([0-9])'), r'\1.\2'))):
     'convert 1234_5678 --> 1234.5678 and gr_qc_12345 --> gr-qc_12345'
@@ -14,105 +30,121 @@ def hashtag_to_spnetID(s, subs=((re.compile('([a-z])_([a-z])'), r'\1-\2'),
     return s
 
 def get_hashtag_arxiv(m):
-    arxivID = hashtag_to_spnetID(str(m.group(1)))
-    return core.ArxivPaperData(arxivID, insertNew='findOrInsert').parent
+    arxivID = hashtag_to_spnetID(str(m))
+    return arxivID
 
 def get_arxiv_paper(m):
-    arxivID = str(m.group(1)).replace('/', '_')
-    return core.ArxivPaperData(arxivID, insertNew='findOrInsert').parent
+    arxivID = str(m).replace('/', '_')
+    return arxivID
 
 def get_hashtag_pubmed(m):
-    pubmedID = str(m.group(1))
-    try: # eutils horribly unreliable, handle its failure gracefully
-        return core.PubmedPaperData(pubmedID, insertNew='findOrInsert').parent
-    except errors.TimeoutError:
-        raise KeyError('eutils timed out, unable to retrive pubmedID')
+    pubmedID = str(m)
+    return pubmedID
 
 def get_hashtag_doi(m):
-    shortDOI = str(m.group(1))
-    return core.DoiPaperData(shortDOI, insertNew='findOrInsert').parent
+    shortDOI = str(m)
+    return shortDOI
 
 def get_doi_paper(m):
-    DOI = m.group(1) # look out, DOI can include any unicode character
-    return core.DoiPaperData(DOI=DOI, insertNew='findOrInsert').parent
+    DOI = m # look out, DOI can include any unicode character
+    return DOI
 
 #################################################################
-# hashtag recognizers
-hashTagPats = (
-    (re.compile('#arxiv_([a-z0-9_]+)'), 'paper', get_hashtag_arxiv),
-    (re.compile('ar[xX]iv:\s?[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+# hashtag parsing
+refPats = (
+    ('#arxiv_([a-z0-9_]+)', 'arxiv', get_hashtag_arxiv),
+    ('ar[xX]iv:\s?[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('ar[xX]iv:\s?([a-zA-Z.-]+/[0-9]+v?[0-9]+)'), 'paper', 
+    ('ar[xX]iv:\s?([a-zA-Z.-]+/[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+    ('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('http://arxiv.org/[abspdf]{3}/[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+    ('http://arxiv.org/[abspdf]{3}/[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('http://arxiv.org/[abspdf]{3}/([a-zA-Z.-]+/[0-9]+v?[0-9]+)'), 'paper', 
+    ('http://arxiv.org/[abspdf]{3}/([a-zA-Z.-]+/[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('http://arxiv.org/[abspdf]{3}/([0-9]+\.[0-9]+v?[0-9]+)'), 'paper', 
+    ('http://arxiv.org/[abspdf]{3}/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
      get_arxiv_paper),
-    (re.compile('#pubmed_([0-9]+)'), 'paper', get_hashtag_pubmed),
-    (re.compile('PMID:\s?([0-9]+)'), 'paper', get_hashtag_pubmed),
-    (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),
-    (re.compile('[dD][oO][iI]:\s?(10\.\S+)'), 'paper', get_doi_paper),
-    (re.compile('shortDOI:\s?([a-zA-Z0-9]+)'), 'paper', get_hashtag_doi),
-    (re.compile('#([a-zA-Z][a-zA-Z0-9_]+)'), 'topic', lambda m:m.group(1)),
+    ('#pubmed_([0-9]+)', 'pubmed', get_hashtag_pubmed),
+    ('PMID:\s?([0-9]+)', 'pubmed', get_hashtag_pubmed),
+    ('#shortDOI_([a-zA-Z0-9]+)', 'shortDOI', get_hashtag_doi),
+    ('[dD][oO][iI]:\s?(10\.\S+)', 'DOI', get_doi_paper),
+    ('shortDOI:\s?([a-zA-Z0-9]+)', 'shortDOI', get_hashtag_doi)
     )
 
-class CategoryList(object):
-    'ensures each string matched only once'
-    recats={'recommend':'rec', 'mustread':'rec', 'spnetwork':'header'}
-    def __init__(self):
-        self.d = {}
-    def append(self, start, k, v):
-        if start in self.d: # ignore duplicate match to same string
-            return
-        try:
-            k = self.recats[v] # recategorize hashtag
-        except KeyError:
-            pass
-        self.d[start] = (k, v)
-    def get_dict(self):
-        'dict of {category:[results]}; results in order of occurence in text'
-        l = self.d.items()
-        l.sort()
-        d = {}
-        primaryPaper = False
-        for pos, (k, v) in l:
-            if v == 'spnetwork': # 1st paper after tag is primary paper
-                primaryPaper = True
-            try:
-                if primaryPaper and k == 'paper':
-                    d.setdefault(k, []).insert(0, v) # make it 1st entry
-                    primaryPaper = False
-                else:
-                    d[k].append(v)
-            except KeyError:
-                d[k] = [v]
-        for k,l in d.items(): # filter out any duplicate entries
-            d[k] = [v for (i,v) in enumerate(l) if v not in l[:i]]
-        return d
-    
+topicPatterns = ['#([a-zA-Z][a-zA-Z0-9_]+)']
+validTags = ('recommend', 'discuss', 'announce', 'mustread')
 
-def get_hashtag_dict(t, pats=hashTagPats):
-    '''extracts a dict of hashtags, of the form {k:[v,...]}
-    with the following possible keys:
-    paper: list of core.Paper objects
-    topic: topic names (leading # removed)
-    rec: recommend or mustread
-    header: spnetwork'''
-    cl = CategoryList()
-    for pat, k, f in pats: # try all the patterns
-        m = pat.search(t)
-        while m:
-            try:
-                result = f(m) # retrieve its output
-                cl.append(m.start(), k, result)
-            except KeyError:
-                pass # bad ID or false positive, so ignore
-            m = pat.search(t, m.end()) # search for next hashtag
-    return cl.get_dict()
+def get_references_and_tags(content, spnetworkOnly=True):
+    """Process the body of a post.  Return
+        - a dictionary with each entry of the form {reference: tag}.  Here
+          reference is a reference to a paper and tag is one of
+          #recommend #discuss #announce #mustread;
+        - and a list of topic tags
+
+        Assumptions:
+        - Only one tag can be applied to each reference in a given post
+        - The tag for each reference must immediately precede the reference
+    """
+    references = {}
+    topics = []
+    primary = None
+
+    # Match all paper references with a tag in front of them
+    for pattern, reftype, patfun in refPats:
+        refpat = re.compile('#(\w+)\s+'+pattern)
+        ref_matches = refpat.findall(content)
+        for reference in ref_matches:
+            tag = reference[0]
+            ref = patfun(reference[1])
+            if tag in validTags:
+                references[ref] = (tag, reftype)
+            elif tag != 'spnetwork':
+                # We should send the user a warning that an invalid
+                # tag was used. We could also perhaps do fuzzy matching to
+                # guess what was meant.
+                references[ref] = ('discuss', reftype)
+
+    # Match all paper references without a tag in front of them
+    for pattern, reftype, patfun in refPats:
+        refpat = re.compile(pattern)
+        ref_matches = refpat.findall(content)
+        for ref in ref_matches:
+            ref = patfun(ref)
+            if ref not in references.keys():
+                references[ref] = ('discuss', reftype)
+
+    # Now find topic tags
+    for pattern in topicPatterns:
+        topicpat = re.compile(pattern)
+        topics = topicpat.findall(content)
+        topics = [t for t in topics if t not in validTags]
+        topics = [t for t in topics if t != 'spnetwork']
+        # Remove duplicates
+        topics = list(set(topics))
+
+    # Now find location of #spnetwork and figure out which is the first reference after it
+    # This seems a bit wasteful, but shouldn't be a bottleneck
+    # Of course, we could check above for the simplest case
+    try:
+        sptagloc = re.compile('#spnetwork').search(content).start()
+    except: # no spnetwork tag in this string
+        if spnetworkOnly:
+            raise Exception('No #spnetwork tag in post')
+        else: # Take first reference as primary
+            sptagloc = 0
+    content = content[sptagloc:]
+    first_ref_loc = len(content)
+    for pattern, reftype, patfun in refPats:
+        ref = re.compile(pattern).search(content)
+        if ref is not None:
+            refloc = ref.start()
+            if refloc < first_ref_loc:
+                first_ref_loc = refloc
+                primary = patfun(ref.group(1))
+
+
+    return references, topics, primary
 
 
 #################################################################
@@ -131,10 +163,11 @@ def screen_topics(topicWords, skipAttr='ignore', **kwargs):
 
 
 
-def get_topicIDs(hashtagDict, docID, timestamp, source):
-    'return list of topic IDs for a post, saving to db if needed'
-    topics = screen_topics(hashtagDict.get('topic', ()),
-                           origin=dict(source=source, id=docID),
+def get_topicIDs(topics, docID, timestamp, source):
+    """return list of topic IDs for a post, saving to db if needed
+
+        Input variable topics should be a list of strings."""
+    topics = screen_topics(topics, origin=dict(source=source, id=docID),
                            published=timestamp)
     return [t._id for t in topics] # IDs for storing to db, etc.
 
@@ -169,11 +202,12 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 continue # matches DB record, so nothing to do
         except KeyError:
             pass
-        hashtagDict = get_hashtag_dict(content) # extract tags and IDs
+        # extract tags and IDs:
+        refs, topics, primary = get_references_and_tags(content)
         if post is None: # extract data for saving post to DB
             try:
-                papers = hashtagDict['paper']
-                paper = papers[0] # link to first paper
+                primary_paper_ID = refs[primary]
+                paper = get_paper(primary,primary_paper_ID[1])
             except KeyError:
                 continue # no link to a paper, so nothing to save.
             userID = get_user(d)
@@ -182,19 +216,14 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         d['text'] =  content
         if process_post:
             process_post(d)
-        d['sigs'] = get_topicIDs(hashtagDict, get_id(d),
-                                 timeStamp, source)
-        if isRec: # record rec type
-            try:
-                d['citationType'] = hashtagDict['rec'][0]
-            except KeyError: # handle bad rec hashtag
-                d['citationType'] = 'recommend'
-        else: # use default citation type
-            d['citationType'] = citationType
+        d['sigs'] = get_topicIDs(topics, get_id(d),timeStamp, source)
+        d['citationType'] = refs[primary][0]
         if post is None: # save to DB
             post = core.Post(docData=d, parent=paper)
-            if len(papers) > 1: # save 2ary citations
-                post.add_citations(papers[1:], citationType2)
+            for ref, meta in refs.iteritems():
+                if ref != primary:
+                    paper = get_paper(ref, meta[1])
+                    post.add_citations([paper], meta[0])
             try:
                 topicsDict
             except NameError:
