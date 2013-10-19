@@ -193,8 +193,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         content = get_content(d)
         if spnetworkOnly and content.find('#spnetwork') < 0:
             continue # ignore posts lacking our spnetwork hashtag
-        isRec = content.find('#recommend') >= 0 or \
-                content.find('#mustread') >= 0
         try:
             post = core.Post(get_id(d))
             if getattr(post, 'etag', None) == d.get('etag', ''):
@@ -253,10 +251,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 c['author'] = author._id
                 c['text'] =  get_content(c)
                 c['replyTo'] = get_id(d)
-                if isRec: # record the type of post
-                    c['sourcetype'] = 'rec'
-                else:
-                    c['sourcetype'] = 'post'
                 r = core.Reply(docData=c, parent=post._parent_link)
                 if recentEvents is not None: # add to monitor deque
                     saveEvents.append(r)
