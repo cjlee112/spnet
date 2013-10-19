@@ -78,6 +78,20 @@ def test_bad_tag():
     )
     test_multiple_citations(postDict)
 
+def test_simple_text():
+    'check simple doi rec parsing'
+    t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
+    check_parse(t, '10.3389/fncom.2012.00001', 'DOI', 'recommend', 
+                ['cosmology'])
+
+def test_pair_text():
+    'check pair of paper refs'
+    t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
+    l = check_parse(t, '1302.4871', 'arxiv', 'recommend', ['cosmology'])
+    refs = l[0]
+    assert refs['22291635'] == ('discuss', 'pubmed')
+    assert refs['1302.4871'] == ('recommend', 'arxiv')
+
 def test_arxiv_href():
     'check handling of arxiv URL in HTML <A HREF>'
     content = '''
@@ -104,6 +118,7 @@ def check_parse(t, primaryID='0906.0213', primaryType='arxiv',
     assert primary == primaryID
     assert refs[primary][1] == primaryType
     assert refs[primary][0] == primaryRole
+    return refs, topics, primary
     
 
 def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
@@ -117,3 +132,14 @@ def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
 def test_arxiv_versions2(arxivIDs=('math.HO_9404236', 'math.HO_9404236')):
     'check if math.HO/9404236 style arxiv IDs create duplicate records'
     test_arxiv_versions(arxivIDs)
+
+def check_paper_pair(args1, args2):
+    p1 = incoming.get_paper(*args1)
+    p2 = incoming.get_paper(*args2)
+    assert p1 == p2
+    assert p1._id == p2._id
+
+def test_doi_vs_pubmed():
+    'check that pubmed and DOI map to identical paper record'
+    check_paper_pair(('22291635', 'pubmed'), 
+                     ('10.3389/fncom.2012.00001', 'DOI'))

@@ -335,20 +335,6 @@ def monolithic_test():
     refs, topics, primary = incoming.get_references_and_tags(txt,spnetworkOnly=False)
     assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
 
-    ## t = 'this is text #spnetwork #recommend #arxiv_1302_4871 #pubmed_22291635 #cosmology'
-    ## d = incoming.get_hashtag_dict(t)
-    ## assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
-
-    ## t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
-    ## d = incoming.get_hashtag_dict(t)
-    ## assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
-
-    t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
-    refs, topics, primary = incoming.get_references_and_tags(t)
-    assert (topics == ['cosmology'])
-    assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
-    assert (refs[primary][0] == 'recommend')
-
     topics, subs = bulk.get_people_subs()
     bulk.deliver_recs(topics, subs)
     assert len(core.Person(jojo._id).received) == 4
