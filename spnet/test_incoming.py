@@ -48,6 +48,27 @@ def test_multiple_citations(d=post1, citationType='discuss'):
     # finally clean up by deleting our test post
     cleanup_post(post)
 
+def test_text_content(t='''
+#discuss arXiv:0910.4103
+#recommend arXiv:0804.2682
+#announce http://arxiv.org/abs/1310.2239
+#spnetwork #gt
+'''):
+    'check basic citationType binding'
+    l = check_parse(t, '0910.4103', 'arxiv', 'discuss', ['gt'])
+    refs = l[0]
+    assert refs['0804.2682'] == ('recommend', 'arxiv')
+    assert refs['1310.2239'] == ('announce', 'arxiv')
+
+def test_html_content(t='''
+<A HREF="http://some.url.com/some/path1">#discuss</A> arXiv:0910.4103
+<A HREF="http://some.url.com/some/path2">#recommend</A> arXiv:0804.2682
+<A HREF="http://some.url.com/some/path3">#announce</A> http://arxiv.org/abs/1310.2239
+<A HREF="http://some.url.com/some/path4">#spnetwork</A> <A HREF="http://some.url.com/some/path5">#gt</A>
+'''):
+    'check that HTML tags do not break citationType binding'
+    test_text_content(t)
+
 def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
     'check that etag value will force updating'
     submit_posts([post1])
@@ -64,6 +85,31 @@ def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
     assert p.etag == 'new and improved'
     assert p.get_text() == newText
     cleanup_post(p)
+
+def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
+                      t2='update #spnetwork arXiv:1310.2239 #cat'):
+    'check updating of primary paper binding'
+    d = post1.copy()
+    d['content'] = t1
+    submit_posts([d])
+    try:
+        p = core.Post(d['id']) # retrieve from DB
+        paper1 = p.parent
+        assert paper1.arxiv.id == '0804.2682'
+        assert paper1.posts == [p]
+        d = post1.copy()
+        d['content'] = t2
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        p2 = core.Post(d['id']) # retrieve from DB
+        paper2 = p2.parent
+        assert core.Paper(paper1._id).posts == []
+        assert paper2.arxiv.id == '1310.2239'
+        assert paper2.posts == [p2]
+    finally: # cleanup so no effect on other tests
+        core.Post(d['id']).delete()
+
+# should code similar test for updating multiple citations
 
 def test_bad_tag():
     'check if #recommended crashes incoming'
