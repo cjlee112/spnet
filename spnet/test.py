@@ -11,7 +11,7 @@ import time
 import sessioninfo
 import bulk
 
-def monolithic_test():
+def destroy_db_and_test():
     '''tests progressively building an spnet db starting from a blank
     slate, adding papers, people, posts, topics, etc. and verifying
     the expected results.  NB: this is a destructive test, i.e. 
