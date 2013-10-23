@@ -6,6 +6,9 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
 </script>
 <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
+
+<script type="text/javascript" src="/js/postlist.js"> </script>
+
 </head>
 
 <body>
@@ -46,7 +49,7 @@ search
 {{ len(post) }} Posts matching " {{- searchAll -}} "
 </h2>
 
-<dl>
+<dl id='post-list'>
 {% for i,post1 in enumerate(post) %}
 <dt>[ {{- i + 1 -}} ]
 <A HREF="{{- post1.get_author_url() -}}" title="Click here to see this person's posts, topics, and other information">
@@ -59,10 +62,10 @@ search
 {% if hasattr(post1, 'url') %}
 <a href=" {{- post1.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
+<br>(click to show/hide)
 </dt>
 <dd>
 <div class="list-comments">
-<input type="checkbox" id="click {{- i -}}"/>Show text.
 {% if post1.get_value('topics') %}
 (On topics:
 {% for topic in post1.get_value('topics') %}
@@ -71,23 +74,12 @@ search
 {% endif %}
 about <A HREF="{{- post1.get_value('parent_url') -}}" title="Click here to view this paper">this paper</A>)
 {% else %}
-</dt>
-<dd>
-<div class="list-comments">
-<input type="checkbox" id="click {{- i -}}"/>Show text.
 (During a discussion thread about <A HREF="{{- post1.get_value('parent_url') -}}" title="Click here to view this paper">this paper</A>)
 {% endif %}
-<div id="test {{- i -}}" style="display: none">
 {{ post1.get_text() }}
-</div>
 </div>
 </dd>
 
-<script>
-$( "#click {{- i -}}" ).click(function() {
-  $( "#test {{- i -}}" ).toggle();
-});
-</script>
 {% endfor %}
 </dl>
 {% else %}

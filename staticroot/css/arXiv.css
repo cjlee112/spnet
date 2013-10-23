@@ -732,3 +732,17 @@ div#long-dc-list {
 #dlpage .list-subjects {
   font-size: 90%;
   }
+
+/* Styling for collapsable lists */
+#post-list dd { 
+    background-color: #eee; 
+    padding:10px; 
+    display:none; 
+}
+
+#post-list dt {
+    border:1px solid #666;
+    padding: 10px;
+    margin: 10px;
+    cursor: pointer;
+}

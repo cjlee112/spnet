@@ -19,6 +19,9 @@ function setPriority(subcoll, topicID, field, state)
   });
 }
 </script>
+
+<script type="text/javascript" src="/js/postlist.js"> </script>
+
 </head>
 
 <body>
@@ -156,7 +159,7 @@ by clicking the <B>Invite your contacts</B> button at the top.
 
 {% if person.recommendations %}
 <h3>Recommendations</h3>
-<dl>
+<dl id='post-list'>
 {% for i,rec in enumerate(timesort(person.recommendations)) %}
 <dt>[ {{- i + 1 -}} ]
 <B><A HREF="{{- rec.get_local_url() -}}">Recommendation</A> for</B>
@@ -175,11 +178,10 @@ RE: topics:
 <a href=" {{- rec.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
+<br>(click to show/hide)
 </dt>
 <dd>
 <div class="list-comments">
-<input type="checkbox" id="rectoggle {{- i -}}"/>Show discussion.<BR>
-<div id="rectext {{- i -}}" style="display: none">
 {{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
@@ -189,14 +191,8 @@ RE: topics:
 </li>
 {% endfor %}
 </div>
-</div>
 </dd>
 
-<script>
-$( "#rectoggle {{- i -}}" ).click(function() {
-  $( "#rectext {{- i -}}" ).toggle();
-});
-</script>
 {% endfor %}
 </dl>
 {% endif %}
@@ -222,8 +218,7 @@ $( "#rectoggle {{- i -}}" ).click(function() {
 {% if len(person.posts) > len(person.recommendations) %}
 {% set i = 0 %}
 <h3>Discussion</h3>
-
-<dl>
+<dl id='post-list'>
 {% for post in timesort(person.posts) %}
 {% if not post.is_rec() %}
 {% set i = i + 1 %}
@@ -238,11 +233,11 @@ RE: topics:
 <A HREF="{{- topic.get_local_url() -}}"> {{ topic.name }} </A>
 {% endfor %}
 {% endif %}
-( {{- display_datetime(post.published) -}} )</dt>
+( {{- display_datetime(post.published) -}} )
+<br>(click to show/hide)
+</dt>
 <dd>
 <div class="list-comments">
-<input type="checkbox" id="disctoggle {{- i -}}"/>Show discussion.<BR>
-<div id="disctext {{- i -}}" style="display: none">
 {{ post.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
@@ -255,7 +250,6 @@ RE: topics:
 {{ reply.get_text() }}
 </li>
 {% endfor %}
-</div>
 </div>
 </dd>
 

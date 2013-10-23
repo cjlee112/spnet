@@ -10,6 +10,8 @@
 <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe">
 </script>
 
+<script type="text/javascript" src="/js/postlist.js"> </script>
+
 </head>
 
 <body>
@@ -46,7 +48,7 @@
 <div id="content">
 {% if topic.recommendations %}
 <h3>Recommendations</h3>
-<dl>
+<dl id='post-list'>
 {% for i,rec in enumerate(timesort(topic.recommendations)) %}
 <dt>[ 
 <A HREF="{{- rec.get_local_url() -}}">
@@ -60,6 +62,7 @@
 <a href=" {{- rec.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
+<br>(click to show/hide)
 </dt>
 <dd>
 <span class="list-identifier">Recommended:
@@ -67,8 +70,6 @@
 {{ rec.parent.title }} </A>
 </span>
 <div class="list-comments">
-<input type="checkbox" id="rectoggle {{- i -}}"/>Show discussion.<BR>
-<div id="rectext {{- i -}}" style="display: none">
 {{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
@@ -78,14 +79,8 @@
 </li>
 {% endfor %}
 </div>
-</div>
 </dd>
 
-<script>
-$( "#rectoggle {{- i -}}" ).click(function() {
-  $( "#rectext {{- i -}}" ).toggle();
-});
-</script>
 {% endfor %}
 </dl>
 {% endif %}
@@ -93,7 +88,7 @@ $( "#rectoggle {{- i -}}" ).click(function() {
 
 {% if len(topic.posts) > len(topic.recommendations) %}
 <h3>Discussion</h3>
-<dl>
+<dl id='post-list'>
 {% set i = 0 %}
 {% for post in timesort(topic.posts) %}
 {% if not post.is_rec() %}
@@ -111,11 +106,10 @@ RE: topics:
 {% endfor %}
 {% endif %}
 ( {{- display_datetime(post.published) -}} )
+<br>(click to show/hide)
 </dt>
 <dd>
 <div class="list-comments">
-<input type="checkbox" id="disctoggle {{- i -}}"/>Show discussion.<BR>
-<div id="disctext {{- i -}}" style="display: none">
 {{ post.get_text() }}
 {% for reply in timesort(post.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.get_author_url() -}}">
@@ -125,14 +119,8 @@ RE: topics:
 </li>
 {% endfor %}
 </div>
-</div>
 </dd>
 
-<script>
-$( "#disctoggle {{- i -}}" ).click(function() {
-  $( "#disctext {{- i -}}" ).toggle();
-});
-</script>
 {% endif %}
 {% endfor %}
 </dl>

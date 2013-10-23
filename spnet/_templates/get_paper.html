@@ -64,6 +64,9 @@ function validateForm()
   }
 }
 </script>
+
+<script type="text/javascript" src="/js/postlist.js"> </script>
+
 </head>
 
 <body>
@@ -246,7 +249,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 
 </h2>
 
-<dl>
+<dl id='post-list'>
 {% for i,rec in enumerate(timesort(paper.get_all_posts(True))) %}
 <dt>[ 
 <A HREF="{{- rec.get_local_url() -}} ">
@@ -260,6 +263,7 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 <a href=" {{- rec.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
 {% endif %}
+<br>(click to show/hide)
 </dt>
 <dd>
 {% if rec.sigs %}
@@ -270,8 +274,6 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 </span>
 {% endif %}
 <div class="list-comments">
-<input type="checkbox" id="rectoggle {{- i -}}"/>Show discussion.<BR>
-<div id="rectext {{- i -}}" style="display: none">
 {{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.get_author_url() -}}">
@@ -280,7 +282,6 @@ Use your Google sign-in to tag, share, discuss and recommend papers:
 {{ reply.get_text() }}
 </li>
 {% endfor %}
-</div>
 </div>
 </dd>
 
@@ -309,7 +310,7 @@ $( "#rectoggle {{- i -}}" ).click(function() {
 {% endif %}
 </h2>
 
-<dl>
+<dl id='post-list'>
 {% for i,post in enumerate(timesort(paper.get_all_posts())) %}
 <dt>[ {{- i + 1 -}} ]
 <A HREF="{{- post.get_author_url() -}}">
@@ -322,11 +323,10 @@ on topics:
 {% endfor %}
 {% endif %}
 ( {{- display_datetime(post.published) -}} )
+<br>(click to show/hide)
 </dt>
 <dd>
 <div class="list-comments">
-<input type="checkbox" id="disctoggle {{- i -}}"/>Show discussion.<BR>
-<div id="disctext {{- i -}}" style="display: none">
 {{ post.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
@@ -340,14 +340,8 @@ on topics:
 </li>
 {% endfor %}
 </div>
-</div>
 </dd>
 
-<script>
-$( "#disctoggle {{- i -}}" ).click(function() {
-  $( "#disctext {{- i -}}" ).toggle();
-});
-</script>
 {% endfor %}
 </dl>
 
