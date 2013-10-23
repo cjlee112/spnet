@@ -178,6 +178,8 @@ RE: topics:
 </dt>
 <dd>
 <div class="list-comments">
+<input type="checkbox" id="rectoggle {{- i -}}"/>Show discussion.<BR>
+<div id="rectext {{- i -}}" style="display: none">
 {{ rec.get_text() }}
 {% for reply in timesort(rec.get_replies(), reverse=False) %}
 <li><A HREF="{{- reply.author.get_local_url() -}}">
@@ -187,7 +189,14 @@ RE: topics:
 </li>
 {% endfor %}
 </div>
+</div>
 </dd>
+
+<script>
+$( "#rectoggle {{- i -}}" ).click(function() {
+  $( "#rectext {{- i -}}" ).toggle();
+});
+</script>
 {% endfor %}
 </dl>
 {% endif %}
@@ -231,7 +240,10 @@ RE: topics:
 {% endif %}
 ( {{- display_datetime(post.published) -}} )</dt>
 <dd>
-<div class="list-comments">{{ post.get_text() }}
+<div class="list-comments">
+<input type="checkbox" id="disctoggle {{- i -}}"/>Show discussion.<BR>
+<div id="disctext {{- i -}}" style="display: none">
+{{ post.get_text() }}
 {% if hasattr(post, 'url') %}
 <a href=" {{- post.url -}} " onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=800');return false;">
 <img src="/images/reply.jpg" title="Click here to reply to this comment on Google+"></a>
@@ -244,7 +256,14 @@ RE: topics:
 </li>
 {% endfor %}
 </div>
+</div>
 </dd>
+
+<script>
+$( "#disctoggle {{- i -}}" ).click(function() {
+  $( "#disctext {{- i -}}" ).toggle();
+});
+</script>
 {% endif %}
 {% endfor %}
 </dl>
