@@ -325,15 +325,29 @@ def monolithic_test():
     assert paper4 == paper5
     assert rootColl['shortDOI']._GET(s) == paper4
     txt = 'some text ' + paper4.doi.get_hashtag()
-    refs, topics, primary = incoming.get_references_and_tags(txt,spnetworkOnly=False)
+    refs, topics, primary = incoming.get_citations_types_and_topics(txt,spnetworkOnly=False)
     assert incoming.get_paper(primary,refs[primary][1]) == paper4
 
     spnetPaper = core.DoiPaperData(DOI='10.3389/fncom.2012.00001',
                                    insertNew='findOrInsert').parent
     assert spnetPaper.title.lower() == 'open peer review by a selected-papers network'
     txt = 'a long comment ' + spnetPaper.doi.get_doctag() + ', some more text'
-    refs, topics, primary = incoming.get_references_and_tags(txt,spnetworkOnly=False)
+    refs, topics, primary = incoming.get_citations_types_and_topics(txt,spnetworkOnly=False)
     assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
+
+    ## t = 'this is text #spnetwork #recommend #arxiv_1302_4871 #pubmed_22291635 #cosmology'
+    ## d = incoming.get_hashtag_dict(t)
+    ## assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
+
+    ## t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
+    ## d = incoming.get_hashtag_dict(t)
+    ## assert d == {'header': ['spnetwork'], 'topic': ['cosmology'], 'paper': [paper1, spnetPaper], 'rec': ['recommend']}
+
+    t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
+    refs, topics, primary = incoming.get_citations_types_and_topics(t)
+    assert (topics == ['cosmology'])
+    assert incoming.get_paper(primary,refs[primary][1]) == spnetPaper
+    assert (refs[primary][0] == 'recommend')
 
     topics, subs = bulk.get_people_subs()
     bulk.deliver_recs(topics, subs)
