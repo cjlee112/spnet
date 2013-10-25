@@ -157,7 +157,45 @@ I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
     try:
         assert len(l) == 1
     finally:
-        l[0].delete()
+        for p in l:
+            p.delete()
+
+def count_posts(*arxivIDs):
+    return [len(getattr(core.ArxivPaperData(a, insertNew='findOrInsert')
+                        .parent, attr, ())) 
+            for (a,attr) in arxivIDs]
+
+def test_no_spnetwork_update():
+    'check proper updating of post that removes #spnetwork tag'
+    args = (('0906.0213', 'posts'), ('1302.4871', 'citations')) # papers to check
+    b = count_posts(*args) # get initial state of these papers
+    d = post1.copy()
+    d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+and this paper arxiv:1302.4871
+#spnetwork
+'''
+    l = submit_posts([d])
+    try:
+        assert len(l) == 1
+        b2 = count_posts(*args)
+        assert b2 == [b[0] + 1, b[1] + 1] # papers now bound to this post
+        d = post1.copy()
+        d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+and this paper arxiv:1302.4871
+'''
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        b2 = count_posts(*args)
+        assert b2 == b # returned to original state
+    finally: # cleanup: delete this post if it still exists
+        try:
+            p = core.Post(d['id'])
+        except KeyError:
+            pass
+        else:
+            p.delete()
     
 
 def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
