@@ -52,76 +52,83 @@ def get_doi_paper(m):
 #################################################################
 # hashtag parsing
 refPats = (
-    ('#arxiv_([a-z0-9_]+)', 'arxiv', get_hashtag_arxiv),
-    ('ar[xX]iv:\s?[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
+    (re.compile('#arxiv_([a-z0-9_]+)'), 'arxiv', get_hashtag_arxiv),
+    (re.compile('ar[xX]iv:\s?[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)'),
+     'arxiv', get_arxiv_paper),
+    (re.compile('ar[xX]iv:\s?([a-zA-Z.-]+/[0-9]+v?[0-9]+)'), 'arxiv',
      get_arxiv_paper),
-    ('ar[xX]iv:\s?([a-zA-Z.-]+/[0-9]+v?[0-9]+)', 'arxiv', 
+    (re.compile('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)'), 'arxiv',
      get_arxiv_paper),
-    ('ar[xX]iv:\s?([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
-     get_arxiv_paper),
-    ('http://arxiv.org/[abspdf]{3}/[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
-     get_arxiv_paper),
-    ('http://arxiv.org/[abspdf]{3}/([a-zA-Z.-]+/[0-9]+v?[0-9]+)', 'arxiv', 
-     get_arxiv_paper),
-    ('http://arxiv.org/[abspdf]{3}/([0-9]+\.[0-9]+v?[0-9]+)', 'arxiv', 
-     get_arxiv_paper),
-    ('#pubmed_([0-9]+)', 'pubmed', get_hashtag_pubmed),
-    ('PMID:\s?([0-9]+)', 'pubmed', get_hashtag_pubmed),
-    ('#shortDOI_([a-zA-Z0-9]+)', 'shortDOI', get_hashtag_doi),
-    ('[dD][oO][iI]:\s?(10\.\S+)', 'DOI', get_doi_paper),
-    ('shortDOI:\s?([a-zA-Z0-9]+)', 'shortDOI', get_hashtag_doi)
+    (re.compile('http://arxiv.org/[abspdf]{3}/[a-zA-Z.-]+/([0-9]+\.[0-9]+v?[0-9]+)'),
+     'arxiv', get_arxiv_paper),
+    (re.compile('http://arxiv.org/[abspdf]{3}/([a-zA-Z.-]+/[0-9]+v?[0-9]+)'),
+     'arxiv', get_arxiv_paper),
+    (re.compile('http://arxiv.org/[abspdf]{3}/([0-9]+\.[0-9]+v?[0-9]+)'),
+     'arxiv', get_arxiv_paper),
+    (re.compile('#pubmed_([0-9]+)'), 'pubmed', get_hashtag_pubmed),
+    (re.compile('PMID:\s?([0-9]+)'), 'pubmed', get_hashtag_pubmed),
+    (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'shortDOI', get_hashtag_doi),
+    (re.compile('[dD][oO][iI]:\s?(10\.\S+)'), 'DOI', get_doi_paper),
+    (re.compile('shortDOI:\s?([a-zA-Z0-9]+)'), 'shortDOI', get_hashtag_doi)
     )
 
-topicPatterns = ['#([a-zA-Z][a-zA-Z0-9_]+)']
-validTags = ('recommend', 'discuss', 'announce', 'mustread')
+tagPattern = re.compile('#([a-zA-Z][a-zA-Z0-9_]+)')
+citationTypes = ('recommend', 'discuss', 'announce', 'mustread')
 
-def get_references_and_tags(content, spnetworkOnly=True):
+def get_citations_types_and_topics(content, spnetworkOnly=True):
     """Process the body of a post.  Return
-        - a dictionary with each entry of the form {reference: tag}.  Here
-          reference is a reference to a paper and tag is one of
-          #recommend #discuss #announce #mustread;
+        - a dictionary with each entry of the form {reference: (refType, citationType}.  Here
+          reference is a reference to a paper and citationType is one of
+          {recommend discuss announce mustread}
+          while refType is one of
+          {arxiv pubmed DOI shortDOI}
         - and a list of topic tags
 
         Assumptions:
-        - Only one tag can be applied to each reference in a given post
-        - The tag for each reference must immediately precede the reference
+        - Each citationType or topic begins with a hash '#'
+        - Only one citationType can be applied to each reference in a given post
+        - The citationType for each reference must appear in the same line as the reference
+        - The following are considered (user) errors:
+            - multiple citations appear in a line with a citationType
+            - multiple citationTypes appear in a line with a reference
+            - a citationType appears in a line with no citations
     """
-    references = {}
+    citations = {}
     topics = []
     primary = None
 
-    # Match all paper references with a tag in front of them
-    for pattern, reftype, patfun in refPats:
-        refpat = re.compile('#(\w+)\s+'+pattern)
-        ref_matches = refpat.findall(content)
-        for reference in ref_matches:
-            tag = reference[0]
-            ref = patfun(reference[1])
-            if tag in validTags:
-                references[ref] = (tag, reftype)
-            elif tag != 'spnetwork':
-                # We should send the user a warning that an invalid
-                # tag was used. We could also perhaps do fuzzy matching to
-                # guess what was meant.
-                references[ref] = ('discuss', reftype)
+    # Split post by lines
+    lines = content.split('\n') # Also need to handle HTML "line breaks"
+    # For each line:
+    for line in lines:
+        linerefs = []
+        # Find all citations in line
+        for refpat, reftype, patfun in refPats:
+            ref_matches = refpat.findall(line)
+            for reference in ref_matches:
+                ref = patfun(reference)
+                linerefs.append( (ref, reftype) )
+        # Find topics and citationTypes in line
+        tags = tagPattern.findall(line)
+        tags = [t for t in tags if t != 'spnetwork']
+        topicTags = [t for t in tags if t not in citationTypes]
+        citationTags = [t for t in tags if t in citationTypes]
+        topics.extend(topicTags)
+        # Keep valid pair if no error
+        if len(citationTags)==1 and len(linerefs)==1:
+            cite = linerefs[0][0]
+            refType = linerefs[0][1]
+            citeType = citationTags[0]
+            if not (cite in citations.keys()) or (citations[cite]=='discuss'):
+                citations[cite] = (citeType, refType)
+        # Otherwise keep all citations with 'discuss' as type
+        else:
+            for cite, refType in linerefs:
+                if not (cite in citations.keys()):
+                    citations[cite] = ('discuss', refType)
 
-    # Match all paper references without a tag in front of them
-    for pattern, reftype, patfun in refPats:
-        refpat = re.compile(pattern)
-        ref_matches = refpat.findall(content)
-        for ref in ref_matches:
-            ref = patfun(ref)
-            if ref not in references.keys():
-                references[ref] = ('discuss', reftype)
-
-    # Now find topic tags
-    for pattern in topicPatterns:
-        topicpat = re.compile(pattern)
-        topics = topicpat.findall(content)
-        topics = [t for t in topics if t not in validTags]
-        topics = [t for t in topics if t != 'spnetwork']
-        # Remove duplicates
-        topics = list(set(topics))
+    # Remove duplicates
+    topics = list(set(topics))
 
     # Now find location of #spnetwork and figure out which is the first reference after it
     # This seems a bit wasteful, but shouldn't be a bottleneck
@@ -133,18 +140,29 @@ def get_references_and_tags(content, spnetworkOnly=True):
             raise Exception('No #spnetwork tag in post')
         else: # Take first reference as primary
             sptagloc = 0
-    content = content[sptagloc:]
-    first_ref_loc = len(content)
-    for pattern, reftype, patfun in refPats:
-        ref = re.compile(pattern).search(content)
+    remainder = content[sptagloc:]
+    first_ref_loc = len(remainder)
+    for refpat, reftype, patfun in refPats:
+        ref = refpat.search(remainder)
         if ref is not None:
             refloc = ref.start()
             if refloc < first_ref_loc:
                 first_ref_loc = refloc
                 primary = patfun(ref.group(1))
+    if primary is None: # if no tags after #spnetwork, use first tag
+        sptagloc = 0
+        remainder = content[sptagloc:]
+        first_ref_loc = len(remainder)
+        for refpat, reftype, patfun in refPats:
+            ref = refpat.search(remainder)
+            if ref is not None:
+                refloc = ref.start()
+                if refloc < first_ref_loc:
+                    first_ref_loc = refloc
+                    primary = patfun(ref.group(1))
 
 
-    return references, topics, primary
+    return citations, topics, primary
 
 
 #################################################################
@@ -201,10 +219,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         except KeyError:
             pass
         # extract tags and IDs:
-        refs, topics, primary = get_references_and_tags(content)
+        citations, topics, primary = get_citations_types_and_topics(content)
         if post is None: # extract data for saving post to DB
             try:
-                primary_paper_ID = refs[primary]
+                primary_paper_ID = citations[primary]
                 paper = get_paper(primary,primary_paper_ID[1])
             except KeyError:
                 continue # no link to a paper, so nothing to save.
@@ -215,10 +233,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         if process_post:
             process_post(d)
         d['sigs'] = get_topicIDs(topics, get_id(d),timeStamp, source)
-        d['citationType'] = refs[primary][0]
+        d['citationType'] = citations[primary][0]
         if post is None: # save to DB
             post = core.Post(docData=d, parent=paper)
-            for ref, meta in refs.iteritems():
+            for ref, meta in citations.iteritems():
                 if ref != primary:
                     paper = get_paper(ref, meta[1])
                     post.add_citations([paper], meta[0])

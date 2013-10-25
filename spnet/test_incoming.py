@@ -159,7 +159,7 @@ I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
 
 def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
                 primaryRole='discuss', tags=[]):
-    refs, topics, primary = incoming.get_references_and_tags(t)
+    refs, topics, primary = incoming.get_citations_types_and_topics(t)
     assert (topics == tags)
     assert primary == primaryID
     assert refs[primary][1] == primaryType
