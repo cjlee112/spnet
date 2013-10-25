@@ -209,8 +209,6 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
         if is_reshare(d): # just a duplicate (reshared) post, so skip
             continue
         content = get_content(d)
-        if spnetworkOnly and content.find('#spnetwork') < 0:
-            continue # ignore posts lacking our spnetwork hashtag
         try:
             post = core.Post(get_id(d))
             if getattr(post, 'etag', None) == d.get('etag', ''):
@@ -218,6 +216,10 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 continue # matches DB record, so nothing to do
         except KeyError:
             pass
+        if spnetworkOnly and content.find('#spnetwork') < 0:
+            if post:
+                post.delete() # remove old Post: no longer tagged!
+            continue # ignore posts lacking our spnetwork hashtag
         # extract tags and IDs:
         citations, topics, primary = get_citations_types_and_topics(content)
         if post is None: # extract data for saving post to DB
