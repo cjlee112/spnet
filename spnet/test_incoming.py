@@ -37,16 +37,17 @@ def test_multiple_citations(d=post1, citationType='discuss'):
     l = submit_posts([d]) # create test post
     assert len(l) == 1
     post = l[0]
-    assert post.parent.arxiv.id == '0804.2682'
-    assert post.citationType == citationType
-    assert len(post.citations) == 2
-    ids = [c.parent.arxiv.id for c in post.citations]
-    assert '0910.4103' in ids and '1310.2239' in ids
-    assert len(post.citations[0].parent.citations) == 1
-    assert post.citations[0].title == 'Such an interesting Post!'
-    assert len(post.citations[1].parent.citations) == 1
-    # finally clean up by deleting our test post
-    cleanup_post(post)
+    try:
+        assert post.parent.arxiv.id == '0804.2682'
+        assert post.citationType == citationType
+        assert len(post.citations) == 2
+        ids = [c.parent.arxiv.id for c in post.citations]
+        assert '0910.4103' in ids and '1310.2239' in ids
+        assert len(post.citations[0].parent.citations) == 1
+        assert post.citations[0].title == 'Such an interesting Post!'
+        assert len(post.citations[1].parent.citations) == 1
+    finally: # clean up by deleting our test post
+        cleanup_post(post)
 
 def test_text_content(t='''
 #discuss arXiv:0910.4103
@@ -72,19 +73,21 @@ def test_html_content(t='''
 def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
     'check that etag value will force updating'
     submit_posts([post1])
-    d = post1.copy()
-    d['content'] = newText
-    submit_posts([d])
-    p = core.Post(d['id']) # retrieve from DB
-    assert p.get_text() == post1['content'] # no update b/c etag unchanged!
-    d = post1.copy()
-    d['content'] = newText
-    d['etag'] = 'new and improved'
-    submit_posts([d])
-    p = core.Post(d['id']) # retrieve from DB
-    assert p.etag == 'new and improved'
-    assert p.get_text() == newText
-    cleanup_post(p)
+    try:
+        d = post1.copy()
+        d['content'] = newText
+        submit_posts([d])
+        p = core.Post(d['id']) # retrieve from DB
+        assert p.get_text() == post1['content'] # no update b/c etag unchanged!
+        d = post1.copy()
+        d['content'] = newText
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        p = core.Post(d['id']) # retrieve from DB
+        assert p.etag == 'new and improved'
+        assert p.get_text() == newText
+    finally:
+        cleanup_post(core.Post(post1['id']))
 
 def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
                       t2='update #spnetwork arXiv:1310.2239 #cat'):
@@ -153,8 +156,10 @@ def test_no_spnetwork():
 I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
 '''
     l = submit_posts([d, post1])
-    assert len(l) == 1
-    cleanup_post(l[0])
+    try:
+        assert len(l) == 1
+    finally:
+        cleanup_post(l[0])
     
 
 def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
