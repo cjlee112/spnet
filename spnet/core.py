@@ -149,6 +149,10 @@ class Post(UniqueArrayDocument, AuthorInfo):
     insert = lambda self,d:report_topics(self, d)
     update = lambda self,d:report_topics(self, d, method='update')
     get_topics = get_topics_noquery
+    def delete(self):
+        for c in self.citations:
+            c.delete()
+        UniqueArrayDocument.delete(self)
     def get_local_url(self):
         return '/posts/' + self.id
     def is_rec(self):

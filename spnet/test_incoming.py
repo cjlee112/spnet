@@ -27,11 +27,6 @@ def submit_posts(posts):
         lambda x:False, 'gplusPost')
     return list(it)
 
-def cleanup_post(post):
-    for c in post.citations:
-        c.delete()
-    post.delete()
-
 def test_multiple_citations(d=post1, citationType='discuss'):
     'add post with multiple citations, redundancy, ordering issues'
     l = submit_posts([d]) # create test post
@@ -47,7 +42,7 @@ def test_multiple_citations(d=post1, citationType='discuss'):
         assert post.citations[0].title == 'Such an interesting Post!'
         assert len(post.citations[1].parent.citations) == 1
     finally: # clean up by deleting our test post
-        cleanup_post(post)
+        post.delete()
 
 def test_text_content(t='''
 #discuss arXiv:0910.4103
@@ -87,7 +82,7 @@ def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
         assert p.etag == 'new and improved'
         assert p.get_text() == newText
     finally:
-        cleanup_post(core.Post(post1['id']))
+        core.Post(post1['id']).delete()
 
 def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
                       t2='update #spnetwork arXiv:1310.2239 #cat'):
@@ -159,7 +154,7 @@ I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
     try:
         assert len(l) == 1
     finally:
-        cleanup_post(l[0])
+        l[0].delete()
     
 
 def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
