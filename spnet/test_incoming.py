@@ -43,6 +43,9 @@ def test_multiple_citations(d=post1, citationType='discuss'):
         assert len(post.citations[1].parent.citations) == 1
     finally: # clean up by deleting our test post
         post.delete()
+    # check that citations to this post were deleted
+    assert len(core.ArxivPaperData('0910.4103').parent.citations) == 0
+    assert len(core.ArxivPaperData('1310.2239').parent.citations) == 0
 
 def test_text_content(t='''
 #discuss arXiv:0910.4103
