@@ -87,9 +87,12 @@ def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
     finally:
         core.Post(post1['id']).delete()
 
-def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
-                      t2='update #spnetwork arXiv:1310.2239 #cat'):
-    'check updating of primary paper binding'
+def test_paper_update(t1='update #spnetwork arXiv:0804.2682 arXiv:0910.4103 #cat',
+                      t2='update #spnetwork arXiv:1310.2239 arXiv:1302.4871 #cat'):
+    'check updating of primary paper and citation binding'
+    args = (('0804.2682', 'posts'), ('0910.4103', 'citations'),
+            ('1310.2239', 'posts'), ('1302.4871', 'citations'))
+    b = count_posts(*args) # get initial state of these papers
     d = post1.copy()
     d['content'] = t1
     submit_posts([d])
@@ -97,11 +100,15 @@ def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
         p = core.Post(d['id']) # retrieve from DB
         paper1 = p.parent
         assert paper1.arxiv.id == '0804.2682'
+        b2 = count_posts(*args)
+        assert b2 == [b[0] + 1, b[1] + 1] + b[2:] # should bind first 2 papers
         assert paper1.posts == [p]
         d = post1.copy()
         d['content'] = t2
         d['etag'] = 'new and improved'
         submit_posts([d])
+        b2 = count_posts(*args)
+        assert b2 == b[:2] + [b[2] + 1, b[3] + 1] # should bind last 2 papers
         p2 = core.Post(d['id']) # retrieve from DB
         paper2 = p2.parent
         assert core.Paper(paper1._id).posts == []
@@ -109,8 +116,8 @@ def test_paper_update(t1='update #spnetwork arXiv:0804.2682 #cat',
         assert paper2.posts == [p2]
     finally: # cleanup so no effect on other tests
         core.Post(d['id']).delete()
+    assert count_posts(*args) == b # returned to original state
 
-# should code similar test for updating multiple citations
 
 def test_bad_tag():
     'check if #recommended crashes incoming'
