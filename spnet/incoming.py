@@ -97,70 +97,64 @@ def get_citations_types_and_topics(content, spnetworkOnly=True):
     """
     citations = {}
     topics = []
-    primary = None
 
     # Split post by lines
     lines = content.split('\n') # Also need to handle HTML "line breaks"
-    # For each line:
     for line in lines:
-        linerefs = []
+        lineRefs = []
         # Find all citations in line
-        for refpat, reftype, patfun in refPats:
-            ref_matches = refpat.findall(line)
-            for reference in ref_matches:
-                ref = patfun(reference)
-                linerefs.append( (ref, reftype) )
+        for refpat, refType, patFun in refPats:
+            for reference in refpat.findall(line):
+                ref = patFun(reference)
+                lineRefs.append( (ref, refType) )
+
         # Find topics and citationTypes in line
         tags = tagPattern.findall(line)
         tags = [t for t in tags if t != 'spnetwork']
         topicTags = [t for t in tags if t not in citationTypes]
         citationTags = [t for t in tags if t in citationTypes]
         topics.extend(topicTags)
-        # Store references with citation types and reference types
+
         if len(citationTags)>0:
             citeType = citationTags[0]
         else:
             citeType = 'discuss'
-        for ref in linerefs:
+
+        # Store references with citation types and reference types
+        for ref in lineRefs:
             cite = ref[0]
             refType = ref[1]
-            if not (cite in citations.keys()) or (citations[cite]=='discuss'):
+            if not (cite in citations.keys()):
+                citations[cite] = (citeType, refType)
+            elif citations[cite][0]=='discuss':
                 citations[cite] = (citeType, refType)
 
     # Remove duplicates
     topics = list(set(topics))
 
-    # Now find location of #spnetwork and figure out which is the first reference after it
-    # This seems a bit wasteful, but shouldn't be a bottleneck
-    # Of course, we could check above for the simplest case
+    # Now find #spnetwork and get first reference after it
     try:
-        sptagloc = re.compile('#spnetwork').search(content).start()
+        spTagLoc = re.compile('#spnetwork').search(content).start()
     except AttributeError: # no spnetwork tag in this string
         if spnetworkOnly:
             raise Exception('No #spnetwork tag in post')
         else: # Take first reference as primary
-            sptagloc = 0
-    remainder = content[sptagloc:]
-    first_ref_loc = len(remainder)
-    for refpat, reftype, patfun in refPats:
-        ref = refpat.search(remainder)
-        if ref is not None:
-            refloc = ref.start()
-            if refloc < first_ref_loc:
-                first_ref_loc = refloc
-                primary = patfun(ref.group(1))
-    if primary is None: # if no tags after #spnetwork, use first tag
-        sptagloc = 0
-        remainder = content[sptagloc:]
-        first_ref_loc = len(remainder)
-        for refpat, reftype, patfun in refPats:
-            ref = refpat.search(remainder)
-            if ref is not None:
-                refloc = ref.start()
-                if refloc < first_ref_loc:
-                    first_ref_loc = refloc
-                    primary = patfun(ref.group(1))
+            spTagLoc = 0
+    remainder = content[spTagLoc:]
 
+    refs = [refPat.search(remainder) for refPat, _, _ in refPats]
+    # If no references after #spnetwork, take first ref in content
+    if refs.count(None) == len(refs):
+        refs = [refPat.search(content) for refPat, _, _ in refPats]
+        # If no refences at all, then return primary = None
+        if refs.count(None) == len(refs):
+            return citations, topics, None
+
+    refs = [ref for ref in refs if ref is not None]
+    locations = [ref.start() for ref in refs]
+
+    firstRef = refs[locations.index(min(locations))]
+    primary = patFun(firstRef.group(1))
 
     return citations, topics, primary
 
