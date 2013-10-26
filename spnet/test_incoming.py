@@ -143,7 +143,7 @@ def test_pair_text():
     t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
     l = check_parse(t, '1302.4871', 'arxiv', 'recommend', ['cosmology'])
     refs = l[0]
-    assert refs['22291635'] == ('discuss', 'pubmed')
+    assert refs['22291635'] == ('recommend', 'pubmed')
     assert refs['1302.4871'] == ('recommend', 'arxiv')
 
 def test_arxiv_href():

@@ -87,10 +87,12 @@ def get_citations_types_and_topics(content, spnetworkOnly=True):
         Assumptions:
         - Each citationType or topic begins with a hash '#'
         - Only one citationType can be applied to each reference in a given post
+        - Only one citationType can appear in each line; it will apply to each
+          reference in that line
         - The citationType for each reference must appear in the same line as the reference
         - The following are considered (user) errors:
-            - multiple citations appear in a line with a citationType
-            - multiple citationTypes appear in a line with a reference
+            - multiple citationTypes appear in a line with a reference; in this
+              case, the first one will be used for all references
             - a citationType appears in a line with no citations
     """
     citations = {}
@@ -114,18 +116,16 @@ def get_citations_types_and_topics(content, spnetworkOnly=True):
         topicTags = [t for t in tags if t not in citationTypes]
         citationTags = [t for t in tags if t in citationTypes]
         topics.extend(topicTags)
-        # Keep valid pair if no error
-        if len(citationTags)==1 and len(linerefs)==1:
-            cite = linerefs[0][0]
-            refType = linerefs[0][1]
+        # Store references with citation types and reference types
+        if len(citationTags)>0:
             citeType = citationTags[0]
+        else:
+            citeType = 'discuss'
+        for ref in linerefs:
+            cite = ref[0]
+            refType = ref[1]
             if not (cite in citations.keys()) or (citations[cite]=='discuss'):
                 citations[cite] = (citeType, refType)
-        # Otherwise keep all citations with 'discuss' as type
-        else:
-            for cite, refType in linerefs:
-                if not (cite in citations.keys()):
-                    citations[cite] = ('discuss', refType)
 
     # Remove duplicates
     topics = list(set(topics))
@@ -135,7 +135,7 @@ def get_citations_types_and_topics(content, spnetworkOnly=True):
     # Of course, we could check above for the simplest case
     try:
         sptagloc = re.compile('#spnetwork').search(content).start()
-    except: # no spnetwork tag in this string
+    except AttributeError: # no spnetwork tag in this string
         if spnetworkOnly:
             raise Exception('No #spnetwork tag in post')
         else: # Take first reference as primary
