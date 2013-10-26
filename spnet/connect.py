@@ -1,13 +1,12 @@
 
 from dbconn import DBConnection
-from core import Paper, Person, Recommendation, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData, PaperInterest, GplusSubscriptions, Subscription, TopicOptions, Citation
+from core import Paper, Person, EmailAddress, Issue, IssueVote, SIG, GplusPersonData, Post, Reply, ArxivPaperData, PubmedPaperData, DoiPaperData, PaperInterest, GplusSubscriptions, Subscription, TopicOptions, Citation
 import json
 from pymongo.errors import ConnectionFailure
 
 connectDict = {
     Paper:'spnet.paper',
     Person:'spnet.person',
-    Recommendation:'spnet.paper',
     EmailAddress:'spnet.person',
     Issue:'spnet.issue',
     IssueVote:'spnet.issue',

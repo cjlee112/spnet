@@ -85,23 +85,6 @@ class AuthorInfo(object):
         else:
             return self.text
 
-def get_replies(self):
-    'used by both Post and Recommendation to find replies'
-    try:
-        docID = self.id
-    except AttributeError:
-        return
-    for r in getattr(self.parent, 'replies', ()):
-        if r._dbDocDict['replyTo'] == docID:
-            yield r
-
-def get_topics_noquery(self):
-    l = []
-    for topicID in self._dbDocDict.get('sigs', ()):
-        l.append(SIG(docData=dict(_id=topicID, name='#' + topicID), 
-                     insertNew=False))
-    return l
-
 def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
     'wrap insert() or update() to insert topics into author Person record'
     try:
@@ -117,25 +100,6 @@ def report_topics(self, d, attr='sigs', method='insert', personAttr='author'):
                            {'$addToSet': {'topics': {'$each':topics}}})
     return getattr(super(self.__class__, self), method)(d)
 
-class Recommendation(ArrayDocument, AuthorInfo):
-    _dbfield = 'recommendations.author' # dot.name for updating
-    useObjectId = False # input data will supply _id
-    _timeStampField = 'published' # auto-add timestamp if missing
-    _parent_url = '/papers/%s' # link for full paper record
-    # attrs that will only be fetched if accessed by user
-    parent = LinkDescriptor('parent', fetch_parent_paper, noData=True)
-    author = LinkDescriptor('author', fetch_person)
-    forwards = LinkDescriptor('forwards', fetch_people)
-    sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
-
-    get_replies = get_replies
-    insert = lambda self,d:report_topics(self, d)
-    update = lambda self,d:report_topics(self, d, method='update')
-    def get_local_url(self):
-        return '/papers/' + str(self._parent_link) + '/recs/' + \
-               str(self._dbDocDict['author'])
-    get_topics = get_topics_noquery
-
 class Post(UniqueArrayDocument, AuthorInfo):
     _dbfield = 'posts.id' # dot.name for updating
     _timeStampField = 'published' # auto-add timestamp if missing
@@ -145,10 +109,23 @@ class Post(UniqueArrayDocument, AuthorInfo):
     citations = LinkDescriptor('citations', fetch_post_citations, noData=True)
     author = LinkDescriptor('author', fetch_person)
     sigs = LinkDescriptor('sigs', fetch_sigs, missingData=())
-    get_replies = get_replies
+    def get_replies(self):
+        'get all replies for this post'
+        try:
+            docID = self.id
+        except AttributeError:
+            return
+        for r in getattr(self.parent, 'replies', ()):
+            if r._dbDocDict['replyTo'] == docID:
+                yield r
     insert = lambda self,d:report_topics(self, d)
     update = lambda self,d:report_topics(self, d, method='update')
-    get_topics = get_topics_noquery
+    def get_topics(self):
+        l = []
+        for topicID in self._dbDocDict.get('sigs', ()):
+            l.append(SIG(docData=dict(_id=topicID, name='#' + topicID), 
+                         insertNew=False))
+        return l
     def delete(self):
         for c in self.citations:
             c.delete()
