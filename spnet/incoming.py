@@ -222,26 +222,25 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
             continue # ignore posts lacking our spnetwork hashtag
         # extract tags and IDs:
         citations, topics, primary = get_citations_types_and_topics(content)
-        if post is None: # extract data for saving post to DB
-            try:
-                primary_paper_ID = citations[primary]
-                paper = get_paper(primary,primary_paper_ID[1])
-            except KeyError:
-                continue # no link to a paper, so nothing to save.
-            userID = get_user(d)
-            author = find_or_insert_person(userID)
-            d['author'] = author._id
+        try:
+            primary_paper_ID = citations[primary]
+            paper = get_paper(primary,primary_paper_ID[1])
+        except KeyError:
+            continue # no link to a paper, so nothing to save.
+        if post and post.parent != paper: # changed primary binding!
+            post.delete() # delete old binding
+            post = None # must resave to new binding
         d['text'] =  content
         if process_post:
             process_post(d)
         d['sigs'] = get_topicIDs(topics, get_id(d),timeStamp, source)
         d['citationType'] = citations[primary][0]
+        oldCitations = {}
         if post is None: # save to DB
+            userID = get_user(d)
+            author = find_or_insert_person(userID)
+            d['author'] = author._id
             post = core.Post(docData=d, parent=paper)
-            for ref, meta in citations.iteritems():
-                if ref != primary:
-                    paper = get_paper(ref, meta[1])
-                    post.add_citations([paper], meta[0])
             try:
                 topicsDict
             except NameError:
@@ -251,6 +250,20 @@ def find_or_insert_posts(posts, get_post_comments, find_or_insert_person,
                 saveEvents.append(post)
         else: # update DB with new data and etag
             post.update(d)
+            for c in getattr(post, 'citations', ()): # index old citations
+                oldCitations[c.parent] = c
+        for ref, meta in citations.iteritems(): # add / update new citations
+            if ref != primary:
+                paper2 = get_paper(ref, meta[1])
+                try: # if already present, just update citationType if changed
+                    c = oldCitations[paper2]
+                    if c.citationType != meta[0]:
+                        c.update(dict(citationType=meta[0]))
+                    del oldCitations[paper2] # don't treat as old citation
+                except KeyError:
+                    post.add_citations([paper2], meta[0])
+        for c in oldCitations.values():
+            c.delete() # delete citations no longer present in updated post
         yield post
         if get_replycount(d) > 0:
             for c in get_post_comments(get_id(d)):
