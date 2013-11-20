@@ -208,7 +208,7 @@ and this paper arxiv:1302.4871
 def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
                 primaryRole='discuss', tags=[]):
     refs, topics, primary = incoming.get_citations_types_and_topics(t)
-    assert (topics == tags)
+    assert set(topics) == set(tags)
     assert primary == primaryID
     assert refs[primary][1] == primaryType
     assert refs[primary][0] == primaryRole
@@ -237,3 +237,12 @@ def test_doi_vs_pubmed():
     'check that pubmed and DOI map to identical paper record'
     check_paper_pair(('22291635', 'pubmed'), 
                      ('10.3389/fncom.2012.00001', 'DOI'))
+def test_doi_finding():
+    t = '''Interesting work on zero-determinant strategies following last year&#39;s paper by Press and Dyson doi:10.1073/pnas.1206569109<br /><br />Stewart and Plotkin describe a subclass of zero-determinant strategies, called generous zero-determinant strategies, that can invade a population of other zero-determinant strategies, are evolutionarily stable, and in some cases can dominate the traditional &quot;best strategy&quot; for the iterated prisoner&#39;s dilemma, win-stay-lose-shift!<br /><br /><a class="ot-hashtag" href="https://plus.google.com/s/%23spnetwork">#spnetwork</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23game_theory">#game_theory</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23evolutionary_game_theory">#evolutionary_game_theory</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23zero_determinent_strategies">#zero_determinent_strategies</a> arXiv:1304.7205'''
+    refs, topics, primary = check_parse(t, '1304.7205', 
+                                        tags=['game_theory', 
+                                              'evolutionary_game_theory',
+                                              'zero_determinent_strategies'])
+    assert '10.1073/pnas.1206569109' in refs
+    assert refs['10.1073/pnas.1206569109'] == ('discuss', 'DOI')
+
