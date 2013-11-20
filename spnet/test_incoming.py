@@ -15,33 +15,109 @@ It talks about three papers including  arXiv:0910.4103
 and http://arxiv.org/abs/1310.2239
 #spnetwork arXiv:0804.2682 #gt  arXiv:0910.4103 arXiv:0804.2682 #gt''',
     user='114744049040264263224',
+    etag='old data',
     title='Such an interesting Post!',
 )
 
-def submit_post(d=post1):
-    it = incoming.find_or_insert_posts([d], None, 
+def submit_posts(posts):
+    it = incoming.find_or_insert_posts([d.copy() for d in posts], None, 
         lambda x:core.GplusPersonData(x, insertNew='findOrInsert').parent,
         lambda x:x['content'], lambda x:x['user'], lambda x:0,
         lambda x:x['id'], lambda x:datetime.now(),
         lambda x:False, 'gplusPost')
     return list(it)
 
-def test_multiple_citations(d=post1):
+def test_multiple_citations(d=post1, citationType='discuss'):
     'add post with multiple citations, redundancy, ordering issues'
-    l = submit_post(d) # create test post
+    l = submit_posts([d]) # create test post
     assert len(l) == 1
     post = l[0]
-    assert post.parent.arxiv.id == '0804.2682'
-    assert len(post.citations) == 2
-    ids = [c.parent.arxiv.id for c in post.citations]
-    assert '0910.4103' in ids and '1310.2239' in ids
-    assert len(post.citations[0].parent.citations) == 1
-    assert post.citations[0].title == 'Such an interesting Post!'
-    assert len(post.citations[1].parent.citations) == 1
-    # finally clean up by deleting our test post
-    post.citations[0].delete()
-    post.citations[1].delete()
-    post.delete()
+    try:
+        assert post.parent.arxiv.id == '0804.2682'
+        assert post.citationType == citationType
+        assert len(post.citations) == 2
+        ids = [c.parent.arxiv.id for c in post.citations]
+        assert '0910.4103' in ids and '1310.2239' in ids
+        assert len(post.citations[0].parent.citations) == 1
+        assert post.citations[0].title == 'Such an interesting Post!'
+        assert len(post.citations[1].parent.citations) == 1
+    finally: # clean up by deleting our test post
+        post.delete()
+    # check that citations to this post were deleted
+    assert len(core.ArxivPaperData('0910.4103').parent.citations) == 0
+    assert len(core.ArxivPaperData('1310.2239').parent.citations) == 0
+
+def test_text_content(t='''
+#discuss arXiv:0910.4103
+#recommend arXiv:0804.2682
+#announce http://arxiv.org/abs/1310.2239
+#spnetwork #gt
+'''):
+    'check basic citationType binding'
+    l = check_parse(t, '0910.4103', 'arxiv', 'discuss', ['gt'])
+    refs = l[0]
+    assert refs['0804.2682'] == ('recommend', 'arxiv')
+    assert refs['1310.2239'] == ('announce', 'arxiv')
+
+def test_html_content(t='''
+<A HREF="http://some.url.com/some/path1">#discuss</A> arXiv:0910.4103
+<A HREF="http://some.url.com/some/path2">#recommend</A> arXiv:0804.2682
+<A HREF="http://some.url.com/some/path3">#announce</A> http://arxiv.org/abs/1310.2239
+<A HREF="http://some.url.com/some/path4">#spnetwork</A> <A HREF="http://some.url.com/some/path5">#gt</A>
+'''):
+    'check that HTML tags do not break citationType binding'
+    test_text_content(t)
+
+def test_post_update(newText='update #spnetwork arXiv:0804.2682 #cat'):
+    'check that etag value will force updating'
+    submit_posts([post1])
+    try:
+        d = post1.copy()
+        d['content'] = newText
+        submit_posts([d])
+        p = core.Post(d['id']) # retrieve from DB
+        assert p.get_text() == post1['content'] # no update b/c etag unchanged!
+        d = post1.copy()
+        d['content'] = newText
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        p = core.Post(d['id']) # retrieve from DB
+        assert p.etag == 'new and improved'
+        assert p.get_text() == newText
+    finally:
+        core.Post(post1['id']).delete()
+
+def test_paper_update(t1='update #spnetwork arXiv:0804.2682 arXiv:0910.4103 #cat',
+                      t2='update #spnetwork arXiv:1310.2239 arXiv:1302.4871 #cat'):
+    'check updating of primary paper and citation binding'
+    args = (('0804.2682', 'posts'), ('0910.4103', 'citations'),
+            ('1310.2239', 'posts'), ('1302.4871', 'citations'))
+    b = count_posts(*args) # get initial state of these papers
+    d = post1.copy()
+    d['content'] = t1
+    submit_posts([d])
+    try:
+        p = core.Post(d['id']) # retrieve from DB
+        paper1 = p.parent
+        assert paper1.arxiv.id == '0804.2682'
+        b2 = count_posts(*args)
+        assert b2 == [b[0] + 1, b[1] + 1] + b[2:] # should bind first 2 papers
+        assert paper1.posts == [p]
+        d = post1.copy()
+        d['content'] = t2
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        b2 = count_posts(*args)
+        assert b2 == b[:2] + [b[2] + 1, b[3] + 1] # should bind last 2 papers
+        p2 = core.Post(d['id']) # retrieve from DB
+        paper2 = p2.parent
+        assert core.Paper(paper1._id).posts == []
+        assert paper2.arxiv.id == '1310.2239'
+        assert paper2.posts == [p2]
+    finally: # cleanup so no effect on other tests
+        core.Post(d['id']).delete()
+    assert count_posts(*args) == b # returned to original state
+
 
 def test_bad_tag():
     'check if #recommended crashes incoming'
@@ -56,6 +132,87 @@ def test_bad_tag():
     )
     test_multiple_citations(postDict)
 
+def test_simple_text():
+    'check simple doi rec parsing'
+    t = 'this is text #spnetwork #recommend doi: 10.3389/fncom.2012.00001 i like doi: this #cosmology'
+    check_parse(t, '10.3389/fncom.2012.00001', 'DOI', 'recommend', 
+                ['cosmology'])
+
+def test_pair_text():
+    'check pair of paper refs'
+    t = 'this is text #spnetwork #recommend arXiv:1302.4871 PMID: 22291635 #cosmology'
+    l = check_parse(t, '1302.4871', 'arxiv', 'recommend', ['cosmology'])
+    refs = l[0]
+    assert refs['22291635'] == ('recommend', 'pubmed')
+    assert refs['1302.4871'] == ('recommend', 'arxiv')
+
+def test_arxiv_href():
+    'check handling of arxiv URL in HTML <A HREF>'
+    content = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+#spnetwork
+'''
+    check_parse(content)
+
+def test_no_spnetwork():
+    'check proper handling of post lacking #spnetwork tag'
+    d = post1.copy()
+    d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+'''
+    l = submit_posts([d, post1])
+    try:
+        assert len(l) == 1
+    finally:
+        for p in l:
+            p.delete()
+
+def count_posts(*arxivIDs):
+    return [len(getattr(core.ArxivPaperData(a, insertNew='findOrInsert')
+                        .parent, attr, ())) 
+            for (a,attr) in arxivIDs]
+
+def test_no_spnetwork_update():
+    'check proper updating of post that removes #spnetwork tag'
+    args = (('0906.0213', 'posts'), ('1302.4871', 'citations')) # papers to check
+    b = count_posts(*args) # get initial state of these papers
+    d = post1.copy()
+    d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+and this paper arxiv:1302.4871
+#spnetwork
+'''
+    l = submit_posts([d])
+    try:
+        assert len(l) == 1
+        b2 = count_posts(*args)
+        assert b2 == [b[0] + 1, b[1] + 1] # papers now bound to this post
+        d = post1.copy()
+        d['content'] = '''
+I want to discuss <A HREF="http://arxiv.org/abs/0906.0213">this paper</A>
+and this paper arxiv:1302.4871
+'''
+        d['etag'] = 'new and improved'
+        submit_posts([d])
+        b2 = count_posts(*args)
+        assert b2 == b # returned to original state
+    finally: # cleanup: delete this post if it still exists
+        try:
+            p = core.Post(d['id'])
+        except KeyError:
+            pass
+        else:
+            p.delete()
+    
+
+def check_parse(t, primaryID='0906.0213', primaryType='arxiv', 
+                primaryRole='discuss', tags=[]):
+    refs, topics, primary = incoming.get_citations_types_and_topics(t)
+    assert set(topics) == set(tags)
+    assert primary == primaryID
+    assert refs[primary][1] == primaryType
+    assert refs[primary][0] == primaryRole
+    return refs, topics, primary
     
 
 def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
@@ -69,3 +226,25 @@ def test_arxiv_versions(arxivIDs=('1108.1172', '1108.1172v3')):
 def test_arxiv_versions2(arxivIDs=('math.HO_9404236', 'math.HO_9404236')):
     'check if math.HO/9404236 style arxiv IDs create duplicate records'
     test_arxiv_versions(arxivIDs)
+
+def check_paper_pair(args1, args2):
+    p1 = incoming.get_paper(*args1)
+    p2 = incoming.get_paper(*args2)
+    assert p1 == p2
+    assert p1._id == p2._id
+
+def test_doi_vs_pubmed():
+    'check that pubmed and DOI map to identical paper record'
+    check_paper_pair(('22291635', 'pubmed'), 
+                     ('10.3389/fncom.2012.00001', 'DOI'))
+
+def test_doi_finding():
+    'check handling of DOI terminated by HTML <tag>'
+    t = '''Interesting work on zero-determinant strategies following last year&#39;s paper by Press and Dyson doi:10.1073/pnas.1206569109<br /><br />Stewart and Plotkin describe a subclass of zero-determinant strategies, called generous zero-determinant strategies, that can invade a population of other zero-determinant strategies, are evolutionarily stable, and in some cases can dominate the traditional &quot;best strategy&quot; for the iterated prisoner&#39;s dilemma, win-stay-lose-shift!<br /><br /><a class="ot-hashtag" href="https://plus.google.com/s/%23spnetwork">#spnetwork</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23game_theory">#game_theory</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23evolutionary_game_theory">#evolutionary_game_theory</a> <a class="ot-hashtag" href="https://plus.google.com/s/%23zero_determinent_strategies">#zero_determinent_strategies</a> arXiv:1304.7205'''
+    refs, topics, primary = check_parse(t, '1304.7205', 
+                                        tags=['game_theory', 
+                                              'evolutionary_game_theory',
+                                              'zero_determinent_strategies'])
+    assert '10.1073/pnas.1206569109' in refs
+    assert refs['10.1073/pnas.1206569109'] == ('discuss', 'DOI')
+

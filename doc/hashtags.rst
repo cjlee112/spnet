@@ -27,7 +27,12 @@ Here are the hashtags and paper ID formats to use:
 * **#spnetwork**  This marks your post for indexing by 
   SelectedPapers.net.  This hashtag is required.
 
-* **an ID for the specific paper** you are discussing.
+* **an ID for each paper** you are discussing.
+  Each paper ID should appear on a separate line.
+  The first paper ID *after* the #spnetwork tag is
+  considered the *primary* reference for your post
+  (i.e., your post will be stored under that paper's
+  entry in the SelectedPapers.net database). 
   The specific tag depends on the origin of the paper:
 
   * **arXiv**: simply use the standard arXiv paper
@@ -69,7 +74,7 @@ That's all you need!
 Optional tags 
 -------------
 
-Recommendations
+citation Types
 ...............
 
 A central principle of SelectedPapers.net is that innovations
@@ -85,8 +90,9 @@ soon).  So start making recommendations,
 and SelectedPapers.net will do the work to help others find your
 recommendations and subscribe to receive your future recommendations!
 
-To mark a post as a recommendation, simply add one of the
-two following hashtags:
+To mark a reference as a recommendation, simply add one of the
+two following hashtags to the line containing the ID of the paper
+you want to recommend:
 
 * **#recommend**
 
@@ -99,41 +105,12 @@ two following hashtags:
   This means you consider the paper "required reading" for your
   research -- it changed how you think or what you're going to do.
   This is the strongest level of recommendation on SelectedPapers.net.
+  
+For example, you might reference two papers in your post::
 
-General user actions
-....................
+    arxiv:1234.5678
+    #recommend doi: 10.3389/fncom.2012.00001
 
-* ``#question``: this post asks a question about the paper.
-* ``#agree``: you agree with the paper.  This will
-  typically be used as a lightweight "upvote / downvote" poll,
-  an easy way for people to declare themselves on one side or
-  another of an argument.
-* ``#disagree``: you disagree with the paper.
-
-
-Open Peer Review
-................
-
-* ``#valid``: the paper's claims meet your field's standards of evidence,
-  in your judgment.
-* ``#uncertain``: the evidence for a claim is not strong enough
-* ``#unsupported``: no valid evidence for a claim
-* ``#wrong``: you're sure a claim is incorrect (provide your evidence!)
-
-* ``#precedes``: one of the paper's claims
-  appears to have already been published by previous publication A
-  (provide its paper ID).
-
-* ``#assessing``: you intend to assess the paper's validity,
-  at least in part.
-* ``#assessingAll``: you can assess all aspects of the paper,
-  because you are expert in all aspects of the paper, i.e.
-  you have performed similar analyses using similar methods on
-  similar data.
-* ``#exit``: you intend no further consideration
-  of this paper (barring unforeseen new information).
-
-* ``#majorResult``: this statement applies to the paper's main claim(s)
-* ``#minorResult``: this statement applies to a minor point that
-  is not one of the paper's main claims.
-
+In this case, the second paper would be marked as "recommended" by
+you.  The first paper would be marked as "discussed" (which is the
+default).
