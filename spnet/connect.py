@@ -26,22 +26,24 @@ connectDict = {
 
 
 
-def init_connection(spnetUrlBase='https://selectedpapers.net', **kwargs):
+def init_connection(spnetUrlBase='https://selectedpapers.net', 
+                    dbconfFile='../mongodb/access.json', **kwargs):
     'set klass.coll on each db class to give it db connection'
+    try:
+        with open(dbconfFile) as ifile:
+            dbconfig = json.load(ifile)
+        kwargs.update(dbconfig)
+        print 'read db connection settings from', dbconfFile
+    except IOError:
+        pass
     try:
         dbconn = DBConnection(connectDict, **kwargs)
     except ConnectionFailure:
-        try:
-            with open('../mongodb/access.json') as ifile:
-                dbconfig = json.load(ifile)
-        except IOError:
-            print '''ERROR: default database connection failed and 
-database connection parameters file not found.  If you are running
-a test / development platform, make sure that your mongod is running
-and accepting connections (from localhost, without a password).'''
-            raise
-        kwargs.update(dbconfig)
-        dbconn = DBConnection(connectDict, **kwargs)
+        print '''ERROR: database connection failed with settings: %s
+If you are running a test / development platform, 
+make sure that your mongod is running
+and accepting connections (from localhost, without a password).''' % str(kwargs)
+        raise
     for klass in connectDict: # set default URL
         klass._spnet_url_base = spnetUrlBase
     return dbconn
