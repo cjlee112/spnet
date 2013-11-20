@@ -68,7 +68,7 @@ refPats = (
     (re.compile('#pubmed_([0-9]+)'), 'pubmed', get_hashtag_pubmed),
     (re.compile('PMID:\s?([0-9]+)'), 'pubmed', get_hashtag_pubmed),
     (re.compile('#shortDOI_([a-zA-Z0-9]+)'), 'shortDOI', get_hashtag_doi),
-    (re.compile('[dD][oO][iI]:\s?(10\.\S+)'), 'DOI', get_doi_paper),
+    (re.compile('[dD][oO][iI]:\s?(10\.[a-zA-Z0-9._;()/-]+)'), 'DOI', get_doi_paper),
     (re.compile('shortDOI:\s?([a-zA-Z0-9]+)'), 'shortDOI', get_hashtag_doi)
     )
 
