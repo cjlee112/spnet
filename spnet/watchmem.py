@@ -1,6 +1,6 @@
 import resource
 import web
-import thread
+from threading import Thread
 import view
 import time
 
@@ -15,7 +15,10 @@ maxmem = 150000 # max RSS in KB
 checkInterval = 60 # seconds between mem usage checks
 
 s = web.Server() # initialize db connection, REST apptree etc.
-thread.start_new_thread(view.poll_recent_events, (s.papers.klass, s.topics.klass)) # start polling db for "recent events"
+poll = Thread(target=view.poll_recent_events,
+              args=(s.papers.klass, s.topics.klass))
+poll.daemon = True # ensure thread will exit automatically
+poll.start() # start polling db for "recent events"
 s.start() # run web server in separate thread
 
 def mem_usage():
@@ -24,3 +27,6 @@ def mem_usage():
 
 while mem_usage() < maxmem: # if exceeded memory limit, exit and restart
     time.sleep(checkInterval) # wait a bit before next check
+
+s.shutdown()
+

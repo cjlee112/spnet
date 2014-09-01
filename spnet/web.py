@@ -29,6 +29,10 @@ class Server(object):
         for attr, c in colls.items(): # bind collections to server root
             setattr(self, attr, c)
 
+    def shutdown(self):
+        'try to force cherrypy to shutdown'
+        cherrypy.engine.exit()
+
     def login(self, email, password):
         'check password and create session if authenticated'
         try:
