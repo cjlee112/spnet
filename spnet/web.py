@@ -74,7 +74,13 @@ class Server(object):
     def oauth2callback(self, error=False, **kwargs):
         if error:
             return error
-        oauth = get_session()['gplus_oauth']
+        try:
+            oauth = get_session()['gplus_oauth']
+        except KeyError:
+            return view.report_error('session storage failed', 403,
+                                     '''Login session info storage (cookie)
+        failed.  Please make sure that your browser accepts cookies
+        from selectedpapers.net. ''', traceback=False)
         oauth.get_credentials(**kwargs)
         get_session()['person'] = oauth.get_person()
         return view.redirect('/')
