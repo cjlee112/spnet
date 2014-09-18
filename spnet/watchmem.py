@@ -3,6 +3,7 @@ import web
 from threading import Thread
 import view
 import time
+import os
 
 # runs spnet web server with explicit memory limit
 # as workaround for Python memory usage going up and up
@@ -25,8 +26,21 @@ def mem_usage():
     'report RSS memory usage by our process in KB'
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-while mem_usage() < maxmem: # if exceeded memory limit, exit and restart
-    time.sleep(checkInterval) # wait a bit before next check
+def log(f, msg):
+    'append message and flush to disk'
+    f.write(msg + '\n')
+    f.flush()
+    os.fsync(f.fileno())
 
+logfile = open('watchmem.log', 'a') # need data to see why still running out of memory!!
+log(logfile, 'starting...')
+
+mem = 0    
+while mem < maxmem: # if exceeded memory limit, exit and restart
+    time.sleep(checkInterval) # wait a bit before next check
+    mem = mem_usage()
+    log(logfile, str(mem))
+
+log(logfile, 'shutting down...')
 s.shutdown()
 
