@@ -13,7 +13,7 @@ import os
 # memory usage limit exceeded.
 
 maxmem = 150000 # max RSS in KB
-checkInterval = 5 # seconds between mem usage checks
+checkInterval = 1 # seconds between mem usage checks
 
 s = web.Server() # initialize db connection, REST apptree etc.
 poll = Thread(target=view.poll_recent_events,
