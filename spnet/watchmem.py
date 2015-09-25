@@ -13,6 +13,7 @@ import os
 # memory usage limit exceeded.
 
 maxmem = 150000 # max RSS in KB
+maxtime = 60 * 60 # restart after one hour
 checkInterval = 1 # seconds between mem usage checks
 
 s = web.Server() # initialize db connection, REST apptree etc.
@@ -35,8 +36,9 @@ def log(f, msg):
 logfile = open('watchmem.log', 'a') # need data to see why still running out of memory!!
 log(logfile, 'starting...')
 
-mem = 0    
-while mem < maxmem: # if exceeded memory limit, exit and restart
+mem = 0
+startTime = time.time()
+while mem < maxmem and time.time() - startTime < maxtime: # if exceeded memory limit, exit and restart
     time.sleep(checkInterval) # wait a bit before next check
     mem = mem_usage()
     log(logfile, str(mem))
