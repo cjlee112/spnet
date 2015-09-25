@@ -1,6 +1,7 @@
 import subprocess
+import sys
 
 while True:
     print 'Starting server...'
-    subprocess.call(['python', 'watchmem.py'])
+    subprocess.call([sys.executable, 'watchmem.py'])
 
