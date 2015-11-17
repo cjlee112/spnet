@@ -16,8 +16,15 @@ maxmem = 150000 # max RSS in KB
 maxtime = 60 * 60 # restart after one hour
 checkInterval = 1 # seconds between mem usage checks
 
-# enforce maxmem using rlimit
-resource.setrlimit(resource.RLIMIT_AS, (maxmem * 1024, maxmem * 1024))
+def limit_vsz(maxvsz):
+    'enforce maxmem using rlimit'
+    resource.setrlimit(resource.RLIMIT_AS, (maxvsz * 1024, maxvsz * 1024))
+
+def get_vsz():
+    'get this process current VSZ as int'
+    pid = os.getpid()
+    t = subprocess.check_output(['ps', '-p%d' % pid, '-o', 'vsz']).split()
+    return int(t[-1])
 
 s = web.Server() # initialize db connection, REST apptree etc.
 poll = Thread(target=view.poll_recent_events,
@@ -32,12 +39,19 @@ def mem_usage():
 
 def log(f, msg):
     'append message and flush to disk'
-    f.write(msg + '\n')
-    f.flush()
-    os.fsync(f.fileno())
+    if f:
+        f.write(msg + '\n')
+        f.flush()
+        os.fsync(f.fileno())
 
-logfile = open('watchmem.log', 'a') # need data to see why still running out of memory!!
+#logfile = open('watchmem.log', 'a') # need data to see why still running out of memory!!
+logfile = None
 log(logfile, 'starting...')
+
+time.sleep(10) # let web server fully start up
+vsz = get_vsz() # measure baseline VSZ
+limit_vsz(vsz + maxmem)
+print 'setrlimit VSZ =', vsz + maxmem
 
 mem = 0
 startTime = time.time()
