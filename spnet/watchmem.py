@@ -16,6 +16,9 @@ maxmem = 150000 # max RSS in KB
 maxtime = 60 * 60 # restart after one hour
 checkInterval = 1 # seconds between mem usage checks
 
+# enforce maxmem using rlimit
+resource.setrlimit(resource.RLIMIT_AS, (maxmem * 1024, maxmem * 1024))
+
 s = web.Server() # initialize db connection, REST apptree etc.
 poll = Thread(target=view.poll_recent_events,
               args=(s.papers.klass, s.topics.klass))
