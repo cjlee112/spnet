@@ -4,6 +4,7 @@ from threading import Thread
 import view
 import time
 import os
+import subprocess
 
 # runs spnet web server with explicit memory limit
 # as workaround for Python memory usage going up and up
